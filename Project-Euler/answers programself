@@ -1,0 +1,9 @@
+from projectEuler import *
+import projectEuler
+classes=[name for name, cls in projectEuler.__dict__.items() if isinstance(cls, type)][3:]
+def strip(string):
+	i=0
+	while not string[i] in [str(n) for n in range(1,10)]: i+=1
+	return string[i:]
+answers=dict((strip(class_),str(eval(class_+'().ans()'))) for class_ in classes)
+with open(THIS_FILEPATH,'w') as file: file.write(str(answers))

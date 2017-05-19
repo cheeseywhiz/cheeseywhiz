@@ -1,0 +1,19 @@
+def strCoord(string):
+    if 'N' in string:
+        index=string.find('N')
+        lat_multi=1
+    elif 'S' in string:
+        index=string.find('S')
+        lat_multi=-1
+    if 'E' in string:
+        long_multi=1
+    elif 'W' in string:
+        long_multi=-1
+    lat=lat_multi*eval(string[:index-2])
+    long=long_multi*eval(string[index+3:-3])
+    return tuple([lat,long])
+
+with open('b') as file:
+    cities=[tuple([city[0],strCoord(city[1][0])]) for city in [city for city in list(eval(file.read())) if not type(city[1][0])==type(None)]]
+    with open(THIS_FILEPATH,'w') as file: file.write(str(cities))
+

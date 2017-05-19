@@ -1,0 +1,16 @@
+from requests import *
+from bs4 import *
+def coordinates(city):
+    try: return [result.string for result in BeautifulSoup(get('https://www.google.com/search?q='+city.replace(' ','+')+'+coordinates').text,'html5lib').find_all('span',class_='_m3b')][0]
+    except: return None
+
+def gather(city):
+    return str(tuple([city,[coordinates(city)]]))+','
+
+with open('a','r') as file: cities=file.read()
+
+cities=[city for city in eval(cities)]
+with open(THIS_FILEPATH,'w') as file:
+    for city in cities:
+        try: file.write(gather(city))
+        except: pass
