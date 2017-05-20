@@ -20,7 +20,7 @@ def info():
                 break
         else:
             i = 0
-        # Join words together
+        # Join words together with spaces while removing colon
         return ' '.join(list[:i])[:-1],' '.join(list[i:])
     return dict(line(elem) for elem in info)
 
