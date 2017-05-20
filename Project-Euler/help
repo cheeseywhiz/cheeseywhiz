@@ -1,0 +1,7 @@
+
+programSelf.py runs a Python script that prints its output in itself.
+
+Usage:        programSelf.py [-h] <filename>
+-h:           This helpscreen
+<filename>:   File to be executed
+THIS_FILEPATH (type=str) in source file will be replaced as expected
