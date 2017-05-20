@@ -1,23 +1,22 @@
 #!/usr/bin/python3
-"""Short API to access battery data."""
 from subprocess import call
 
 
 def info():
-    """Dictionary of battery information."""
+    """Dictionary of battery information
+    """
     call('batteryinfo.sh')
     with open('pipe') as file:
         info = file.read().split('\n')
     # Inner loop: remove extra whitespace from line
     # Outer loop: do this for each line
-    info = [[letter
-             for letter in line.split(' ')
-             if letter != ''] for line in info]
+    info = [[letter for letter in line.split(
+        ' ') if letter != ''] for line in info]
 
     def line(list):
-        """Turn split string into formatted tuple.
-
-        line(list) -> tuple(str variable, str value)."""
+        """Turn a list of words into a tuple of (variable, value) based on
+        where the colon lies
+        """
         # leave variable i on element that has colon as last character
         for i, word in enumerate(list):
             if word[-1] == ':':
@@ -31,7 +30,6 @@ def info():
 
 
 def percentage():
-    """Battery charge percentage."""
     energy = info()
     return float(energy['energy'][:-3]) / float(energy['energy-full'][:-3])
 

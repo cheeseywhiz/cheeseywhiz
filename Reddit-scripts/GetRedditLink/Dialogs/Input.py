@@ -19,10 +19,10 @@ class InputDialog(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
-        self.setWindowFlags(Qt.WindowStaysOnTopHint
-                            | Qt.WindowCloseButtonHint
-                            | Qt.WindowMinimizeButtonHint
-                            | Qt.MSWindowsFixedSizeDialogHint)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint |
+                            Qt.WindowCloseButtonHint |
+                            Qt.WindowMinimizeButtonHint |
+                            Qt.MSWindowsFixedSizeDialogHint)
         self.setWindowTitle('Get Reddit Link')
         self.setCentralWidget(InputWidget(self))
         self.minimumWidth_ = 248
