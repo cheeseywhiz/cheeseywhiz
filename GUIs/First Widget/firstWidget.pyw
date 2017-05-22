@@ -1,9 +1,4 @@
-"""
-cd Desktop\projectEuler
-cls
-py firstWidget.pyw
-
-"""
+#!/usr/bin/python3
 import sys
 import math
 from PyQt5.QtWidgets import *
