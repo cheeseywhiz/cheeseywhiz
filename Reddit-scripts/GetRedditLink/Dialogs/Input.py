@@ -1,8 +1,9 @@
-"""79 characters long                                                      """
+"""79 characters long                                                       """
+
 import sys
+import webbrowser
 import praw
 import prawcore
-import webbrowser
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
