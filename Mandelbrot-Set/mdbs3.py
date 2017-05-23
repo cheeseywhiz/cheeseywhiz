@@ -7,7 +7,7 @@ from decorators import timer, np_vector
 
 xmin, xmax = -683 / 192, 683 / 192
 ymin, ymax = -2, 2
-width, height = 1366, 768
+width, height = 1366 * 2, 768 * 2
 
 
 @timer
