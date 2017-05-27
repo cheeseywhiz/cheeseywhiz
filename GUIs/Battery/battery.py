@@ -4,7 +4,10 @@ import decorators
 
 
 def info():
-    """Dictionary of battery information:
+    """dict info()
+
+    info() is a dictionary of battery information containing the following
+    stats:
 
     native-path
     vendor
