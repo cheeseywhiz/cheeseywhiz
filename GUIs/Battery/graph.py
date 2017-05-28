@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
 import time
 import warnings
 import matplotlib.pyplot as plt
 import battery
 
+# matplotlib.pyplot event loop warning
 warnings.filterwarnings('ignore', '.*GUI is implemented.*')
+# String formatting on print(time, percentage)
 warnings.filterwarnings("ignore", 'Attempting to set identical')
 
 
@@ -19,15 +20,15 @@ def loop(event, tick, max_loop=0):
         max_loop = maxsize
         del maxsize
 
-    t0 = time.time()
     n = 1
+    t0 = time.time()
     print('Beginning loop.')
-    event()
 
     try:
         while n < max_loop:
             t1 = time.time()
-            if t1 - t0 >= tick:
+            elapsed = t1 - t0
+            if elapsed >= tick:
                 t0 = t1
                 n += 1
                 event()
@@ -38,26 +39,29 @@ def loop(event, tick, max_loop=0):
 
 
 class LiveGraph:
-    def __init__(self):
-        self._t_0 = time.time()
-        plt.ion()
-        loop(self._plot_new_percentage, 30)
+    """Plot live percentage data
 
-    def _plot_new_percentage(self):
-        x, y = int(time.time() - self._t_0), self._percentage()
+    Call loop() on an instance to begin plotting."""
+    def __init__(self):
+        plt.ion()
+
+    def __plot_new_percentage(self):
+        x, y = int(time.time() - self.__t_0), self.__percentage()
         print('time=%d seconds, %.9f%s'%(x, y, '%'))
         plt.axis([0, x * 1.1, 0, 100])
         plt.scatter(x, y)
-        plt.pause(30)
+        plt.pause(self.__tick - 1)
+
+    def loop(self, tick=30, max_loop=0):
+        """None loop(float tick=30, int max_loop=0)
+
+        Begin looping battery percentage graph.
+        Check for a new percentage every <tick> seconds and plot a maximum of
+        <max_loop> points. Set max_loop to 0 to loop forever."""
+        self.__tick = tick
+        self.__t_0 = time.time()
+        loop(self.__plot_new_percentage, tick, max_loop)
 
     @staticmethod
-    def _percentage():
+    def __percentage():
         return float(battery.info()['percentage'][:-1])
-
-
-def main():
-    LiveGraph()
-
-
-if __name__ == '__main__':
-    main()

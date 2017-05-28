@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from time import clock
 
 
 def vector_1d(f):
@@ -8,4 +8,14 @@ def vector_1d(f):
     def decorator(list, *args, **kwargs):
         return [f(item, *args, **kwargs) for item in list]
 
+    return decorator
+
+
+def timer(f):
+    """Print execution time of decorated function."""
+    def decorator(*args, **kwargs):
+        t = clock()
+        res = f(*args, **kwargs)
+        print('%.6f'%(clock() - t))
+        return res
     return decorator
