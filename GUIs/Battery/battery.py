@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import subprocess
 import decorators
 
@@ -6,8 +6,7 @@ import decorators
 def info():
     """dict info()
 
-    info() is a dictionary of battery information containing the following
-    stats:
+    Returns battery information containing the following:
 
     native-path
     vendor
@@ -35,10 +34,12 @@ def info():
 
     # Remove whitespace on each line
     # Just individual words left
-    info[:] = [[letter
-                for letter in line.split(' ')
-                if letter != '']
-               for line in info]
+    info[:] = [
+        [
+            letter
+            for letter in line.split(' ')
+            if letter != '']
+        for line in info]
 
     @decorators.vector_1d
     def info_format(line):
@@ -53,17 +54,18 @@ def info():
         # Join words together with spaces while removing colon (last char)
         return ' '.join(line[:i])[:-1], ' '.join(line[i:])
 
-    whitelist = ['native-path', 'vendor', 'model', 'serial', 'power supply',
-                 'updated', 'present', 'rechargeable', 'state', 'energy',
-                 'energy-empty', 'energy-full', 'energy-full-design',
-                 'energy-rate', 'voltage', 'time to empty', 'percentage',
-                 'capacity', 'technology']
+    whitelist = [
+        'native-path', 'vendor', 'model', 'serial', 'power supply', 'updated',
+        'present', 'rechargeable', 'state', 'energy', 'energy-empty',
+        'energy-full', 'energy-full-design', 'energy-rate', 'voltage',
+        'time to empty', 'percentage', 'capacity', 'technology']
     info = {stat: val
             for stat, val in info_format(info)
             if stat in whitelist}
-    info['percentage'] = str(100
-                             * float(info['energy'][:-3])
-                             / float(info['energy-full'][:-3])) + '%'
+    info['percentage'] = str(
+        100
+        * float(info['energy'][:-3])
+        / float(info['energy-full'][:-3])) + '%'
     return info
 
 

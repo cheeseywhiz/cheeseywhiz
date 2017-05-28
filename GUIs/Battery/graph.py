@@ -1,13 +1,18 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import time
+import warnings
 import matplotlib.pyplot as plt
 import battery
 
+warnings.filterwarnings('ignore', '.*GUI is implemented.*')
+warnings.filterwarnings("ignore", 'Attempting to set identical')
 
-def loop(tick, event, max_loop=0):
-    """None loop(float tick, function event, int max_loop=0)
-    Call <event>() a maximum of <max_loop> times if the battery
-    percentage has changed and check if has changed every <tick> seconds.
+
+def loop(event, tick, max_loop=0):
+    """None loop(function event, float tick, int max_loop=0)
+
+    Call <event>() a maximum of <max_loop> times every <tick> seconds.
+
     Set max_size to 0 to run indefinitely."""
     if not max_loop:
         from sys import maxsize
@@ -15,25 +20,44 @@ def loop(tick, event, max_loop=0):
         del maxsize
 
     t0 = time.time()
-    percentage0 = battery.percentage()
     n = 1
+    print('Beginning loop.')
+    event()
 
     try:
-        event()
         while n < max_loop:
             t1 = time.time()
-            if t1 - t0 <= tick:
+            if t1 - t0 >= tick:
                 t0 = t1
-                percentage1 = battery.percentage()
-                if percentage0 != percentage1:
-                    percentage0 = percentage1
-                    n += 1
-                    event()
-    except KeyboardInterrupt as error:
-        print(str(error), 'User interrupted.')
+                n += 1
+                event()
+    except KeyboardInterrupt:
+        print('User interrupted.')
     else:
         print('Successfully looped.')
 
 
-def printtime():
-    print(time.time(), battery.percentage())
+class LiveGraph:
+    def __init__(self):
+        self._t_0 = time.time()
+        plt.ion()
+        loop(self._plot_new_percentage, 30)
+
+    def _plot_new_percentage(self):
+        x, y = int(time.time() - self._t_0), self._percentage()
+        print('time=%d seconds, %.9f%s'%(x, y, '%'))
+        plt.axis([0, x * 1.1, 0, 100])
+        plt.scatter(x, y)
+        plt.pause(30)
+
+    @staticmethod
+    def _percentage():
+        return float(battery.info()['percentage'][:-1])
+
+
+def main():
+    LiveGraph()
+
+
+if __name__ == '__main__':
+    main()
