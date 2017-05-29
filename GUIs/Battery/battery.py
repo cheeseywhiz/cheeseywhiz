@@ -5,7 +5,7 @@ import decorators
 def info():
     """dict info()
 
-    Returns battery information containing the following:
+    Dictionary of battery information including the following:
 
     native-path
     vendor
@@ -43,7 +43,7 @@ def info():
     @decorators.vector_1d
     def info_format(line):
         # leave variable i on element that has colon as last character
-        # variable i decides which words are assigned to the stat or the val
+        # variable i decides which words are assigned to the stat or to the val
         for i, word in enumerate(line, start=1):
             if word[-1] == ':':
                 break
@@ -61,10 +61,10 @@ def info():
     info = {stat: val
             for stat, val in info_format(info)
             if stat in whitelist}
-    info['percentage'] = str(
-        100
-        * float(info['energy'][:-3])
-        / float(info['energy-full'][:-3])) + '%'
+    # info['percentage'] = str(
+    #     100
+    #     * float(info['energy'][:-3])
+    #     / float(info['energy-full'][:-3])) + '%'  # TODO: accurate percentage
     return info
 
 

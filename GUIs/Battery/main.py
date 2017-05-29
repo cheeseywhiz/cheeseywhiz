@@ -3,8 +3,8 @@ import graph
 
 
 def main():
-    plt = graph.LiveGraph()
-    plt.loop()
+    image = graph.PlotLivePercentage()
+    image.start()
 
 
 if __name__ == '__main__':
