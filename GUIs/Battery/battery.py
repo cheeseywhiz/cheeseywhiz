@@ -1,39 +1,73 @@
-#!/usr/bin/python3
-from subprocess import call
+import subprocess
+import decorators
 
 
 def info():
-    """Dictionary of battery information
-    """
-    call('batteryinfo.sh')
+    """dict info()
+
+    Dictionary of battery information including the following:
+
+    native-path
+    vendor
+    model
+    serial
+    power supply
+    updated
+    present
+    rechargeable
+    state
+    energy
+    energy-empty
+    energy-full
+    energy-full-design
+    energy-rate
+    voltage
+    time to empty
+    percentage
+    capacity
+    technology"""
+    subprocess.call('batteryinfo.sh')
+
     with open('pipe') as file:
         info = file.read().split('\n')
-    # Inner loop: remove extra whitespace from line
-    # Outer loop: do this for each line
-    info = [[letter for letter in line.split(
-        ' ') if letter != ''] for line in info]
 
-    def line(list):
-        """Turn a list of words into a tuple of (variable, value) based on
-        where the colon lies
-        """
+    # Remove whitespace on each line
+    # Just individual words left
+    info[:] = [
+        [
+            letter
+            for letter in line.split(' ')
+            if letter != '']
+        for line in info]
+
+    @decorators.vector_1d
+    def info_format(line):
         # leave variable i on element that has colon as last character
-        for i, word in enumerate(list):
+        # variable i decides which words are assigned to the stat or to the val
+        for i, word in enumerate(line, start=1):
             if word[-1] == ':':
-                i += 1
                 break
         else:
             i = 0
-        # Join words together with spaces while removing colon
-        return ' '.join(list[:i])[:-1], ' '.join(list[i:])
-    return dict(line(elem) for elem in info)
 
+        # Join words together with spaces while removing colon (last char)
+        return ' '.join(line[:i])[:-1], ' '.join(line[i:])
 
-def percentage():
-    energy = info()
-    return float(energy['energy'][:-3]) / float(energy['energy-full'][:-3])
+    whitelist = [
+        'native-path', 'vendor', 'model', 'serial', 'power supply', 'updated',
+        'present', 'rechargeable', 'state', 'energy', 'energy-empty',
+        'energy-full', 'energy-full-design', 'energy-rate', 'voltage',
+        'time to empty', 'percentage', 'capacity', 'technology']
+    info = {stat: val
+            for stat, val in info_format(info)
+            if stat in whitelist}
+    # info['percentage'] = str(
+    #     100
+    #     * float(info['energy'][:-3])
+    #     / float(info['energy-full'][:-3])) + '%'  # TODO: accurate percentage
+    return info
 
 
 if __name__ == '__main__':
-    print(info())
-    print(percentage())
+    import pprint
+    pprint.pprint(info())
