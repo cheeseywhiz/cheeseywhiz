@@ -1,3 +1,4 @@
+import os
 import subprocess
 import decorators
 
@@ -26,7 +27,7 @@ def info():
     percentage
     capacity
     technology"""
-    subprocess.call('batteryinfo.sh')
+    subprocess.call(os.path.abspath('batteryinfo.sh'), shell=True)
 
     with open('pipe') as file:
         info = file.read().split('\n')

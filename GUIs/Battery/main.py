@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 import graph
 import sys
-from PySide.QtCore import *
-from PySide.QtGui import *
+try:
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+except Exception:  # no PySide
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtWidgets import *
 
 
 class DesktopWidget(QMainWindow):

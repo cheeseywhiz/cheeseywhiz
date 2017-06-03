@@ -3,8 +3,13 @@ import os
 import warnings
 import matplotlib.pyplot as plt
 import battery
-from PySide.QtCore import *
-from PySide.QtGui import *
+try:
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+except ModuleNotFoundError:  # no PySide
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtWidgets import *
 
 # String formatting on print(time, percentage)
 warnings.filterwarnings("ignore", 'Attempting to set identical')
