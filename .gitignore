@@ -1,5 +1,7 @@
 # All .png
 **/*.png
+**/*.txt
+**/*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
