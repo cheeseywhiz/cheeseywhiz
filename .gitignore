@@ -3,6 +3,8 @@
 **/*.txt
 **/*.pdf
 
+!Wordcloud/wordcloud.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
