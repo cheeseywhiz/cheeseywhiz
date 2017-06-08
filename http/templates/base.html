@@ -12,7 +12,7 @@
 <body>
     <form action="/" method="post">
         <input id="text" type="text" name="url" value="{{ current_url }}"><br>
-        <input type="submit" value="Generate .json vis">
+        <input type="submit" value="Generate .json vis"><button onclick="window.location.href='/'">Home</button>
     </form>
     <div id="json">
         {% block json %}{% endblock json %}

@@ -1,7 +1,6 @@
-#!/home/cheese/cheeseywhiz/http/bin/python
 from json.decoder import JSONDecodeError
 from flask import Flask, render_template, request
-from static import jsonvis
+from static.jsonvis import JsonVis
 
 app = Flask(__name__)
 
@@ -13,13 +12,12 @@ def index():
         current_url = request.form['url']
         template_name = 'json.html'
         try:
-            data = jsonvis.download(current_url)
+            JsonVis().download(current_url).make_html(template_name, 4)
         except JSONDecodeError as error:
             return render_template(
                 'error.html', current_url=current_url,
                 error='Either 404 or URL was not .json format',
             )
-        jsonvis.make_html(data, 4, template_name=template_name)
         return render_template(template_name, current_url=current_url)
     else:
         # no data entered/opening page
