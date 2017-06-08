@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask</title>
+    <script type="text/javascript" src="/static/js/jquery-3.2.1.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("input:text").focus(function() { $(this).select(); } );
+        });
+    </script>
+</head>
+<body>
+    <form action="/" method="post">
+        <input id="text" type="text" name="url" value="{{ current_url }}"><br>
+        <input type="submit" value="Generate .json vis">
+    </form>
+    <div id="json">
+        {% block json %}{% endblock json %}
+    </div>
+</body>
+</html>

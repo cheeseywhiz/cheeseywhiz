@@ -63,3 +63,11 @@ docs/_build/
 
 # PyBuilder
 target/
+
+http/bin/
+
+http/include/
+
+http/pip-selfcheck\.json
+
+http/templates/json\.html
