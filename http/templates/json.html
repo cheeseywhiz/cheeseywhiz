@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block json %}
+{% for instruction, content in instructions %}
+    {% if instruction == 'open_list' %}
+        <ul>
+    {% elif instruction == 'list_item' %}
+        <li>{{ content }}</li>
+    {% elif instruction == 'close_list' %}
+        </ul>
+    {% endif %}
+{% endfor %}
+{% endblock json %}
