@@ -1,16 +1,25 @@
+# execute from virtualenv:
 # python home.py
 from json.decoder import JSONDecodeError
+from time import clock
 from flask import Flask, render_template, request
-from static.exceptions import HTTPException, NotFound
-from static.jsonvis import JsonVis
+from static import HTTPException, JsonVis, NotFound
 
 app = Flask(__name__)
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
 
+def timer(time):
+    print('%.6f seconds to serve'%(clock() - time))
+
+
 @app.route('/', methods=['POST', 'GET'])
 def index():
+    """\
+    Homepage
+    """
+    t0 = clock()
     if 'url' in request.form:
         # data entered
         current_url = request.form['url']
@@ -21,21 +30,25 @@ def index():
                 message='Site either not found or is not json format',
                 current_url=current_url
             )
-        return render_template(
+        file = render_template(
             'json.html', current_url=current_url, instructions=instructions
         )
+        timer(t0)
+        return file
     else:
         # no data entered/opening page
-        return render_template('index.html')
+        file = render_template('index.html')
+        timer(t0)
+        return file
 
 
 @app.errorhandler(HTTPException)
 def handler(error):
+    """\
+    Handle all exceptions based from HTTPException.
+    """
     return error.handle()
 
 
 if __name__ == '__main__':
-    app.run(
-        host='0.0.0.0',
-        # use_reloader=True,
-    )
+    app.run(host='0.0.0.0')

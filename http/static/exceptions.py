@@ -1,12 +1,12 @@
 """\
 Provides base class for HTTP exceptions.
 """
-import re
+from re import findall
 from flask import render_template
 
 
 def _split_caps(name: str):
-    words = re.findall('[A-Z][^A-Z]*', name)
+    words = findall('[A-Z][^A-Z]*', name)
     return ' '.join(words)
 
 

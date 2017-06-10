@@ -1,8 +1,6 @@
-{% extends "base.html" %}
+{% extends "index.html" %}
 {% block title %}{{ error.name }}{% endblock title %}
 {% block json %}
-<div>
-    <h1 id="error-header">{{ error.status_code }} {{ error.name }}</h1>
-    <p id="error-message">{% if error.message %}{{ error.message }}{% endif %}</p>
-</div>
+<h1 id="error-header">{{ error.status_code }} {{ error.name }}</h1>
+<p id="error-message">{% if error.message %}{{ error.message }}{% endif %}</p>
 {% endblock json %}
