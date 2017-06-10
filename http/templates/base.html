@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask</title>
+    <title>{% block title %}{% endblock title %}</title>
     <script type="text/javascript" src="/static/js/jquery-3.2.1.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $("input:text").focus(function() { $(this).select(); } );
-        });
-    </script>
+    <script type="text/javascript" src="/static/js/script.js"></script>
 </head>
 <body>
     <form action="/" method="post">

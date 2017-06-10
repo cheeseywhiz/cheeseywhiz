@@ -1,8 +1,7 @@
-# export FLASK_APP=home.py
-# flask run --host=0.0.0.0
+# python home.py
 from json.decoder import JSONDecodeError
 from flask import Flask, render_template, request
-from static.exceptions import NotFound
+from static.exceptions import HTTPException, NotFound
 from static.jsonvis import JsonVis
 
 app = Flask(__name__)
@@ -30,6 +29,13 @@ def index():
         return render_template('index.html')
 
 
-@app.errorhandler(NotFound)
+@app.errorhandler(HTTPException)
 def handler(error):
-    return error.handle
+    return error.handle()
+
+
+if __name__ == '__main__':
+    app.run(
+        host='0.0.0.0',
+        # use_reloader=True,
+    )

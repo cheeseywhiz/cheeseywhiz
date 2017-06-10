@@ -5,7 +5,7 @@ import json
 import subprocess
 
 
-class JsonVis(object):
+class JsonVis:
     def _open_list(self):
         self.instructions.append(('open_list', None))
 
