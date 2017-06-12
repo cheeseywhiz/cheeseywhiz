@@ -69,3 +69,5 @@ http/bin/
 http/include/
 
 http/pip-selfcheck\.json
+
+http/data/sets/

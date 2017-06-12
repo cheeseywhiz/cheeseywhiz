@@ -1,7 +1,9 @@
-# execute from virtualenv:
-# python home.py
+"""\
+execute from virtualenv:
+python home.py
+"""
+import time
 from json.decoder import JSONDecodeError
-from time import clock
 from flask import Flask, render_template, request
 from static import HTTPException, JsonVis, NotFound
 
@@ -10,8 +12,8 @@ app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
 
-def timer(time):
-    print('%.6f seconds to serve'%(clock() - time))
+def timer(initial):
+    print('%.6f seconds to serve'%(time.clock() - initial))
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -19,7 +21,7 @@ def index():
     """\
     Homepage
     """
-    t0 = clock()
+    t0 = time.clock()
     if 'url' in request.form:
         # data entered
         current_url = request.form['url']

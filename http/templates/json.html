@@ -6,6 +6,8 @@
         <ul>
     {% elif instruction == 'list_item' %}
         <li>{{ content }}</li>
+    {% elif instruction == 'horiz_rule' %}
+        <hr>
     {% elif instruction == 'close_list' %}
         </ul>
     {% endif %}

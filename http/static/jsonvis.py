@@ -12,6 +12,9 @@ class JsonVis:
     def _list_item(self, data):
         self.instructions.append(('list_item', str(data)))
 
+    def _horiz_rule(self):
+        self.instructions.append(('horiz_rule', None))
+
     def _close_list(self):
         self.instructions.append(('close_list', None))
 
@@ -26,13 +29,15 @@ class JsonVis:
             self._open_list()
             for item in data:
                 self._iterate(item)
+                self._horiz_rule()
             self._close_list()
         else:
             self._list_item(data)
 
     def download(self, url: str):
         """
-        Return a python dictionary generated from json data at <url>.
+        Store a python dictionary generated from json data at <url> in
+        self.data. Returns self.
         """
         data = subprocess.run(
             f"curl '{url}'",  # Quotes required around url for URL parameters
@@ -44,7 +49,8 @@ class JsonVis:
 
     def make_instructions(self):
         """
-        Return a list of instructions that is parsed by the json.html template.
+        Take self.data and return a list of instructions about its html
+        visualization that is parsed by json.html.
         """
         self.instructions = []
         self._open_list()
