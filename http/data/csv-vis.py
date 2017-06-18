@@ -2,67 +2,29 @@
 import csv
 import sys
 import matplotlib.pyplot as plt
-
-DATA_SETS = {
-    'bay-area-zip-codes': {
-        'file-location': 'sets/bay-area-zip-codes',
-        'show-labels': True,
-        'label-index': 3,
-        'data-index': 1,
-        'str-start-chars': 16,
-        'str-end-chars': 3,
-    },
-    'idk': {
-        'file-location': 'sets/idk',
-        'show-labels': False,
-        'label-index': 0,
-        'data-index': 10,
-        'str-start-chars': 10,
-        'str-end-chars': 2,
-    },
-    'sf-zones': {
-        'file-location': 'sets/sf-zones',
-        'show-labels': False,
-        'label-index': 0,
-        'data-index': 5,
-        'str-start-chars': 10,
-        'str-end-chars': 2,
-    },
-    'ny-senate': {
-        'file-location': 'sets/ny-senate',
-        'show-labels': True,
-        'label-index': 0,
-        'data-index': 3,
-        'str-start-chars': 16,
-        'str-end-chars': 3,
-    },
-    'md-counties': {
-        'file-location': 'sets/md-counties',
-        'show-labels': True,
-        'label-index': 0,
-        'data-index': 1,
-        'str-start-chars': 16,
-        'str-end-chars': 3,
-    },
-}
+from config import data_sets, fontdict
 
 try:
     sys.argv[1]
-    if sys.argv[1] not in DATA_SETS:
+    if sys.argv[1] not in data_sets:
         raise IndexError
 except IndexError as error:
-    keys = '\n'.join(key for key in DATA_SETS)
+    keys = '\n'.join(key for key in data_sets)
     print(f'Data sets:\n{keys}\nPut in arg #1')
     sys.exit(1)
 
-data_set = DATA_SETS[sys.argv[1]]
+data_set = data_sets[sys.argv[1]]
+
+# allowing for None end chars
+if data_set['str-end-chars'] is not None:
+    data_set['str-end-chars'] *= -1
 
 with open(data_set['file-location']) as file:
     # for processing huge files
     csv.field_size_limit(sys.maxsize)
     # you can unpack a list: no tupling required here
     raw_data = list(csv.reader(file))
-    print('read data')
+    print('raw_data')
 
 # headers from data[0] so far
 # strip MULTIPOLYGON ((( ))) from coordinates string
@@ -71,19 +33,26 @@ formatted_data = [
     (
         row[data_set['label-index']].capitalize(),
         row[data_set['data-index']][
-            data_set['str-start-chars']:-data_set['str-end-chars']
+            data_set['str-start-chars']:data_set['str-end-chars']
         ]
     )
     for row in raw_data[1:]
 ]
-print('formatted data')
+print('formatted_data')
+
+# mo county data pairs coords differently
+if data_set == data_sets['mo-counties']:
+    formatted_data = [
+        (label, coords.replace(',', ' '))
+        for label, coords in formatted_data
+    ]
 
 # split up numbers to furthur work with
 split_coords = [
     (label, coords_str.split(' '))
     for label, coords_str in formatted_data
 ]
-print('split coords')
+print('split_coords')
 
 
 # turn strings into floats by trimming off traiing characters if necessary
@@ -100,7 +69,7 @@ float_coords = [
     (label, [float_recur(coord) for coord in coords_str])
     for label, coords_str in split_coords
 ]
-print('turned coords into floats')
+print('float_coords')
 
 
 # throw pairs of consecutive lat/longs together in a single tuple
@@ -114,7 +83,7 @@ coord_pairs = [
     (label, [i for i in combine(coords)])
     for label, coords in float_coords
 ]
-print('paired coords')
+print('coord_pairs')
 
 
 # calculate the center of the area to place the label
@@ -137,21 +106,14 @@ label_geom_center = [
     (label, coords, center(coords))
     for label, coords in coord_pairs
 ]
-print('calculated centers')
+print('label_geom_center')
 
 # convert pairs of coordinates into lists of lats and longs
 boundaries = [
     (label, zip(*coords), center)
     for label, coords, center in label_geom_center
 ]
-print('made lat/long lists')
-
-fontdict = {
-    'family': 'Monospace',
-    'color': 'black',
-    'weight': 'normal',
-    'size': 8,
-}
+print('boundaries')
 
 # plot the data
 for label, boundary, center in boundaries:

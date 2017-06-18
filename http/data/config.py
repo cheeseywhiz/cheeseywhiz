@@ -1,0 +1,73 @@
+data_sets = {
+    'bay-area-zip-codes': {
+        'file-location': 'sets/bay-area-zip-codes',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 1,
+        'str-start-chars': 16,
+        'str-end-chars': 3,
+    },
+    'idk': {
+        'file-location': 'sets/idk',
+        'show-labels': False,
+        'label-index': 0,
+        'data-index': 10,
+        'str-start-chars': 10,
+        'str-end-chars': 2,
+    },
+    'sf-zones': {
+        'file-location': 'sets/sf-zones',
+        'show-labels': False,
+        'label-index': 0,
+        'data-index': 5,
+        'str-start-chars': 10,
+        'str-end-chars': 2,
+    },
+    'ny-senate': {
+        'file-location': 'sets/ny-senate',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 3,
+        'str-start-chars': 16,
+        'str-end-chars': 3,
+    },
+    'md-counties': {
+        'file-location': 'sets/md-counties',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 1,
+        'str-start-chars': 16,
+        'str-end-chars': 3,
+    },
+    'chicago-hoods': {
+        'file-location': 'sets/chicago-hoods',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 1,
+        'str-start-chars': 16,
+        'str-end-chars': 3,
+    },
+    'mo-counties': {
+        'file-location': 'sets/mo-counties',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 6,
+        'str-start-chars': None,
+        'str-end-chars': None,
+    },
+    'chicago-schools': {
+        'file-location': 'sets/chicago-schools',
+        'show-labels': True,
+        'label-index': 0,
+        'data-index': 2,
+        'str-start-chars': 16,
+        'str-end-chars': 3,
+    },
+}
+
+fontdict = {
+    'family': 'Sans',
+    'color': 'black',
+    'weight': 'normal',
+    'size': 8,
+}

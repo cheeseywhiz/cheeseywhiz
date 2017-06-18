@@ -1,7 +1,10 @@
-# All .png
 **/*.png
 **/*.txt
 **/*.pdf
+**/bin
+**/include
+**/lib
+**/pip-selfcheck.json
 
 !Wordcloud/wordcloud.png
 
