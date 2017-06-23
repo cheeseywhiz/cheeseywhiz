@@ -1,3 +1,6 @@
+"""
+Unused: initial very slow version using PIL before I used matplotlib
+"""
 from PIL import Image
 
 

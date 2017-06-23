@@ -13,10 +13,14 @@ Required:
 Optional:
     [-avg [mean, median, min, max]]:
         Change averaging operation. Default is mean.
+    [-c [color map]]:
+        Change the default colormap when in grayscale mode. See -hc and -g.
     [-g]:
-        Turn the output image into grayscale.
+        Change color mode to grayscale or specified color map.
     [-h]:
         Print this help message and quit.
+    [-hc]:
+        Print color map options.
     [-i]:
         Toggle default invert colors option. Default is %s.
     [-o [output filename]]:
@@ -31,29 +35,37 @@ Optional:
     [-v]:
         Print out parsed arguments.
 """
-import os
-import sys
-import numpy as np
+from os import listdir, path
+from sys import exit, argv
+
+from numpy import empty
 from matplotlib import pyplot as plt
-from avgimglib.mplimageiter import ImageIter
-from avgimglib import trim, load_global
+
+from avgimglib import colormaps, ImageIter, load_global, trim
 
 
-class container:
+class Container:
     @property
     def CMAP(self):
-        return plt.get_cmap('Greys') if self.GRAYSCALE else None
+        if self.GRAYSCALE:
+            return self.cmap
+        else:
+            return None
 
     @CMAP.setter
     def CMAP(self, cmap):
-        return plt.get_cmap(cmap) if self.GRAYSCALE else None
+        try:
+            self.cmap = plt.get_cmap(cmap)
+        except ValueError as error:
+            print(f'Unknown color map {cmap}. Options:\n{colormaps()}')
 
 
-g = container()
+g = Container()
 load_global(g)
 
 g.INVERT = True
 g.GRAYSCALE = False
+g.CMAP = 'Greys'
 __doc__ = __doc__[1:-1]%g.INVERT
 g.__DOC__ = __doc__
 
@@ -67,19 +79,19 @@ def zip_iterables(*iterables):
             break
 
 
-def main(argv):
+def make_image(argv):
     imgs_dir, avg_func, fname, exit_func = trim(argv)
     img_px = []
 
-    for image_ in os.listdir(imgs_dir):
-        image = os.path.join(imgs_dir, image_)
+    for image_ in listdir(imgs_dir):
+        image = path.join(imgs_dir, image_)
         img_px.append(ImageIter(image))
 
     width = img_px[0].width
     height = img_px[0].height
     color_len = img_px[0].color_len
 
-    new_img = np.empty((width, height, color_len))
+    new_img = empty((width, height, color_len))
 
     for pixel_info_list in zip_iterables(*img_px):
         px_list, py_list, colors = zip(*pixel_info_list)
@@ -90,8 +102,12 @@ def main(argv):
     exit_func(array=new_img, fname=fname)
 
 
-if __name__ == '__main__':
+def main(argv):
     try:
-        main(sys.argv)
+        make_image(argv)
     except KeyboardInterrupt:
-        sys.exit('\nStopped by user')
+        exit('\nStopped by user')
+
+
+if __name__ == '__main__':
+    main(argv)
