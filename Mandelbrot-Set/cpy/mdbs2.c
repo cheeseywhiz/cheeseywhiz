@@ -3,9 +3,11 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "depends": []
+        "depends": [
+            "mdbs2.h"
+        ]
     },
-    "module_name": "mdbs"
+    "module_name": "mdbs2"
 }
 END: Cython Metadata */
 
@@ -436,9 +438,9 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__mdbs
-#define __PYX_HAVE_API__mdbs
-#include "math.h"
+#define __PYX_HAVE__mdbs2
+#define __PYX_HAVE_API__mdbs2
+#include "mdbs2.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -634,7 +636,7 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "mdbs.pyx",
+  "mdbs2.pyx",
 };
 
 /*--- Type declarations ---*/
@@ -715,35 +717,6 @@ static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
     PyObject *kwds2, PyObject *values[], Py_ssize_t num_pos_args,\
     const char* function_name);
 
-/* PyThreadStateGet.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
-#define __Pyx_PyThreadState_assign  __pyx_tstate = PyThreadState_GET();
-#else
-#define __Pyx_PyThreadState_declare
-#define __Pyx_PyThreadState_assign
-#endif
-
-/* PyErrFetchRestore.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
-#else
-#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
-#endif
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
-
 /* CodeObjectCache.proto */
 typedef struct {
     PyCodeObject* code_object;
@@ -763,6 +736,9 @@ static void __pyx_insert_code_object(int code_line, PyCodeObject* code_object);
 static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
+
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
@@ -779,13 +755,13 @@ static int __Pyx_check_binary_version(void);
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 
-/* Module declarations from 'mdbs' */
-static double __pyx_f_4mdbs_escape(double, double, int, int __pyx_skip_dispatch); /*proto*/
-static double __pyx_f_4mdbs_hue(int, int __pyx_skip_dispatch); /*proto*/
-#define __Pyx_MODULE_NAME "mdbs"
-int __pyx_module_is_main_mdbs = 0;
+/* Module declarations from 'mdbs2' */
+static int __pyx_f_5mdbs2_escape(double, double, int, int __pyx_skip_dispatch); /*proto*/
+static double __pyx_f_5mdbs2_hue(int, int __pyx_skip_dispatch); /*proto*/
+#define __Pyx_MODULE_NAME "mdbs2"
+int __pyx_module_is_main_mdbs2 = 0;
 
-/* Implementation of 'mdbs' */
+/* Implementation of 'mdbs2' */
 static const char __pyx_k_imag[] = "imag";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_real[] = "real";
@@ -796,155 +772,39 @@ static PyObject *__pyx_n_s_limit;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_real;
 static PyObject *__pyx_n_s_test;
-static PyObject *__pyx_pf_4mdbs_escape(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit); /* proto */
-static PyObject *__pyx_pf_4mdbs_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_n); /* proto */
+static PyObject *__pyx_pf_5mdbs2_escape(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit); /* proto */
+static PyObject *__pyx_pf_5mdbs2_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_n); /* proto */
 
-/* "mdbs.pyx":1
- * cpdef double escape(double real, double imag, int limit):             # <<<<<<<<<<<<<<
- *     cdef double x, x_temp, y
- *     cdef int n
+/* "mdbs2.pyx":6
+ * 
+ * 
+ * cpdef int escape(double real, double imag, int limit):             # <<<<<<<<<<<<<<
+ *     return _escape(real, imag, limit)
+ * 
  */
 
-static PyObject *__pyx_pw_4mdbs_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static double __pyx_f_4mdbs_escape(double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  double __pyx_v_x;
-  double __pyx_v_x_temp;
-  double __pyx_v_y;
-  int __pyx_v_n;
-  double __pyx_r;
+static PyObject *__pyx_pw_5mdbs2_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_f_5mdbs2_escape(double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit, CYTHON_UNUSED int __pyx_skip_dispatch) {
+  int __pyx_r;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
   __Pyx_RefNannySetupContext("escape", 0);
 
-  /* "mdbs.pyx":4
- *     cdef double x, x_temp, y
- *     cdef int n
- *     x = 0             # <<<<<<<<<<<<<<
- *     y = 0
- *     n = 0
- */
-  __pyx_v_x = 0.0;
-
-  /* "mdbs.pyx":5
- *     cdef int n
- *     x = 0
- *     y = 0             # <<<<<<<<<<<<<<
- *     n = 0
+  /* "mdbs2.pyx":7
  * 
- */
-  __pyx_v_y = 0.0;
-
-  /* "mdbs.pyx":6
- *     x = 0
- *     y = 0
- *     n = 0             # <<<<<<<<<<<<<<
- * 
- *     while x ** 2 + y ** 2 < 2 ** 2 and n < limit:
- */
-  __pyx_v_n = 0;
-
-  /* "mdbs.pyx":8
- *     n = 0
- * 
- *     while x ** 2 + y ** 2 < 2 ** 2 and n < limit:             # <<<<<<<<<<<<<<
- *         x_temp = x
- *         x = x ** 2  - y ** 2 + real
- */
-  while (1) {
-    __pyx_t_2 = (((pow(__pyx_v_x, 2.0) + pow(__pyx_v_y, 2.0)) < 4.0) != 0);
-    if (__pyx_t_2) {
-    } else {
-      __pyx_t_1 = __pyx_t_2;
-      goto __pyx_L5_bool_binop_done;
-    }
-    __pyx_t_2 = ((__pyx_v_n < __pyx_v_limit) != 0);
-    __pyx_t_1 = __pyx_t_2;
-    __pyx_L5_bool_binop_done:;
-    if (!__pyx_t_1) break;
-
-    /* "mdbs.pyx":9
- * 
- *     while x ** 2 + y ** 2 < 2 ** 2 and n < limit:
- *         x_temp = x             # <<<<<<<<<<<<<<
- *         x = x ** 2  - y ** 2 + real
- *         y = 2 * x_temp * y + imag
- */
-    __pyx_v_x_temp = __pyx_v_x;
-
-    /* "mdbs.pyx":10
- *     while x ** 2 + y ** 2 < 2 ** 2 and n < limit:
- *         x_temp = x
- *         x = x ** 2  - y ** 2 + real             # <<<<<<<<<<<<<<
- *         y = 2 * x_temp * y + imag
- *         n = n + 1
- */
-    __pyx_v_x = ((pow(__pyx_v_x, 2.0) - pow(__pyx_v_y, 2.0)) + __pyx_v_real);
-
-    /* "mdbs.pyx":11
- *         x_temp = x
- *         x = x ** 2  - y ** 2 + real
- *         y = 2 * x_temp * y + imag             # <<<<<<<<<<<<<<
- *         n = n + 1
- * 
- */
-    __pyx_v_y = (((2.0 * __pyx_v_x_temp) * __pyx_v_y) + __pyx_v_imag);
-
-    /* "mdbs.pyx":12
- *         x = x ** 2  - y ** 2 + real
- *         y = 2 * x_temp * y + imag
- *         n = n + 1             # <<<<<<<<<<<<<<
- * 
- *     if n == limit:
- */
-    __pyx_v_n = (__pyx_v_n + 1);
-  }
-
-  /* "mdbs.pyx":14
- *         n = n + 1
- * 
- *     if n == limit:             # <<<<<<<<<<<<<<
- *         return 0
- *     else:
- */
-  __pyx_t_1 = ((__pyx_v_n == __pyx_v_limit) != 0);
-  if (__pyx_t_1) {
-
-    /* "mdbs.pyx":15
- * 
- *     if n == limit:
- *         return 0             # <<<<<<<<<<<<<<
- *     else:
- *         return n
- */
-    __pyx_r = 0.0;
-    goto __pyx_L0;
-
-    /* "mdbs.pyx":14
- *         n = n + 1
- * 
- *     if n == limit:             # <<<<<<<<<<<<<<
- *         return 0
- *     else:
- */
-  }
-
-  /* "mdbs.pyx":17
- *         return 0
- *     else:
- *         return n             # <<<<<<<<<<<<<<
+ * cpdef int escape(double real, double imag, int limit):
+ *     return _escape(real, imag, limit)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  /*else*/ {
-    __pyx_r = __pyx_v_n;
-    goto __pyx_L0;
-  }
+  __pyx_r = _escape(__pyx_v_real, __pyx_v_imag, __pyx_v_limit);
+  goto __pyx_L0;
 
-  /* "mdbs.pyx":1
- * cpdef double escape(double real, double imag, int limit):             # <<<<<<<<<<<<<<
- *     cdef double x, x_temp, y
- *     cdef int n
+  /* "mdbs2.pyx":6
+ * 
+ * 
+ * cpdef int escape(double real, double imag, int limit):             # <<<<<<<<<<<<<<
+ *     return _escape(real, imag, limit)
+ * 
  */
 
   /* function exit code */
@@ -954,8 +814,8 @@ static double __pyx_f_4mdbs_escape(double __pyx_v_real, double __pyx_v_imag, int
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4mdbs_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_4mdbs_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5mdbs2_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_5mdbs2_1escape(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   double __pyx_v_real;
   double __pyx_v_imag;
   int __pyx_v_limit;
@@ -983,16 +843,16 @@ static PyObject *__pyx_pw_4mdbs_1escape(PyObject *__pyx_self, PyObject *__pyx_ar
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_imag)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, 1); __PYX_ERR(0, 1, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, 1); __PYX_ERR(0, 6, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_limit)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, 2); __PYX_ERR(0, 1, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, 2); __PYX_ERR(0, 6, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "escape") < 0)) __PYX_ERR(0, 1, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "escape") < 0)) __PYX_ERR(0, 6, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -1001,32 +861,32 @@ static PyObject *__pyx_pw_4mdbs_1escape(PyObject *__pyx_self, PyObject *__pyx_ar
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
       values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
     }
-    __pyx_v_real = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_real == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 1, __pyx_L3_error)
-    __pyx_v_imag = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_imag == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 1, __pyx_L3_error)
-    __pyx_v_limit = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_limit == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1, __pyx_L3_error)
+    __pyx_v_real = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_real == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 6, __pyx_L3_error)
+    __pyx_v_imag = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_imag == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 6, __pyx_L3_error)
+    __pyx_v_limit = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_limit == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 6, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("escape", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 6, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("mdbs.escape", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("mdbs2.escape", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_4mdbs_escape(__pyx_self, __pyx_v_real, __pyx_v_imag, __pyx_v_limit);
+  __pyx_r = __pyx_pf_5mdbs2_escape(__pyx_self, __pyx_v_real, __pyx_v_imag, __pyx_v_limit);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4mdbs_escape(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit) {
+static PyObject *__pyx_pf_5mdbs2_escape(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_real, double __pyx_v_imag, int __pyx_v_limit) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("escape", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_f_4mdbs_escape(__pyx_v_real, __pyx_v_imag, __pyx_v_limit, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_f_5mdbs2_escape(__pyx_v_real, __pyx_v_imag, __pyx_v_limit, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -1035,7 +895,7 @@ static PyObject *__pyx_pf_4mdbs_escape(CYTHON_UNUSED PyObject *__pyx_self, doubl
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("mdbs.escape", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("mdbs2.escape", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -1043,111 +903,72 @@ static PyObject *__pyx_pf_4mdbs_escape(CYTHON_UNUSED PyObject *__pyx_self, doubl
   return __pyx_r;
 }
 
-/* "mdbs.pyx":25
- *     double M_PI
+/* "mdbs2.pyx":10
+ * 
  * 
  * cpdef double hue(int n):             # <<<<<<<<<<<<<<
- *     if n == 0:
- *         return 0
+ *     return int(_hue(n))
  */
 
-static PyObject *__pyx_pw_4mdbs_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n); /*proto*/
-static double __pyx_f_4mdbs_hue(int __pyx_v_n, CYTHON_UNUSED int __pyx_skip_dispatch) {
+static PyObject *__pyx_pw_5mdbs2_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n); /*proto*/
+static double __pyx_f_5mdbs2_hue(int __pyx_v_n, CYTHON_UNUSED int __pyx_skip_dispatch) {
   double __pyx_r;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
+  double __pyx_t_1;
   __Pyx_RefNannySetupContext("hue", 0);
 
-  /* "mdbs.pyx":26
+  /* "mdbs2.pyx":11
  * 
  * cpdef double hue(int n):
- *     if n == 0:             # <<<<<<<<<<<<<<
- *         return 0
- *     else:
+ *     return int(_hue(n))             # <<<<<<<<<<<<<<
  */
-  __pyx_t_1 = ((__pyx_v_n == 0) != 0);
-  if (__pyx_t_1) {
+  __pyx_t_1 = trunc(_hue(__pyx_v_n)); 
+  __pyx_r = __pyx_t_1;
+  goto __pyx_L0;
 
-    /* "mdbs.pyx":27
- * cpdef double hue(int n):
- *     if n == 0:
- *         return 0             # <<<<<<<<<<<<<<
- *     else:
- *         return (256 / M_PI) * acos(cos((M_PI / 38) * n))
- */
-    __pyx_r = 0.0;
-    goto __pyx_L0;
-
-    /* "mdbs.pyx":26
+  /* "mdbs2.pyx":10
  * 
- * cpdef double hue(int n):
- *     if n == 0:             # <<<<<<<<<<<<<<
- *         return 0
- *     else:
- */
-  }
-
-  /* "mdbs.pyx":29
- *         return 0
- *     else:
- *         return (256 / M_PI) * acos(cos((M_PI / 38) * n))             # <<<<<<<<<<<<<<
- */
-  /*else*/ {
-    if (unlikely(M_PI == 0)) {
-      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-      __PYX_ERR(0, 29, __pyx_L1_error)
-    }
-    __pyx_r = ((256.0 / M_PI) * acos(cos(((M_PI / 38.0) * __pyx_v_n))));
-    goto __pyx_L0;
-  }
-
-  /* "mdbs.pyx":25
- *     double M_PI
  * 
  * cpdef double hue(int n):             # <<<<<<<<<<<<<<
- *     if n == 0:
- *         return 0
+ *     return int(_hue(n))
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_WriteUnraisable("mdbs.hue", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
-  __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4mdbs_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n); /*proto*/
-static PyObject *__pyx_pw_4mdbs_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n) {
+static PyObject *__pyx_pw_5mdbs2_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n); /*proto*/
+static PyObject *__pyx_pw_5mdbs2_3hue(PyObject *__pyx_self, PyObject *__pyx_arg_n) {
   int __pyx_v_n;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("hue (wrapper)", 0);
   assert(__pyx_arg_n); {
-    __pyx_v_n = __Pyx_PyInt_As_int(__pyx_arg_n); if (unlikely((__pyx_v_n == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 25, __pyx_L3_error)
+    __pyx_v_n = __Pyx_PyInt_As_int(__pyx_arg_n); if (unlikely((__pyx_v_n == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 10, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
-  __Pyx_AddTraceback("mdbs.hue", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("mdbs2.hue", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_4mdbs_2hue(__pyx_self, ((int)__pyx_v_n));
+  __pyx_r = __pyx_pf_5mdbs2_2hue(__pyx_self, ((int)__pyx_v_n));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4mdbs_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_n) {
+static PyObject *__pyx_pf_5mdbs2_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_n) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("hue", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_f_4mdbs_hue(__pyx_v_n, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_f_5mdbs2_hue(__pyx_v_n, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -1156,7 +977,7 @@ static PyObject *__pyx_pf_4mdbs_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __p
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("mdbs.hue", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("mdbs2.hue", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -1165,8 +986,8 @@ static PyObject *__pyx_pf_4mdbs_2hue(CYTHON_UNUSED PyObject *__pyx_self, int __p
 }
 
 static PyMethodDef __pyx_methods[] = {
-  {"escape", (PyCFunction)__pyx_pw_4mdbs_1escape, METH_VARARGS|METH_KEYWORDS, 0},
-  {"hue", (PyCFunction)__pyx_pw_4mdbs_3hue, METH_O, 0},
+  {"escape", (PyCFunction)__pyx_pw_5mdbs2_1escape, METH_VARARGS|METH_KEYWORDS, 0},
+  {"hue", (PyCFunction)__pyx_pw_5mdbs2_3hue, METH_O, 0},
   {0, 0, 0, 0}
 };
 
@@ -1177,7 +998,7 @@ static struct PyModuleDef __pyx_moduledef = {
   #else
     PyModuleDef_HEAD_INIT,
   #endif
-    "mdbs",
+    "mdbs2",
     0, /* m_doc */
     -1, /* m_size */
     __pyx_methods /* m_methods */,
@@ -1215,11 +1036,11 @@ static int __Pyx_InitGlobals(void) {
 }
 
 #if PY_MAJOR_VERSION < 3
-PyMODINIT_FUNC initmdbs(void); /*proto*/
-PyMODINIT_FUNC initmdbs(void)
+PyMODINIT_FUNC initmdbs2(void); /*proto*/
+PyMODINIT_FUNC initmdbs2(void)
 #else
-PyMODINIT_FUNC PyInit_mdbs(void); /*proto*/
-PyMODINIT_FUNC PyInit_mdbs(void)
+PyMODINIT_FUNC PyInit_mdbs2(void); /*proto*/
+PyMODINIT_FUNC PyInit_mdbs2(void)
 #endif
 {
   PyObject *__pyx_t_1 = NULL;
@@ -1233,7 +1054,7 @@ PyMODINIT_FUNC PyInit_mdbs(void)
           Py_FatalError("failed to import 'refnanny' module");
   }
   #endif
-  __Pyx_RefNannySetupContext("PyMODINIT_FUNC PyInit_mdbs(void)", 0);
+  __Pyx_RefNannySetupContext("PyMODINIT_FUNC PyInit_mdbs2(void)", 0);
   if (__Pyx_check_binary_version() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_empty_tuple = PyTuple_New(0); if (unlikely(!__pyx_empty_tuple)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_empty_bytes = PyBytes_FromStringAndSize("", 0); if (unlikely(!__pyx_empty_bytes)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -1262,7 +1083,7 @@ PyMODINIT_FUNC PyInit_mdbs(void)
   #endif
   /*--- Module creation code ---*/
   #if PY_MAJOR_VERSION < 3
-  __pyx_m = Py_InitModule4("mdbs", __pyx_methods, 0, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
+  __pyx_m = Py_InitModule4("mdbs2", __pyx_methods, 0, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
   #else
   __pyx_m = PyModule_Create(&__pyx_moduledef);
   #endif
@@ -1279,14 +1100,14 @@ PyMODINIT_FUNC PyInit_mdbs(void)
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_mdbs) {
+  if (__pyx_module_is_main_mdbs2) {
     if (PyObject_SetAttrString(__pyx_m, "__name__", __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "mdbs")) {
-      if (unlikely(PyDict_SetItemString(modules, "mdbs", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "mdbs2")) {
+      if (unlikely(PyDict_SetItemString(modules, "mdbs2", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -1306,10 +1127,10 @@ PyMODINIT_FUNC PyInit_mdbs(void)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "mdbs.pyx":1
- * cpdef double escape(double real, double imag, int limit):             # <<<<<<<<<<<<<<
- *     cdef double x, x_temp, y
- *     cdef int n
+  /* "mdbs2.pyx":1
+ * cdef extern from "mdbs2.h":             # <<<<<<<<<<<<<<
+ *     int _escape(double real, double imag, int limit)
+ *     double _hue(int n)
  */
   __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -1323,11 +1144,11 @@ PyMODINIT_FUNC PyInit_mdbs(void)
   __Pyx_XDECREF(__pyx_t_1);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init mdbs", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init mdbs2", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_DECREF(__pyx_m); __pyx_m = 0;
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init mdbs");
+    PyErr_SetString(PyExc_ImportError, "init mdbs2");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
@@ -1496,72 +1317,6 @@ invalid_keyword:
     #endif
 bad:
     return -1;
-}
-
-/* PyErrFetchRestore */
-#if CYTHON_FAST_THREAD_STATE
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-}
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-}
-#endif
-
-/* WriteUnraisableException */
-static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
 }
 
 /* CodeObjectCache */
@@ -1746,6 +1501,37 @@ bad:
         }\
         return (target_type) value;\
     }
+
+/* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
+    const int neg_one = (int) -1, const_zero = (int) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(int) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(int) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(int) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(int),
+                                     little, !is_unsigned);
+    }
+}
 
 /* CIntFromPy */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *x) {

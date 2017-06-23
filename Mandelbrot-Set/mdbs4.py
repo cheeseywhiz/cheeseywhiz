@@ -2,10 +2,10 @@
 
 import time
 from PIL import Image
-from cpy.mdbs import escape, hue
+from cpy.mdbs2 import escape, hue
 
 
-def mdbs(xmin, xmax, ymin, ymax, w, h, break_point):
+def mdbs(xmin=-2, xmax=2, ymin=-2, ymax=2, w=2048, h=2048, break_point=100):
     img = Image.new('HSV', (w, h))
     pixel = img.load()
     for x, y in [(x, y) for x in range(w) for y in range(h)]:
