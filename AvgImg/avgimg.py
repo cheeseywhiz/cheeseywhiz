@@ -14,9 +14,7 @@ Optional:
     [-avg [mean, median, min, max]]:
         Change averaging operation. Default is mean.
     [-c [color map]]:
-        Change the default colormap when in grayscale mode. See -hc and -g.
-    [-g]:
-        Change color mode to grayscale or specified color map.
+        Give the output image a new color set. See -hc.
     [-h]:
         Print this help message and quit.
     [-hc]:
@@ -41,7 +39,7 @@ from sys import exit, argv
 from numpy import empty
 from matplotlib import pyplot as plt
 
-from avgimglib import colormaps, ImageIter, load_global, trim
+from imglib import colormaps, ImageIter, load_global, trim
 
 
 class Container:
@@ -91,7 +89,9 @@ def make_image(argv):
     height = img_px[0].height
     color_len = img_px[0].color_len
 
-    new_img = empty((width, height, color_len))
+    new_img = empty(
+        (width, height, color_len)[:(2 if g.GRAYSCALE else 3)]
+    )
 
     for pixel_info_list in zip_iterables(*img_px):
         px_list, py_list, colors = zip(*pixel_info_list)

@@ -93,6 +93,7 @@ def trim(argv):
         except IndexError:
             _sys.exit('Unknown -c option')
         g.CMAP = cmap
+        msgs.append(f'With cmap {cmap}')
 
     if '-g' in argv:
         g_flag = argv.index('-g')
@@ -139,9 +140,9 @@ def trim(argv):
         msgs.append('Not showing output')
 
     if '-v' in argv:
-        verbose = True
         v_flag = argv.index('-v')
         argv.pop(v_flag)
+        verbose = True
         msgs.insert(0, 'Parsed options:')
 
     # Once each flag is pop()'d, the no-flag source dir should be the last item
@@ -162,14 +163,13 @@ def trim(argv):
 def _average_f(f):
     def if_invert(num):
         if g.INVERT:
-            return int(255 - num)
+            return int(256 - num)
         else:
             return int(num)
 
     def if_grayscale(nums):
         if g.GRAYSCALE:
-            avg = sum(nums) / len(nums)
-            return avg, avg, avg
+            return sum(nums) / len(nums)
         else:
             return nums
 
@@ -222,4 +222,4 @@ class _Exit:
 
     @staticmethod
     def _done(**kwargs):
-        print('Done')
+        pass  # print('Done')
