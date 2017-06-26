@@ -52,17 +52,6 @@ def colormaps():
     return '\n'.join(rows)[:-1]
 
 
-def get_flag(argv, flag):
-    for option in argv:
-        if option.startswith(flag):
-            break
-    else:
-        return
-
-    argv.remove(option)
-    return option.split('=')[1]
-
-
 def parse_argv(argv, good_flags):
     """\
 argv is the list of arguments passed into the command line.

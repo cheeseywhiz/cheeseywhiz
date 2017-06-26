@@ -52,7 +52,7 @@ class Container:
     def CMAP(self, cmap):
         try:
             self.cmap = plt.get_cmap(cmap)
-        except ValueError as error:
+        except ValueError:
             print(f'Unknown color map {cmap}. Options:\n{colormaps()}')
 
 
