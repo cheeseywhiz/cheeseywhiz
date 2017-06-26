@@ -3,30 +3,28 @@
 Take the average of each pixel for each picture in the source directory. Each
 image must be exactly the same size.
 
-avgimg.py [arguments]
+avgimg.py [arguments] [source directory]
 
-[arguments]
-Required:
-    [source directory]:
-        Directory to pull images from.
+[source directory]:
+    Directory to pull images from.
 
-Optional:
-    [-avg [mean, median, min, max]]:
+[arguments]:
+    [-avg]=[mean, median, min, max]:
         Change averaging operation. Default is mean.
-    [-c [color map]]:
-        Give the output image a new color set. See -hc.
+    [-c]=[color map]:
+        Give the output image a new color set. See -hc for options.
     [-h]:
         Print this help message and quit.
     [-hc]:
-        Print color map options.
+        Print color map options and quit.
     [-i]:
         Toggle default invert colors option. Default is %s.
-    [-o [output filename]]:
+    [-o]=[output filename]:
         Filename of new output image. Default output.png in current working
         directory.
     [+o]:
         The output saved temporarily in /tmp. Intended to be used with -s.
-    [-s [feh, mpl]]:
+    [-s]=[feh, mpl]:
         Open the image on exit.
             feh: Open with feh
             mpl: Open with matplotlib
@@ -63,7 +61,7 @@ load_global(g)
 
 g.INVERT = True
 g.GRAYSCALE = False
-g.CMAP = 'Greys'
+g.CMAP = 'Accent'
 __doc__ = __doc__[1:-1]%g.INVERT
 g.__DOC__ = __doc__
 

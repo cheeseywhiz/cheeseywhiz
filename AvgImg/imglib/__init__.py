@@ -32,12 +32,12 @@ def colormaps():
     try:
         _plt.get_cmap('')
     except ValueError as error:
-        cmaps_list1 = sorted(str(error).split(':')[1][1:].split(', '))
+        cmaps_str = sorted(str(error).split(':')[1][1:].split(', '))
 
     row_length = 0
     row = []
     rows = []
-    for cmap in cmaps_list1:
+    for cmap in cmaps_str:
         row_length += len(cmap + ', ')
         if row_length < 80:
             row.append(cmap)
@@ -49,114 +49,149 @@ def colormaps():
             row.append(cmap)
             row_length = len(cmap + ', ')
 
-    return '\n'.join(rows)
+    return '\n'.join(rows)[:-1]
+
+
+def get_flag(argv, flag):
+    for option in argv:
+        if option.startswith(flag):
+            break
+    else:
+        return
+
+    argv.remove(option)
+    return option.split('=')[1]
+
+
+def parse_argv(argv, good_flags):
+    """\
+argv is the list of arguments passed into the command line.
+good_flags is a list of expected flags to parse and is used to build the
+initial structure.
+
+Return a dictionary with the following structure:
+    {
+        '-flag1': value,
+        '-flag2': value,
+        '+flag3': value,
+        ...,
+        'positional' : ('python3', ...)  # e.g.
+    }
+
+Each flag's value starts off as False. If the flag was not specified, the value
+in the dictionary stays as False. If the flag was specified with an option,
+(e.g. -f=123) the option (e.g. 123) is stored under the flag in the dictionary.
+If the flag was specified without an option (e.g. -h), None is stored in the
+dictionary.
+
+'positional' holds user-specified arguments that did not start with + or -
+while retaining the order they were specified in the command.\
+"""
+    options = {
+        key: False
+        for key in good_flags
+    }
+    positional = []
+
+    for arg in argv:
+        if arg[0] in ['-', '+']:
+            if '=' in arg:
+                arg, value = arg.split('=')
+                options[arg] = value
+            else:
+                options[arg] = None
+            if arg not in good_flags:
+                _sys.exit(f'Unknown flag {arg}')
+        else:
+            positional.append(arg)
+
+    options['positional'] = tuple(positional)
+    return options
 
 
 def trim(argv):
     msgs = []
     verbose = False
-    flags = [
-        '-h', '-hc', '-avg', '-c', '-g', '-i', '-o', '+o', '-s', '-v'
+    good_flags = [
+        '-h', '-hc', '-avg', '-c', '-i', '-o', '+o', '-s', '-v',
     ]
+    flags = parse_argv(argv, good_flags)
 
-    for flag in argv:
-        if flag.startswith('-') or flag.startswith('+'):
-            if flag not in flags:
-                _sys.exit(f'Unknown flag {flag}')
-
-    if '-h' in argv:
+    if flags['-h'] is None or len(argv) == 1:
         print(g.__DOC__)
         _sys.exit(0)
 
-    if '-hc' in argv:
+    if flags['-hc'] is None:
         print(colormaps())
         _sys.exit(0)
 
-    if '-avg' in argv:
-        avg_flag = argv.index('-avg')
-        argv.pop(avg_flag)
-        try:
-            avg_func_name = argv.pop(avg_flag)
-        except IndexError:
-            _sys.exit('Missing required -avg option')
-        avg_func = getattr(_Avg, avg_func_name)
+    if flags['-avg']:
+        avg_func_name = flags['-avg']
         msgs.append(f'With {avg_func_name} as average')
-    else:
-        avg_func = getattr(_Avg, 'mean')
-        msgs.append('With mean as average')
+    elif flags['-avg'] is None:
+        _sys.exit('Missing required -avg option')
+    elif not flags['-avg']:
+        avg_func_name = 'mean'
 
-    if '-c' in argv:
-        c_flag = argv.index('-c')
-        argv.pop(c_flag)
-        try:
-            cmap = argv.pop(c_flag)
-        except IndexError:
-            _sys.exit('Unknown -c option')
-        g.CMAP = cmap
-        msgs.append(f'With cmap {cmap}')
-
-    if '-g' in argv:
-        g_flag = argv.index('-g')
-        argv.pop(g_flag)
+    if flags['-c']:
+        cmap_name = flags['-c']
+        g.CMAP = cmap_name
         g.GRAYSCALE = True
-        msgs.append('With grayscale')
+        msgs.append(f'With color map {cmap_name}')
+    elif flags['-c'] is None:
+        _sys.exit('Missing required -c option')
+    elif not flags['-c']:
+        # Defaults set in global
+        pass
 
-    if '-i' in argv:
-        i_flag = argv.index('-i')
-        argv.pop(i_flag)
+    if flags['-i'] is None:
         g.INVERT = not g.INVERT
         msgs.append(f'{"With" if g.INVERT else "Without"} inverted colors')
+    elif not flags['-i']:
+        # Default set in global
+        pass
 
-    tmp_fname = '/tmp/output.png'
-    if '-o' in argv:
-        o_flag = argv.index('-o')
-        argv.pop(o_flag)
-        try:
-            fname = _os.path.abspath(argv.pop(o_flag))
-        except IndexError:
-            _sys.exit('Missing required output filename')
-    elif '+o' in argv:
-        o_flag = argv.index('+o')
-        argv.pop(o_flag)
-        msgs.append('Temp ouput file')
-        fname = tmp_fname
-    else:
-        cwd = _os.getcwd()
-        fname = _os.path.join(cwd, 'output.png')
-    if fname != tmp_fname:
-        msgs.append(f'Saving to {fname}')
+    if flags['-o']:
+        fname = _os.path.abspath(_os.path.expanduser(flags['-o']))
+        msgs.append(f'Output image at {fname}')
+    elif flags['-o'] is None:
+        _sys.exit('Missing required output filename')
+    elif not flags['-o']:
+        fname = _os.path.abspath('output.png')
 
-    if '-s' in argv:
-        s_flag = argv.index('-s')
-        argv.pop(s_flag)
-        try:
-            exit_func_name = argv.pop(s_flag)
-        except IndexError:
-            _sys.exit('Missing required -s option')
-        exit_func = getattr(_Exit, exit_func_name)
-        msgs.append(f'Showing output with {exit_func_name}')
-    else:
-        exit_func = getattr(_Exit, '_done')
-        msgs.append('Not showing output')
+    if flags['+o'] is None:
+        fname = '/tmp/output.png'
+    elif not flags['+o']:
+        pass
 
-    if '-v' in argv:
-        v_flag = argv.index('-v')
-        argv.pop(v_flag)
+    if flags['-s']:
+        exit_func_name = flags['-s']
+        msgs.append(f'Opening with {exit_func_name}')
+    elif flags['-s'] is None:
+        _sys.exit('Missing required -s option')
+    elif not flags['-s']:
+        exit_func_name = 'done'
+
+    if flags['-v'] is None:
         verbose = True
         msgs.insert(0, 'Parsed options:')
 
-    # Once each flag is pop()'d, the no-flag source dir should be the last item
-    # in the list.
-    imgs_dir = _os.path.abspath(argv.pop())
-    msgs.append(f'Averaging {imgs_dir}/*')
-    # we pop()'d the called command
-    if len(argv) == 0:
+    avg_func = getattr(_Avg, avg_func_name)
+    exit_func = getattr(_Exit, exit_func_name)
+
+    try:
+        given_dir = flags['positional'][1]
+    except IndexError:
         _sys.exit('Missing required source directory')
+
+    imgs_dir = _os.path.abspath(_os.path.expanduser(given_dir))
+    msgs.append(f'Averaging {imgs_dir}/*')
 
     if verbose:
         print(msgs[0])
         for msg in msgs[1:]:
             print(4 * ' ' + msg)
+
     return imgs_dir, avg_func, fname, exit_func
 
 
@@ -210,16 +245,16 @@ class _Avg:
 class _Exit:
     @staticmethod
     def feh(fname=None, **kwargs):
-        _Exit._done()
+        _Exit.done()
         from subprocess import run
         run(f'feh {fname}', shell=True)
 
     @staticmethod
     def mpl(array=None, **kwargs):
-        _Exit._done()
+        _Exit.done()
         _plt.imshow(array, cmap=g.CMAP)
         _plt.show()
 
     @staticmethod
-    def _done(**kwargs):
+    def done(**kwargs):
         pass  # print('Done')
