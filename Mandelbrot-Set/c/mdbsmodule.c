@@ -1,34 +1,53 @@
 #include <Python.h>
 #include <stdio.h>
-#include "math_ops.h"
 
 static char mdbs_doc[] = "\
 Provides C implementation of escape function for Mandelbrot sets.\
 ";
 
+static PyObject *
+escape_impl(Py_complex complex, int limit) {
+    double x = 0, y = 0, x_temp, answer;
+    int n;
+
+    for (n = 0; x * x + y * y < 2 * 2 && n < limit; n++) {
+        x_temp = x;
+        x = x * x - y * y + complex.real;
+        y = 2 * x_temp * y + complex.imag;
+    };
+
+    if (n == limit) {
+        answer = 0;
+    } else {
+        answer = n * 255 / 45;
+    };
+
+    return Py_BuildValue("d", answer);
+};
+
 static char mdbs_escape_doc[] = "\
-escape(real: float, imag: float, limit=100: int) -> float\n\
+escape(complex: complex, limit=100: int) -> float\n\
 \n\
-Find how long it takes to escape past radius 2 for complex num at\n\
-real + imag * i. The limit keyword argument is the maximum number of loops to\n\
-take before returning 0.\n\
+Find how long it takes to escape past radius 2 for complex num at the given\n\
+Python complex number. The limit keyword argument is the maximum number of\n\
+loops to take before returning 0.\n\
 \n\
 Returns HSV hue value for escape value.\
 ";
 static PyObject*
 mdbs_escape(PyObject *self, PyObject *args, PyObject *kwargs) {
-    double real, imag;
-
-    char *args_kwargs_list[] = {"real", "imag", "limit", NULL};
+    Py_complex complex;
     int limit = 100;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd|$i", args_kwargs_list,
-                                     &real, &imag, &limit)) {
+    char *args_kwargs_list[] = {"complex", "limit", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "D|$i", args_kwargs_list,
+                                     &complex, &limit))
+    {
         return NULL;
     };
 
-    /* TODO: Make escape() take a Py_complex and return a PyObject* float. */
-    return Py_BuildValue("d", escape(real, imag, limit));
+    return escape_impl(complex, limit);
 };
 
 static PyMethodDef mdbs_methods[] = {
