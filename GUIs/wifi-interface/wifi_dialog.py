@@ -1,14 +1,15 @@
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
     QVBoxLayout, QWidget,
 )
-from PyQt5.QtCore import pyqtSignal, QObject
-from random_data import wifi_data
-# from wifi_data import wifi_data
+# from random_data import wifi_data
+from wifi_list import wifi_data
 
 
 def slot(f):
-    def decorated_f(emitter, parent, *args, **kwargs):
+    def decorated_f(child, parent, *args, **kwargs):
         return f(parent, *args, **kwargs)
     return decorated_f
 
@@ -18,8 +19,8 @@ class Dialog(QMainWindow):
         super().__init__()
         self.setWindowTitle('WiFi Tool')
         # self.setCentralWidget(QProfile(self, wifi_data()[0]))  # wgt tester
-        self.setCentralWidget(CentralWidget(self))
         self.show()
+        self.setCentralWidget(CentralWidget(self))
 
 
 class CentralWidget(QWidget):
@@ -33,10 +34,10 @@ class CentralWidget(QWidget):
 
     def init_sub_widgets(self):
         self.scroll_area = ProfileArea()
-        self.profile_scroll = QWidget()
-        self.profile_layout = QVBoxLayout()
-        self.profile_scroll.setLayout(self.profile_layout)
-        self.scroll_area.setWidget(self.profile_scroll)
+        self.profiles_widget = QWidget()
+        self.pf_layout = ProfileAreaLayout()
+        self.profiles_widget.setLayout(self.pf_layout)
+        self.scroll_area.setWidget(self.profiles_widget)
 
         return [
             self.button_row(),
@@ -70,13 +71,18 @@ class CentralWidget(QWidget):
 
     @slot
     def scan(self):
-        print('\'Scan\' pressed')
+        for i in reversed(range(self.pf_layout.count())):
+            widget = self.pf_layout.itemAt(i).widget()
+            self.pf_layout.removeWidget(widget)
+            if widget is not None:
+                widget.setParent(None)
 
-        for i in reversed(range(self.profile_layout.count())):
-            self.profile_layout.itemAt(i).widget().setParent(None)
+        for i, widget in enumerate(QProfile(pf) for pf in wifi_data()):
+            if i % 2:
+                pass  # TODO: widget.setBackgroundRole(QPalette.Midlight)
+            self.pf_layout.addWidget(widget)
 
-        for widget in (QProfile(self, pf) for pf in wifi_data()):
-            self.profile_layout.addWidget(widget)
+        self.pf_layout.addStretch(-1)
 
     @slot
     def connect(self):
@@ -87,6 +93,15 @@ class ProfileArea(QScrollArea):
     def __init__(self):
         super().__init__()
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setBackgroundRole(QPalette.Base)
+
+
+class ProfileAreaLayout(QVBoxLayout):
+    def __init__(self):
+        super().__init__()
+        self.addWidget(QWidget())
+        self.setContentsMargins(0, 0, 0, 0)
 
 
 class ScanButton(QPushButton):
@@ -97,7 +112,7 @@ class ScanButton(QPushButton):
         self.parent = parent
         self.signal = self.scan_event
 
-    def keyPressEvent(self, event):
+    def mousePressEvent(self, event):
         self.scan_event.emit(self.parent)
 
 
@@ -114,13 +129,12 @@ class ConnectButton(QPushButton):
 
 
 class QProfile(QWidget):
-    def __init__(self, parent, profile_dict):
+    def __init__(self, pf_dict):
         super().__init__()
-        self.parent = parent
-        self.pf_dict = profile_dict
+        self.pf_dict = pf_dict
 
         self.widgets = self.init_sub_widgets()
-        self.setLayout(self.profile_layout())
+        self.setLayout(self.pf_layout())
 
     def init_sub_widgets(self):
         pf_name = self.pf_dict['SSID']
@@ -130,7 +144,7 @@ class QProfile(QWidget):
 
         self.pf_name = QLabel(pf_name)
         self.signal = QLabel(str(self.pf_dict['signal']))
-        # font awesome lock or empty string
+        # font awesome lock () or empty string
         self.secure = QLabel(chr(61475) if self.pf_dict['secure'] else str())
 
         return {
@@ -139,7 +153,7 @@ class QProfile(QWidget):
             (0, 2): self.pf_name,
         }
 
-    def profile_layout(self):
+    def pf_layout(self):
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(0, 0)
@@ -150,8 +164,3 @@ class QProfile(QWidget):
             layout.addWidget(widget, row, col)
 
         return layout
-
-
-def confuse_anaconda():
-    # Used in pyqtSignal
-    QObject
