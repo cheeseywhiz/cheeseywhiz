@@ -48,8 +48,8 @@ class CentralWidget(QWidget):
         widget = QWidget()
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        self.scan_button = ScanButton(self, 'Scan')
-        self.connect_button = ConnectButton(self, 'Connect')
+        self.scan_button = QPushButton('Scan')
+        self.connect_button = QPushButton('Connect')
 
         for button in [self.scan_button, self.connect_button]:
             layout.addWidget(button)
@@ -58,8 +58,8 @@ class CentralWidget(QWidget):
         return widget
 
     def init_connections(self):
-        self.scan_button.signal.connect(self.scan)
-        self.connect_button.signal.connect(self.connect)
+        self.scan_button.clicked.connect(self.scan)
+        self.connect_button.clicked.connect(self.connect)
 
     def central_layout(self):
         layout = QVBoxLayout()
@@ -69,7 +69,6 @@ class CentralWidget(QWidget):
 
         return layout
 
-    @slot
     def scan(self):
         for i in reversed(range(self.pf_layout.count())):
             widget = self.pf_layout.itemAt(i).widget()
@@ -87,13 +86,8 @@ class CentralWidget(QWidget):
 
         self.pf_layout.addStretch(-1)
 
-    @slot
     def connect(self):
         print('connect')
-
-    @slot
-    def pf_click(self):
-        print('pf click')
 
 
 class ProfileArea(QScrollArea):
@@ -102,30 +96,6 @@ class ProfileArea(QScrollArea):
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setBackgroundRole(QPalette.NoRole)
-
-
-class ScanButton(QPushButton):
-    scan_event = pyqtSignal('QObject')
-
-    def __init__(self, parent, *QPushButton_args):
-        super().__init__(*QPushButton_args)
-        self.parent = parent
-        self.signal = self.scan_event
-
-    def mousePressEvent(self, event):
-        self.scan_event.emit(self.parent)
-
-
-class ConnectButton(QPushButton):
-    connect_event = pyqtSignal('QObject')
-
-    def __init__(self, parent, *QPushButton_args):
-        super().__init__(*QPushButton_args)
-        self.parent = parent
-        self.signal = self.connect_event
-
-    def mousePressEvent(self, event):
-        self.connect_event.emit(self.parent)
 
 
 class QProfile(QWidget):
