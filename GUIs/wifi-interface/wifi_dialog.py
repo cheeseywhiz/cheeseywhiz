@@ -35,6 +35,7 @@ class CentralWidget(QWidget):
         self.scroll_area = ProfileArea()
         self.profiles_widget = QWidget()
         self.pf_layout = QVBoxLayout()
+        self.pf_layout.setSpacing(0)
         self.pf_layout.setContentsMargins(0, 0, 0, 0)
         self.profiles_widget.setLayout(self.pf_layout)
         self.scroll_area.setWidget(self.profiles_widget)
@@ -77,11 +78,8 @@ class CentralWidget(QWidget):
                 widget.setParent(None)
 
         for i, widget in enumerate(QProfile(self, pf) for pf in wifi_data()):
-            # TODO: Color gaps between entries
             if i % 2:
                 widget.setBackgroundRole(QPalette.Midlight)
-            else:
-                widget.setBackgroundRole(QPalette.Base)
             self.pf_layout.addWidget(widget)
 
         self.pf_layout.addStretch(-1)
@@ -95,7 +93,7 @@ class ProfileArea(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setBackgroundRole(QPalette.NoRole)
+        self.setBackgroundRole(QPalette.Base)
 
 
 class QProfile(QWidget):
