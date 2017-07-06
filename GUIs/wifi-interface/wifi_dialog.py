@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
     QVBoxLayout, QWidget,
 )
-# from random_data import wifi_data
-from wifi_list import wifi_data
+from random_data import wifi_data
+# from wifi_list import wifi_data
 
 
 def slot(f):
@@ -18,9 +18,8 @@ class Dialog(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('WiFi Tool')
-        # self.setCentralWidget(QProfile(self, wifi_data()[0]))  # wgt tester
-        self.show()
-        self.setCentralWidget(CentralWidget(self))
+        self.widget = CentralWidget(self)
+        self.setCentralWidget(self.widget)
 
 
 class CentralWidget(QWidget):
@@ -35,7 +34,8 @@ class CentralWidget(QWidget):
     def init_sub_widgets(self):
         self.scroll_area = ProfileArea()
         self.profiles_widget = QWidget()
-        self.pf_layout = ProfileAreaLayout()
+        self.pf_layout = QVBoxLayout()
+        self.pf_layout.setContentsMargins(0, 0, 0, 0)
         self.profiles_widget.setLayout(self.pf_layout)
         self.scroll_area.setWidget(self.profiles_widget)
 
@@ -77,16 +77,23 @@ class CentralWidget(QWidget):
             if widget is not None:
                 widget.setParent(None)
 
-        for i, widget in enumerate(QProfile(pf) for pf in wifi_data()):
+        for i, widget in enumerate(QProfile(self, pf) for pf in wifi_data()):
+            # TODO: Color gaps between entries
             if i % 2:
-                pass  # TODO: widget.setBackgroundRole(QPalette.Midlight)
+                widget.setBackgroundRole(QPalette.Midlight)
+            else:
+                widget.setBackgroundRole(QPalette.Base)
             self.pf_layout.addWidget(widget)
 
         self.pf_layout.addStretch(-1)
 
     @slot
     def connect(self):
-        pass
+        print('connect')
+
+    @slot
+    def pf_click(self):
+        print('pf click')
 
 
 class ProfileArea(QScrollArea):
@@ -94,14 +101,7 @@ class ProfileArea(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setBackgroundRole(QPalette.Base)
-
-
-class ProfileAreaLayout(QVBoxLayout):
-    def __init__(self):
-        super().__init__()
-        self.addWidget(QWidget())
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setBackgroundRole(QPalette.NoRole)
 
 
 class ScanButton(QPushButton):
@@ -124,28 +124,30 @@ class ConnectButton(QPushButton):
         self.parent = parent
         self.signal = self.connect_event
 
-    def keyPressEvent(self, event):
+    def mousePressEvent(self, event):
         self.connect_event.emit(self.parent)
 
 
 class QProfile(QWidget):
-    def __init__(self, pf_dict):
+    def __init__(self, parent, Pf_inst):
         super().__init__()
-        self.pf_dict = pf_dict
+        self.parent = parent
+        self.Pf_inst = Pf_inst
 
+        self.setAutoFillBackground(True)
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.pf_layout())
 
     def init_sub_widgets(self):
-        pf_name = self.pf_dict['SSID']
+        pf_name = self.Pf_inst['SSID']
 
-        if self.pf_dict['connected']:
+        if self.Pf_inst['connected']:
             pf_name = f'<b>{pf_name}</b>'
 
         self.pf_name = QLabel(pf_name)
-        self.signal = QLabel(str(self.pf_dict['signal']))
+        self.signal = QLabel(str(self.Pf_inst['signal']))
         # font awesome lock () or empty string
-        self.secure = QLabel(chr(61475) if self.pf_dict['secure'] else str())
+        self.secure = QLabel(chr(61475) if self.Pf_inst['secure'] else str())
 
         return {
             (0, 0): self.signal,
@@ -164,3 +166,7 @@ class QProfile(QWidget):
             layout.addWidget(widget, row, col)
 
         return layout
+
+    def mouseClickEvent(self, event):
+        # TODO
+        self.setBackgroundRole(QPalette.Highlight)

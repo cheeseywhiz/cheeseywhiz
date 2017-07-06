@@ -6,7 +6,7 @@ from wifi_dialog import Dialog
 
 def main():
     app = QApplication([])
-    Dialog()
+    Dialog().show()
     sys.exit(app.exec_())
 
 

@@ -16,7 +16,7 @@ def wifi_data():
     def sort_key(pf):
         return pf['signal']
 
-    res = sorted([rand_pf() for _ in range(randint(10, 30))], key=sort_key)
+    res = sorted([rand_pf() for _ in range(randint(3, 30))], key=sort_key)
     pf = choice(res[:3])
     pf['connected'] = True
     pf['secure'] = True
