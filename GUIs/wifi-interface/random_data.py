@@ -5,13 +5,13 @@ from wifi_list import Profile
 
 def wifi_data():
     def rand_pf():
-        return Profile({
+        return {
             'SSID': ''.join(
                 choice(ascii_letters + digits) for _ in range(randint(8, 32))),
             'connected': False,
             'secure': (False, True)[random() < (2 / 3)],
             'signal': randint(25, 99),
-        })
+        }
 
     def sort_key(pf):
         return pf['signal']
@@ -20,4 +20,4 @@ def wifi_data():
     pf = choice(res[:3])
     pf['connected'] = True
     pf['secure'] = True
-    return res
+    return map(Profile, res)

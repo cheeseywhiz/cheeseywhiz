@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
 from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
@@ -6,12 +6,6 @@ from PyQt5.QtWidgets import (
 )
 from random_data import wifi_data
 # from wifi_list import wifi_data
-
-
-def slot(f):
-    def decorated_f(child, parent, *args, **kwargs):
-        return f(parent, *args, **kwargs)
-    return decorated_f
 
 
 class Dialog(QMainWindow):
@@ -26,6 +20,7 @@ class CentralWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.previous_pf = None
 
         self.widgets = self.init_sub_widgets()
         self.init_connections()
@@ -35,8 +30,8 @@ class CentralWidget(QWidget):
         self.scroll_area = ProfileArea()
         self.profiles_widget = QWidget()
         self.pf_layout = QVBoxLayout()
-        self.pf_layout.setSpacing(0)
         self.pf_layout.setContentsMargins(0, 0, 0, 0)
+        self.pf_layout.setSpacing(0)
         self.profiles_widget.setLayout(self.pf_layout)
         self.scroll_area.setWidget(self.profiles_widget)
 
@@ -77,15 +72,25 @@ class CentralWidget(QWidget):
             if widget is not None:
                 widget.setParent(None)
 
-        for i, widget in enumerate(QProfile(self, pf) for pf in wifi_data()):
+        for i, widget in enumerate(QProfile(pf) for pf in wifi_data()):
             if i % 2:
-                widget.setBackgroundRole(QPalette.Midlight)
+                widget.default_role = QPalette.Midlight
+            else:
+                widget.default_role = QPalette.Base
+            widget.clicked.connect(self.pf_click)
             self.pf_layout.addWidget(widget)
 
         self.pf_layout.addStretch(-1)
 
     def connect(self):
         print('connect')
+
+    @pyqtSlot(QObject)
+    def pf_click(self, clicked_pf):
+        if self.previous_pf is not None:
+            self.previous_pf.setBackgroundRole(self.previous_pf.default_role)
+        clicked_pf.setBackgroundRole(QPalette.Highlight)
+        self.previous_pf = clicked_pf
 
 
 class ProfileArea(QScrollArea):
@@ -97,10 +102,12 @@ class ProfileArea(QScrollArea):
 
 
 class QProfile(QWidget):
-    def __init__(self, parent, Pf_inst):
+    clicked = pyqtSignal(QObject)
+
+    def __init__(self, Pf_inst):
         super().__init__()
-        self.parent = parent
         self.Pf_inst = Pf_inst
+        self._default_role = None
 
         self.setAutoFillBackground(True)
         self.widgets = self.init_sub_widgets()
@@ -135,6 +142,15 @@ class QProfile(QWidget):
 
         return layout
 
-    def mouseClickEvent(self, event):
-        # TODO
+    def mousePressEvent(self, event):
+        self.clicked.emit(self)
         self.setBackgroundRole(QPalette.Highlight)
+
+    @property
+    def default_role(self):
+        return self._default_role
+
+    @default_role.setter
+    def default_role(self, role):
+        self._default_role = role
+        self.setBackgroundRole(role)
