@@ -1,5 +1,4 @@
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QSize, Qt
-from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QMainWindow, QPushButton, QVBoxLayout, QWidget,
@@ -24,14 +23,12 @@ class CentralWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self._previous_pf = None
 
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.central_layout())
 
     def init_sub_widgets(self):
         self.profiles_widget = ProfileTable(self)
-        self.profiles_widget.itemPressed.connect(self.item_pressed)
 
         return [
             ButtonRow(self),
@@ -57,9 +54,9 @@ class CentralWidget(QWidget):
 
         # generate new widgets
         for pf in wifi_data():
-            new_widget = QProfile(self, pf)
-            new_height = new_widget.minimumSize().height()
             new_item = QListWidgetItem()
+            new_widget = QProfile(self, new_item, pf)
+            new_height = new_widget.minimumSize().height()
             new_item.setSizeHint(QSize(-1, new_height))
             self.profiles_widget.addItem(new_item)
             self.profiles_widget.setItemWidget(new_item, new_widget)
@@ -69,16 +66,8 @@ class CentralWidget(QWidget):
 
     @pyqtSlot(QObject)
     def pf_click(self, clicked_pf):
-        if self._previous_pf is not None:
-            self._previous_pf.setBackgroundRole(QPalette.Base)
-            self._previous_pf.setAutoFillBackground(False)
-
-        clicked_pf.setAutoFillBackground(True)
-        clicked_pf.setBackgroundRole(QPalette.Highlight)
-        self._previous_pf = clicked_pf
-
-    def item_pressed(*args):
-        print(args)
+        index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
+        self.profiles_widget.setCurrentIndex(index)
 
 
 class ProfileTable(QListWidget):
@@ -88,8 +77,8 @@ class ProfileTable(QListWidget):
 
         self.setAlternatingRowColors(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setSelectionMode(self.SingleSelection)
         self.setVerticalScrollMode(self.ScrollPerItem)
+        self.setSelectionMode(self.SingleSelection)
 
 
 class ButtonRow(QWidget):
@@ -111,10 +100,11 @@ class ButtonRow(QWidget):
 class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, parent, pf_dict):
+    def __init__(self, parent, item_widget, pf_dict):
         Profile.__init__(self, pf_dict)
         QWidget.__init__(self)
         self.parent = parent
+        self.item_widget = item_widget
 
         self.widgets = self.init_sub_widgets()
         self.clicked.connect(self.parent.pf_click)
