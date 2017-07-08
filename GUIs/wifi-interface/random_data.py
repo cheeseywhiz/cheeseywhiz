@@ -1,6 +1,5 @@
 from random import choice, randint, random
 from string import ascii_letters, digits
-from wifi_list import Profile
 
 
 def wifi_data():
@@ -20,4 +19,15 @@ def wifi_data():
     pf = choice(res[:3])
     pf['connected'] = True
     pf['secure'] = True
-    return map(Profile, res)
+    return res
+
+
+def main():
+    # for use with interactive shell
+    global data
+    data = wifi_data()
+    print(data)
+
+
+if __name__ == '__main__':
+    main()

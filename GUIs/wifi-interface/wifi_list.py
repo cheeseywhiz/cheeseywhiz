@@ -1,5 +1,6 @@
 import re
 import subprocess
+from collections.abc import Mapping
 
 
 def wifi_data():
@@ -37,7 +38,7 @@ def wifi_data():
             elif 'signal' in entry:
                 signal = re.search(r'\d\d', entry).group(0)
                 new_netw['signal'] = int(signal)
-        networks.append(Profile(new_netw))
+        networks.append(new_netw)
 
     def sort_key(netw):
         return netw['signal']
@@ -45,22 +46,19 @@ def wifi_data():
     return sorted(networks, key=sort_key)
 
 
-class Profile(dict):
-    def __init__(self, inst: dict):
-        self.inst = inst
-        self.key = ''
-        super().__init__(self.inst)
-        self.pf_name = f"{self['SSID'].split(' ')[0]}-profile"
-        self.pf_path = f'/etc/netctl/{self.pf_name}'
+class Profile(Mapping):
+    # dict implementation
 
-    def generate_profile(self):
-        subprocess.run(
-            f"sudo echo '{str(self)}' | sudo dd of={self.pf_path}",
-            shell=True)
+    def __getitem__(self, item):
+        return self._dict.__getitem__(item)
 
-    def command(self, cmd):
-        return subprocess.run(
-            f'sudo netctl {cmd} {self.pf_name}', shell=True)
+    def __iter__(self):
+        return self._dict.__iter__()
+
+    def __len__(self):
+        return self._dict.__len__()
+
+    # class implementation
 
     def __str__(self):
         def escape_space(str_):
@@ -79,7 +77,22 @@ class Profile(dict):
             f'Key={key}' if self.key else None, ]))
 
     def __repr__(self):
-        return f'Profile({repr(self.inst)})'
+        return f'{self.__class__.__name__}({repr(self._dict)})'
+
+    def __init__(self, dict_inst):
+        self._dict = dict_inst
+        self.key = ''
+        self.pf_name = f"{self['SSID'].split(' ')[0]}-profile"
+        self.pf_path = f'/etc/netctl/{self.pf_name}'
+
+    def generate_profile(self):
+        subprocess.run(
+            f"sudo echo '{str(self)}' | sudo dd of={self.pf_path}",
+            shell=True)
+
+    def command(self, cmd):
+        return subprocess.run(
+            f'sudo netctl {cmd} {self.pf_name}', shell=True)
 
     def key_prompt(self):
         return input('Password: ')
@@ -106,6 +119,7 @@ class Profile(dict):
 
 
 def main():
+    # for use with interactive shell
     global data
     data = wifi_data()
     print(data)

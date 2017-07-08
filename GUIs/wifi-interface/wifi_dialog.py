@@ -4,8 +4,10 @@ from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
     QVBoxLayout, QWidget,
 )
-from random_data import wifi_data
+from noconflict import classmaker
+from wifi_list import Profile
 # from wifi_list import wifi_data
+from random_data import wifi_data
 
 
 class Dialog(QMainWindow):
@@ -27,13 +29,12 @@ class CentralWidget(QWidget):
         self.setLayout(self.central_layout())
 
     def init_sub_widgets(self):
-        self.scroll_area = ProfileArea()
         self.profiles_widget = QWidget()
-        self.pf_layout = QVBoxLayout()
+        self.scroll_area = ProfileArea()
+        self.scroll_area.setWidget(self.profiles_widget)
+        self.pf_layout = QVBoxLayout(self.profiles_widget)
         self.pf_layout.setContentsMargins(0, 0, 0, 0)
         self.pf_layout.setSpacing(0)
-        self.profiles_widget.setLayout(self.pf_layout)
-        self.scroll_area.setWidget(self.profiles_widget)
 
         return [
             self.button_row(),
@@ -42,7 +43,7 @@ class CentralWidget(QWidget):
 
     def button_row(self):
         widget = QWidget()
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         self.scan_button = QPushButton('Scan')
         self.connect_button = QPushButton('Connect')
@@ -50,7 +51,6 @@ class CentralWidget(QWidget):
         for button in [self.scan_button, self.connect_button]:
             layout.addWidget(button)
 
-        widget.setLayout(layout)
         return widget
 
     def init_connections(self):
@@ -66,17 +66,20 @@ class CentralWidget(QWidget):
         return layout
 
     def scan(self):
+        # delete all widgets
         for i in reversed(range(self.pf_layout.count())):
             widget = self.pf_layout.itemAt(i).widget()
             self.pf_layout.removeWidget(widget)
             if widget is not None:
                 widget.setParent(None)
 
+        # generate new widgets
         for i, widget in enumerate(QProfile(pf) for pf in wifi_data()):
             if i % 2:
                 widget.default_role = QPalette.Midlight
             else:
                 widget.default_role = QPalette.Base
+            widget.setBackgroundRole(widget.default_role)
             widget.clicked.connect(self.pf_click)
             self.pf_layout.addWidget(widget)
 
@@ -89,6 +92,7 @@ class CentralWidget(QWidget):
     def pf_click(self, clicked_pf):
         if self.previous_pf is not None:
             self.previous_pf.setBackgroundRole(self.previous_pf.default_role)
+
         clicked_pf.setBackgroundRole(QPalette.Highlight)
         self.previous_pf = clicked_pf
 
@@ -101,28 +105,27 @@ class ProfileArea(QScrollArea):
         self.setBackgroundRole(QPalette.Base)
 
 
-class QProfile(QWidget):
+class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, Pf_inst):
-        super().__init__()
-        self.Pf_inst = Pf_inst
-        self._default_role = None
+    def __init__(self, pf_dict):
+        Profile.__init__(self, pf_dict)
+        QWidget.__init__(self)
 
         self.setAutoFillBackground(True)
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.pf_layout())
 
     def init_sub_widgets(self):
-        pf_name = self.Pf_inst['SSID']
+        pf_name = self['SSID']
 
-        if self.Pf_inst['connected']:
+        if self['connected']:
             pf_name = f'<b>{pf_name}</b>'
 
         self.pf_name = QLabel(pf_name)
-        self.signal = QLabel(str(self.Pf_inst['signal']))
+        self.signal = QLabel(str(self['signal']))
         # font awesome lock () or empty string
-        self.secure = QLabel(chr(61475) if self.Pf_inst['secure'] else str())
+        self.secure = QLabel(chr(61475) if self['secure'] else str())
 
         return {
             (0, 0): self.signal,
@@ -145,12 +148,3 @@ class QProfile(QWidget):
     def mousePressEvent(self, event):
         self.clicked.emit(self)
         self.setBackgroundRole(QPalette.Highlight)
-
-    @property
-    def default_role(self):
-        return self._default_role
-
-    @default_role.setter
-    def default_role(self, role):
-        self._default_role = role
-        self.setBackgroundRole(role)
