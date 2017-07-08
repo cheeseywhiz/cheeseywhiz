@@ -1,13 +1,15 @@
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QSize, Qt
 from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import (
-    QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
-    QVBoxLayout, QWidget,
+    QGridLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
+    QMainWindow, QPushButton, QVBoxLayout, QWidget,
 )
 from noconflict import classmaker
-from wifi_list import Profile
-# from wifi_list import wifi_data
-from random_data import wifi_data
+from wifi_list import (
+    Profile,
+    # wifi_data,
+    random_data as wifi_data,
+)
 
 
 class Dialog(QMainWindow):
@@ -22,40 +24,19 @@ class CentralWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.previous_pf = None
+        self._previous_pf = None
 
         self.widgets = self.init_sub_widgets()
-        self.init_connections()
         self.setLayout(self.central_layout())
 
     def init_sub_widgets(self):
-        self.profiles_widget = QWidget()
-        self.scroll_area = ProfileArea()
-        self.scroll_area.setWidget(self.profiles_widget)
-        self.pf_layout = QVBoxLayout(self.profiles_widget)
-        self.pf_layout.setContentsMargins(0, 0, 0, 0)
-        self.pf_layout.setSpacing(0)
+        self.profiles_widget = ProfileTable(self)
+        self.profiles_widget.itemPressed.connect(self.item_pressed)
 
         return [
-            self.button_row(),
-            self.scroll_area,
+            ButtonRow(self),
+            self.profiles_widget,
         ]
-
-    def button_row(self):
-        widget = QWidget()
-        layout = QHBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.scan_button = QPushButton('Scan')
-        self.connect_button = QPushButton('Connect')
-
-        for button in [self.scan_button, self.connect_button]:
-            layout.addWidget(button)
-
-        return widget
-
-    def init_connections(self):
-        self.scan_button.clicked.connect(self.scan)
-        self.connect_button.clicked.connect(self.connect)
 
     def central_layout(self):
         layout = QVBoxLayout()
@@ -67,54 +48,78 @@ class CentralWidget(QWidget):
 
     def scan(self):
         # delete all widgets
-        for i in reversed(range(self.pf_layout.count())):
-            widget = self.pf_layout.itemAt(i).widget()
-            self.pf_layout.removeWidget(widget)
+        for i in reversed(range(self.profiles_widget.count())):
+            list_item = self.profiles_widget.item(i)
+            widget = self.profiles_widget.itemWidget(list_item)
+            self.profiles_widget.takeItem(i)
             if widget is not None:
                 widget.setParent(None)
 
         # generate new widgets
-        for i, widget in enumerate(QProfile(pf) for pf in wifi_data()):
-            if i % 2:
-                widget.default_role = QPalette.Midlight
-            else:
-                widget.default_role = QPalette.Base
-            widget.setBackgroundRole(widget.default_role)
-            widget.clicked.connect(self.pf_click)
-            self.pf_layout.addWidget(widget)
-
-        self.pf_layout.addStretch(-1)
+        for pf in wifi_data():
+            new_widget = QProfile(self, pf)
+            new_height = new_widget.minimumSize().height()
+            new_item = QListWidgetItem()
+            new_item.setSizeHint(QSize(-1, new_height))
+            self.profiles_widget.addItem(new_item)
+            self.profiles_widget.setItemWidget(new_item, new_widget)
 
     def connect(self):
         print('connect')
 
     @pyqtSlot(QObject)
     def pf_click(self, clicked_pf):
-        if self.previous_pf is not None:
-            self.previous_pf.setBackgroundRole(self.previous_pf.default_role)
+        if self._previous_pf is not None:
+            self._previous_pf.setBackgroundRole(QPalette.Base)
+            self._previous_pf.setAutoFillBackground(False)
 
+        clicked_pf.setAutoFillBackground(True)
         clicked_pf.setBackgroundRole(QPalette.Highlight)
-        self.previous_pf = clicked_pf
+        self._previous_pf = clicked_pf
+
+    def item_pressed(*args):
+        print(args)
 
 
-class ProfileArea(QScrollArea):
-    def __init__(self):
+class ProfileTable(QListWidget):
+    def __init__(self, parent):
         super().__init__()
-        self.setWidgetResizable(True)
+        self.parent = parent
+
+        self.setAlternatingRowColors(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setBackgroundRole(QPalette.Base)
+        self.setSelectionMode(self.SingleSelection)
+        self.setVerticalScrollMode(self.ScrollPerItem)
+
+
+class ButtonRow(QWidget):
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.scan_button = QPushButton('Scan')
+        self.scan_button.clicked.connect(self.parent.scan)
+        self.connect_button = QPushButton('Connect')
+        self.connect_button.clicked.connect(self.parent.connect)
+
+        for button in [self.scan_button, self.connect_button]:
+            self.layout.addWidget(button)
 
 
 class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, pf_dict):
+    def __init__(self, parent, pf_dict):
         Profile.__init__(self, pf_dict)
         QWidget.__init__(self)
+        self.parent = parent
 
-        self.setAutoFillBackground(True)
         self.widgets = self.init_sub_widgets()
+        self.clicked.connect(self.parent.pf_click)
         self.setLayout(self.pf_layout())
+        self.setMinimumHeight(self.minimumSizeHint().height() * 4 / 3)
 
     def init_sub_widgets(self):
         pf_name = self['SSID']
@@ -143,8 +148,8 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         for (row, col), widget in self.widgets.items():
             layout.addWidget(widget, row, col)
 
+        layout.setSizeConstraint(layout.SetFixedSize)
         return layout
 
     def mousePressEvent(self, event):
         self.clicked.emit(self)
-        self.setBackgroundRole(QPalette.Highlight)
