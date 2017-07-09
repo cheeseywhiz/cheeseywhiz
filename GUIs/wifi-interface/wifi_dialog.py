@@ -1,6 +1,4 @@
-from PyQt5.QtCore import (
-    pyqtSignal, pyqtSlot, QObject, QItemSelectionModel, QSize, Qt,
-)
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QObject, QSize, Qt
 from PyQt5.QtWidgets import (
     QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow,
     QPushButton, QVBoxLayout, QWidget,
@@ -20,24 +18,24 @@ class Dialog(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('WiFi Tool')
-        self.widget = CentralWidget(self)
+        self.widget = CentralWidget()
         self.setCentralWidget(self.widget)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            print('escape')
+            self.widget.profiles_widget.setCurrentIndex(QModelIndex())
 
 
 class CentralWidget(QWidget):
-    def __init__(self, _parent=None):
+    def __init__(self, parent=None):
         super().__init__()
-        self._parent = _parent
+        self._parent = parent
 
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.central_layout())
 
     def init_sub_widgets(self):
-        self.profiles_widget = ProfileTable(self)
+        self.profiles_widget = ProfileTable()
 
         return [
             ButtonRow(self),
@@ -53,14 +51,8 @@ class CentralWidget(QWidget):
         return layout
 
     def scan(self):
-        # delete all widgets
-        for i in reversed(range(self.profiles_widget.count())):
-            list_item = self.profiles_widget.item(i)
-            widget = self.profiles_widget.itemWidget(list_item)
-            self.profiles_widget.takeItem(i)
-            widget.setParent(None)
+        self.profiles_widget.clear()
 
-        # generate new widgets
         for pf in wifi_data():
             new_item = QListWidgetItem()
             new_widget = QProfile(pf, self, new_item)
@@ -79,27 +71,24 @@ class CentralWidget(QWidget):
 
 
 class ProfileTable(QListWidget):
-    def __init__(self, _parent=None):
+    def __init__(self, parent=None):
         super().__init__()
-        self._parent = _parent
+        self._parent = parent
 
-        # self.model = ProfileModel(self)
         self.setAlternatingRowColors(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollMode(self.ScrollPerItem)
         self.setSelectionMode(self.SingleSelection)
 
-
-class ProfileModel(QItemSelectionModel):
-    def __init__(self, _parent):
-        super().__init__()
-        self._parent = _parent
+    def current_pf(self):
+        index = self.currentIndex()
+        return self.indexWidget(index)
 
 
 class ButtonRow(QWidget):
-    def __init__(self, _parent=None):
+    def __init__(self, parent=None):
         super().__init__()
-        self._parent = _parent
+        self._parent = parent
 
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -115,10 +104,10 @@ class ButtonRow(QWidget):
 class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, pf_dict, _parent=None, item_widget=None):
+    def __init__(self, pf_dict, parent=None, item_widget=None):
         Profile.__init__(self, pf_dict)
         QWidget.__init__(self)
-        self._parent = _parent
+        self._parent = parent
         self.item_widget = item_widget
 
         self.clicked.connect(self._parent.pf_click)
@@ -131,7 +120,10 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         new_min_height = old_min_height * 4 / 3
         min_height_diff = new_min_height - old_min_height
         self.setMinimumSize(0, new_min_height)
+
         layout.setContentsMargins(min_height_diff, 0, 0, 0)
+        layout.setSizeConstraint(layout.SetMinimumSize)
+        layout.setAlignment(Qt.AlignVCenter)
 
     def init_sub_widgets(self):
         pf_name = self['SSID']
