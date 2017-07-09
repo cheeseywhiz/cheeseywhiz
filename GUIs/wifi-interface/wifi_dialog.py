@@ -1,14 +1,19 @@
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QSize, Qt
+from PyQt5.QtCore import (
+    pyqtSignal, pyqtSlot, QObject, QItemSelectionModel, QSize, Qt,
+)
 from PyQt5.QtWidgets import (
     QGridLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QMainWindow, QPushButton, QVBoxLayout, QWidget,
 )
 from noconflict import classmaker
-from libwifi import (
-    Profile,
-    # wifi_data,
-    random_data as wifi_data,
-)
+from libwifi import Profile
+
+debug = 1
+
+if debug:
+    from libwifi import random_data as wifi_data
+else:
+    from libwifi import wifi_data
 
 
 class Dialog(QMainWindow):
@@ -20,9 +25,9 @@ class Dialog(QMainWindow):
 
 
 class CentralWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, _parent=None):
         super().__init__()
-        self.parent = parent
+        self._parent = _parent
 
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.central_layout())
@@ -49,8 +54,7 @@ class CentralWidget(QWidget):
             list_item = self.profiles_widget.item(i)
             widget = self.profiles_widget.itemWidget(list_item)
             self.profiles_widget.takeItem(i)
-            if widget is not None:
-                widget.setParent(None)
+            widget.setParent(None)
 
         # generate new widgets
         for pf in wifi_data():
@@ -71,27 +75,34 @@ class CentralWidget(QWidget):
 
 
 class ProfileTable(QListWidget):
-    def __init__(self, parent=None):
+    def __init__(self, _parent=None):
         super().__init__()
-        self.parent = parent
+        self._parent = _parent
 
+        # self.model = ProfileModel(self)
         self.setAlternatingRowColors(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollMode(self.ScrollPerItem)
         self.setSelectionMode(self.SingleSelection)
 
 
-class ButtonRow(QWidget):
-    def __init__(self, parent=None):
+class ProfileModel(QItemSelectionModel):
+    def __init__(self, _parent):
         super().__init__()
-        self.parent = parent
+        self._parent = _parent
+
+
+class ButtonRow(QWidget):
+    def __init__(self, _parent=None):
+        super().__init__()
+        self._parent = _parent
 
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.scan_button = QPushButton('Scan')
-        self.scan_button.clicked.connect(self.parent.scan)
+        self.scan_button.clicked.connect(self._parent.scan)
         self.connect_button = QPushButton('Connect')
-        self.connect_button.clicked.connect(self.parent.connect)
+        self.connect_button.clicked.connect(self._parent.connect)
 
         for button in [self.scan_button, self.connect_button]:
             self.layout.addWidget(button)
@@ -100,14 +111,14 @@ class ButtonRow(QWidget):
 class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, pf_dict, parent=None, item_widget=None):
+    def __init__(self, pf_dict, _parent=None, item_widget=None):
         Profile.__init__(self, pf_dict)
         QWidget.__init__(self)
-        self.parent = parent
+        self._parent = _parent
         self.item_widget = item_widget
 
         self.widgets = self.init_sub_widgets()
-        self.clicked.connect(self.parent.pf_click)
+        self.clicked.connect(self._parent.pf_click)
         self.setLayout(self.pf_layout())
         self.setMinimumHeight(self.minimumSizeHint().height() * 4 / 3)
 

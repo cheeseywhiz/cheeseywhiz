@@ -1,11 +1,13 @@
 **/*.png
 **/*.JPG
 **/*.txt
+!**/*/requirements.txt
 **/*.pdf
 **/bin
 **/include
 **/lib
 **/pip-selfcheck.json
+GUIs/wifi-interface/out.py
 
 !Wordcloud/wordcloud.png
 
