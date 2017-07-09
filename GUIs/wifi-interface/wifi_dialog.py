@@ -2,8 +2,8 @@ from PyQt5.QtCore import (
     pyqtSignal, pyqtSlot, QObject, QItemSelectionModel, QSize, Qt,
 )
 from PyQt5.QtWidgets import (
-    QGridLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-    QMainWindow, QPushButton, QVBoxLayout, QWidget,
+    QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow,
+    QPushButton, QVBoxLayout, QWidget,
 )
 from noconflict import classmaker
 from libwifi import Profile
@@ -22,6 +22,10 @@ class Dialog(QMainWindow):
         self.setWindowTitle('WiFi Tool')
         self.widget = CentralWidget(self)
         self.setCentralWidget(self.widget)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            print('escape')
 
 
 class CentralWidget(QWidget):
@@ -117,10 +121,17 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         self._parent = _parent
         self.item_widget = item_widget
 
-        self.widgets = self.init_sub_widgets()
         self.clicked.connect(self._parent.pf_click)
-        self.setLayout(self.pf_layout())
-        self.setMinimumHeight(self.minimumSizeHint().height() * 4 / 3)
+
+        self.widgets = self.init_sub_widgets()
+        layout = self.pf_layout()
+        self.setLayout(layout)
+
+        old_min_height = self.sizeHint().height()
+        new_min_height = old_min_height * 4 / 3
+        min_height_diff = new_min_height - old_min_height
+        self.setMinimumSize(0, new_min_height)
+        layout.setContentsMargins(min_height_diff, 0, 0, 0)
 
     def init_sub_widgets(self):
         pf_name = self['SSID']
@@ -133,23 +144,19 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         # font awesome lock () or empty string
         self.secure = QLabel(chr(61475) if self['secure'] else str())
 
-        return {
-            (0, 0): self.signal,
-            (0, 1): self.secure,
-            (0, 2): self.pf_name,
-        }
+        return (
+            (0, self.signal),
+            (0, self.secure),
+            (1, self.pf_name),
+        )
 
     def pf_layout(self):
-        layout = QGridLayout()
+        layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setColumnStretch(0, 0)
-        layout.setColumnStretch(1, 0)
-        layout.setColumnStretch(2, 1)
 
-        for (row, col), widget in self.widgets.items():
-            layout.addWidget(widget, row, col)
+        for stretch, widget in self.widgets:
+            layout.addWidget(widget, stretch=stretch)
 
-        layout.setSizeConstraint(layout.SetFixedSize)
         return layout
 
     def mousePressEvent(self, event):
