@@ -3,7 +3,7 @@
 
 
 def skip_redundant(iterable, skipset=None):
-    "Redundant items are repeated items or items in the original skipset."
+    """Redundant items are repeated items or items in the original skipset."""
     if skipset is None:
         skipset = set()
     for item in iterable:

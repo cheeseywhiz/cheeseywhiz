@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QPushButton, QVBoxLayout, QWidget,
 )
 from noconflict import classmaker
-from wifi_list import (
+from libwifi import (
     Profile,
     # wifi_data,
     random_data as wifi_data,
@@ -20,7 +20,7 @@ class Dialog(QMainWindow):
 
 
 class CentralWidget(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
 
@@ -55,7 +55,7 @@ class CentralWidget(QWidget):
         # generate new widgets
         for pf in wifi_data():
             new_item = QListWidgetItem()
-            new_widget = QProfile(self, new_item, pf)
+            new_widget = QProfile(pf, self, new_item)
             new_height = new_widget.minimumSize().height()
             new_item.setSizeHint(QSize(-1, new_height))
             self.profiles_widget.addItem(new_item)
@@ -71,7 +71,7 @@ class CentralWidget(QWidget):
 
 
 class ProfileTable(QListWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
 
@@ -82,7 +82,7 @@ class ProfileTable(QListWidget):
 
 
 class ButtonRow(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
 
@@ -100,7 +100,7 @@ class ButtonRow(QWidget):
 class QProfile(Profile, QWidget, metaclass=classmaker()):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, parent, item_widget, pf_dict):
+    def __init__(self, pf_dict, parent=None, item_widget=None):
         Profile.__init__(self, pf_dict)
         QWidget.__init__(self)
         self.parent = parent
