@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QVBoxLayout, QWidget,
 )
 from noconflict import classmaker
+from get_password import get_password
 from libwifi import Profile
 
 debug = 1
@@ -14,7 +15,7 @@ else:
     from libwifi import wifi_data
 
 
-class Dialog(QMainWindow):
+class WifiTool(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('WiFi Tool')
@@ -36,11 +37,21 @@ class CentralWidget(QWidget):
 
     def init_sub_widgets(self):
         self.profiles_widget = ProfileTable()
+        buttons = ButtonRow()
+        buttons.scan_button.clicked.connect(self.scan)
+        buttons.connect_button.clicked.connect(lambda: print('NotImplemented'))
+        buttons.pass_button.clicked.connect(
+            lambda: print(self.parse_password()))
 
-        return [
-            ButtonRow(self),
+        return (
+            buttons,
             self.profiles_widget,
-        ]
+        )
+
+    @pyqtSlot(QObject)
+    def pf_click(self, clicked_pf):
+        index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
+        self.profiles_widget.setCurrentIndex(index)
 
     def central_layout(self):
         layout = QVBoxLayout()
@@ -61,13 +72,20 @@ class CentralWidget(QWidget):
             self.profiles_widget.addItem(new_item)
             self.profiles_widget.setItemWidget(new_item, new_widget)
 
-    def connect(self):
-        print('connect')
+    def parse_password(self):
+        while True:
+            # Loop while user entry is invalid
+            key = get_password()
 
-    @pyqtSlot(QObject)
-    def pf_click(self, clicked_pf):
-        index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
-        self.profiles_widget.setCurrentIndex(index)
+            if key is None:
+                # Do nothing if user cancelled
+                return
+            elif len(key) < 8:
+                print('Error: password shorter than 8 characters')
+            elif len(key) > 63:
+                print('Error: password longer than 63 characters')
+            else:
+                return key
 
 
 class ProfileTable(QListWidget):
@@ -90,15 +108,23 @@ class ButtonRow(QWidget):
         super().__init__()
         self._parent = parent
 
-        self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.scan_button = QPushButton('Scan')
-        self.scan_button.clicked.connect(self._parent.scan)
-        self.connect_button = QPushButton('Connect')
-        self.connect_button.clicked.connect(self._parent.connect)
+        self.setLayout(self.layout(self.widgets()))
 
-        for button in [self.scan_button, self.connect_button]:
-            self.layout.addWidget(button)
+    def widgets(self):
+        self.scan_button = QPushButton('Scan')
+        self.connect_button = QPushButton('Connect')
+        self.pass_button = QPushButton('Enter password')
+
+        return [self.scan_button, self.connect_button, self.pass_button]
+
+    def layout(self, widgets):
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        for button in widgets:
+            layout.addWidget(button)
+
+        return layout
 
 
 class QProfile(Profile, QWidget, metaclass=classmaker()):
@@ -131,15 +157,15 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         if self['connected']:
             pf_name = f'<b>{pf_name}</b>'
 
-        self.pf_name = QLabel(pf_name)
-        self.signal = QLabel(str(self['signal']))
+        pf_name = QLabel(pf_name)
+        signal = QLabel(str(self['signal']))
         # font awesome lock () or empty string
-        self.secure = QLabel(chr(61475) if self['secure'] else str())
+        secure = QLabel(chr(61475) if self['secure'] else str())
 
         return (
-            (0, self.signal),
-            (0, self.secure),
-            (1, self.pf_name),
+            (0, signal),
+            (0, secure),
+            (1, pf_name),
         )
 
     def pf_layout(self):

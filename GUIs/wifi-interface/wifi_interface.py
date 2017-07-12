@@ -4,9 +4,7 @@ pyrasite-shell $(ps aux | pgrep -f "wifi_interface")
 """
 import sys
 from PyQt5.QtWidgets import QApplication
-from wifi_dialog import Dialog
-from pprint import pprint as p
-p
+from wifi_dialog import WifiTool
 
 
 def exp(obj, printable=False):
@@ -17,13 +15,11 @@ def exp(obj, printable=False):
             return obj
 
     def recur(obj, parent=None):
-        def instance_name(obj, parent):
+        def instance_name():
             if parent is not None and hasattr(parent, '__dict__'):
                 for name, attr in parent.__dict__.items():
                     if obj is attr:
                         return name
-                else:
-                    return obj.__class__.__name__
 
             return obj.__class__.__name__
 
@@ -34,10 +30,10 @@ def exp(obj, printable=False):
                 raise AttributeError
 
         except AttributeError:
-            return repr_(obj), instance_name(obj, parent)
+            return repr_(obj), instance_name()
 
         else:
-            return {instance_name(obj, parent): (repr_(obj), [
+            return {instance_name(): (repr_(obj), [
                     recur(child)
                     for child in children])}
 
@@ -112,7 +108,6 @@ def write():
 
 
 app = QApplication([])
-window = Dialog()
+window = WifiTool()
 window.show()
-write()
 sys.exit(app.exec_())
