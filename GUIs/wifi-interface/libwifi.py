@@ -13,13 +13,13 @@ def wifi_data():
             for pair in zip(matches, data))
 
     networks = []
-    stdout = subprocess.run(
-        'sudo iw dev wlp6s0 scan',
-        shell=True, stdout=subprocess.PIPE).stdout
-    data = stdout.decode('utf-8')
+    data = subprocess.run([
+        # TODO: pipe to grep to show only lines parsed here
+        'sudo', 'iw', 'dev', 'wlp6s0', 'scan', ],
+        stdout=subprocess.PIPE).stdout.decode()
     data = [
-        [chunk.strip()
-         for chunk in netw.splitlines()]
+        [line.strip()
+         for line in netw.splitlines()]
         for netw in split_keep(data)]
 
     for profile_scan in data:
@@ -44,6 +44,35 @@ def wifi_data():
         return netw['signal']
 
     return sorted(networks, key=sort_key)
+
+
+def current_pf_name():
+    import os
+    connected_ssid = subprocess.run([
+        'iwgetid', '-r', ],
+        stdout=subprocess.PIPE
+    ).stdout[:-1].decode().replace(' ', '\ ')
+
+    ssid_searcher = re.compile('ESSID=(.*)')
+    netctl_dir = '/etc/netctl'
+    profiles = filter(
+        os.path.isfile,
+        (os.path.join(netctl_dir, file) for file in os.listdir(netctl_dir))
+    )
+
+    for full_path in profiles:
+        read_cmd = subprocess.Popen([
+            'sudo', 'less', full_path, ],
+            stdout=subprocess.PIPE)
+        grep_cmd = subprocess.Popen([
+            'grep', 'ESSID=', ],
+            stdin=read_cmd.stdout, stdout=subprocess.PIPE
+        )
+        read_cmd.stdout.close()
+        profile_text = grep_cmd.communicate()[0].decode()
+        parsed_ssid = ssid_searcher.findall(profile_text)[0]
+        if parsed_ssid == connected_ssid:
+            return os.path.split(full_path)[1]
 
 
 def random_data():
@@ -106,16 +135,25 @@ class Profile(MutableMapping):
             'Security=wpa' if self['secure'] else None,
             f'ESSID={essid}',
             'IP=dhcp',
-            f'Key={key}' if self['secure'] else None, ]))
+            f'Key={key}' if self['secure'] else None, ])) + '\n'
 
     def generate_profile(self):
-        subprocess.run(
-            f"sudo echo '{self.profile_str()}' | sudo dd of={self.pf_path}",
-            shell=True)
+        subprocess.run([
+            'sudo', 'tee', self.pf_path, ],
+            input=self.profile_str().encode()
+        )
 
     def command(self, cmd):
-        return subprocess.run(
-            f'sudo netctl {cmd} {self.pf_name}', shell=True)
+        subprocess.run([
+            'sudo', 'netctl', cmd, self.pf_name,
+        ])
+
+    @staticmethod
+    def man_netctl():
+        # TODO: regex output to show commands for self.command
+        return subprocess.run([
+            'man', '-P cat', 'netctl', ],
+            stdout=subprocess.PIPE).stdout.decode()
 
 
 def main():
