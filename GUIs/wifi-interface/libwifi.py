@@ -87,7 +87,7 @@ class Profile(MutableMapping):
 
     # implement class
 
-    def __init__(self, a_dict, **kwargs):
+    def __init__(self, a_dict):
         self.__dict = a_dict
         self['key'] = ''
         self.pf_name = f"{self['SSID'].split(' ')[0][:8]}-profile"
@@ -126,4 +126,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main  # ()

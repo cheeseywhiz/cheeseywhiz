@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow,
     QPushButton, QVBoxLayout, QWidget,
 )
-from noconflict import classmaker
 from get_password import get_password
 from libwifi import Profile
 
@@ -28,9 +27,8 @@ class WifiTool(QMainWindow):
 
 
 class CentralWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
 
         self.widgets = self.init_sub_widgets()
         self.setLayout(self.central_layout())
@@ -67,7 +65,7 @@ class CentralWidget(QWidget):
 
         for pf in wifi_data():
             new_item = QListWidgetItem()
-            new_widget = QProfile(pf, self, new_item)
+            new_widget = QProfile(pf, item_widget=new_item)
             new_widget.clicked.connect(self.pf_click)
             new_height = new_widget.minimumSize().height()
             new_item.setSizeHint(QSize(-1, new_height))
@@ -91,9 +89,8 @@ class CentralWidget(QWidget):
 
 
 class ProfileTable(QListWidget):
-    def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
 
         self.setAlternatingRowColors(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -106,9 +103,8 @@ class ProfileTable(QListWidget):
 
 
 class ButtonRow(QWidget):
-    def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
 
         self.setLayout(self.layout(self.widgets()))
 
@@ -129,13 +125,12 @@ class ButtonRow(QWidget):
         return layout
 
 
-class QProfile(Profile, QWidget, metaclass=classmaker()):
+class QProfile(QWidget):
     clicked = pyqtSignal(QObject)
 
-    def __init__(self, pf_dict, parent=None, item_widget=None):
-        Profile.__init__(self, pf_dict)
-        QWidget.__init__(self)
-        self._parent = parent
+    def __init__(self, pf_dict, *base_args, item_widget=None, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
+        self.pf = Profile(pf_dict)
         self.item_widget = item_widget
 
         self.widgets = self.init_sub_widgets()
@@ -152,15 +147,15 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         layout.setAlignment(Qt.AlignVCenter)
 
     def init_sub_widgets(self):
-        pf_name = self['SSID']
+        pf_name = self.pf['SSID']
 
-        if self['connected']:
+        if self.pf['connected']:
             pf_name = f'<b>{pf_name}</b>'
 
         pf_name = QLabel(pf_name)
-        signal = QLabel(str(self['signal']))
+        signal = QLabel(str(self.pf['signal']))
         # font awesome lock () or empty string
-        secure = QLabel(chr(61475) if self['secure'] else str())
+        secure = QLabel(chr(61475) if self.pf['secure'] else str())
 
         return (
             (0, signal),

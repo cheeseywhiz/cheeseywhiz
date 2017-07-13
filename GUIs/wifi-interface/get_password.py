@@ -9,9 +9,8 @@ from PyQt5.QtWidgets import (
 class PasswordDialog(QDialog):
     submitted = pyqtSignal(str)
 
-    def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
         self.value = None
 
         self.setWindowTitle('Enter password')
@@ -69,8 +68,8 @@ class PasswordDialog(QDialog):
 
 
 class PasswordEdit(QLineEdit):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
         self.default_font = self.font()
 
     @pyqtSlot()
@@ -88,8 +87,8 @@ class SmartCheckBox(QCheckBox):
     checked = pyqtSignal()
     unchecked = pyqtSignal()
 
-    def __init__(self, *QCheckBox_args):
-        super().__init__(*QCheckBox_args)
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
         self.stateChanged.connect(self.handle_state_change)
 
     def handle_state_change(self, state):
