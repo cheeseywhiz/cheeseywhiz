@@ -48,11 +48,6 @@ class CentralWidget(QWidget):
             self.profiles_widget,
         )
 
-    @pyqtSlot(QObject)
-    def pf_click(self, clicked_pf):
-        index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
-        self.profiles_widget.setCurrentIndex(index)
-
     def central_layout(self):
         layout = QVBoxLayout()
 
@@ -61,12 +56,19 @@ class CentralWidget(QWidget):
 
         return layout
 
+    @pyqtSlot(QObject)
+    def pf_click(self, clicked_pf):
+        index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
+        self.profiles_widget.setCurrentIndex(index)
+
+    @pyqtSlot()
     def scan(self):
         self.profiles_widget.clear()
 
         for pf in wifi_data():
             new_item = QListWidgetItem()
             new_widget = QProfile(pf, self, new_item)
+            new_widget.clicked.connect(self.pf_click)
             new_height = new_widget.minimumSize().height()
             new_item.setSizeHint(QSize(-1, new_height))
             self.profiles_widget.addItem(new_item)
@@ -135,8 +137,6 @@ class QProfile(Profile, QWidget, metaclass=classmaker()):
         QWidget.__init__(self)
         self._parent = parent
         self.item_widget = item_widget
-
-        self.clicked.connect(self._parent.pf_click)
 
         self.widgets = self.init_sub_widgets()
         layout = self.pf_layout()

@@ -1,8 +1,8 @@
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
-    QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QVBoxLayout, QWidget,
+    QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QVBoxLayout, QWidget,
 )
 
 
@@ -27,7 +27,7 @@ class PasswordDialog(QDialog):
         self.pass_entry = PasswordEdit()
         self.pass_entry.returnPressed.connect(self.submit)
 
-        check_box = SmartCheckBox()  # ('Hide')
+        check_box = SmartCheckBox()
         check_box.checked.connect(self.pass_entry.set_password)
         check_box.unchecked.connect(self.pass_entry.set_normal)
         check_box.setCheckState(Qt.Checked)
@@ -57,6 +57,7 @@ class PasswordDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
+    @pyqtSlot()
     def submit(self):
         self.value = self.pass_entry.text()
         self.submitted.emit(self.value)
@@ -72,10 +73,12 @@ class PasswordEdit(QLineEdit):
         super().__init__()
         self.default_font = self.font()
 
+    @pyqtSlot()
     def set_normal(self):
         self.setFont(QFont('Monospace'))
         self.setEchoMode(self.Normal)
 
+    @pyqtSlot()
     def set_password(self):
         self.setFont(self.default_font)
         self.setEchoMode(self.Password)
