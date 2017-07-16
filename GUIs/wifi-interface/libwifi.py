@@ -1,36 +1,56 @@
 import re
-import subprocess
+from subprocess import PIPE, Popen, STDOUT
 from collections.abc import MutableMapping
 
 
-def wifi_data():
-    def split_keep(self):
-        regex = re.compile('BSS ..:')
-        matches = regex.findall(self)
-        data = regex.split(self)[1:]
-        return (
-            ''.join(pair)
-            for pair in zip(matches, data))
+def akh(*args, **kwargs):
+    """
+    akh: args/kwargs helper
 
+    Return a two-tuple containing the arguments tuple and the keyword
+    dictionary of the called function.
+    """
+    return args, kwargs
+
+
+def Ppipe(*args_chain):
+    """
+    Return the Popen instance of the pipe chain of each command in the list.
+    Each argument shall be Popen arguments supplied by akh().
+    """
+    first, *args_chain = args_chain
+
+    fargs, fkwargs = first
+    fkwargs.update({'stdout': PIPE})
+    new = Popen(*fargs, **fkwargs)
+
+    for args in args_chain:
+        old = new
+        fargs, fkwargs = args
+        fkwargs.update({'stdin': old.stdout, 'stdout': PIPE, 'stderr': STDOUT})
+        new = Popen(*fargs, **fkwargs)
+        old.stdout.close()
+
+    return new
+
+
+def wifi_data():
     networks = []
-    data = subprocess.run([
-        # TODO: pipe to grep to show only lines parsed here
-        'sudo', 'iw', 'dev', 'wlp6s0', 'scan', ],
-        stdout=subprocess.PIPE).stdout.decode()
+    out, err = Ppipe(
+        akh('sudo iw dev wlp6s0 scan', shell=True),
+        akh('egrep "BSS ..:|SSID|RSN|signal"', shell=True)
+    ).communicate()
+    # TODO: regulate each profile to be exactly four lines long
     data = [
         [line.strip()
          for line in netw.splitlines()]
-        for netw in split_keep(data)]
+        for netw in re.split('BSS ..:', out.decode())[1:]]
 
     for profile_scan in data:
-        new_netw = {
-            'SSID': '',
-            'connected': False,
-            'secure': False,
-            'signal': 0, }
+        new_netw = Profile.empty.copy()
         for entry in profile_scan:
             if 'SSID' in entry:
-                new_netw['SSID'] = re.split(r'SSID: *', entry)[1]
+                new_netw['SSID'] = re.split('SSID: *', entry)[1]
             elif 'associated' in entry:
                 new_netw['connected'] = True
             elif 'RSN' in entry:
@@ -48,10 +68,11 @@ def wifi_data():
 
 def current_pf_name():
     import os
-    connected_ssid = subprocess.run([
-        'iwgetid', '-r', ],
-        stdout=subprocess.PIPE
-    ).stdout[:-1].decode().replace(' ', '\ ')
+    out, err = Popen(
+        ['iwgetid', '-r'],
+        stdout=PIPE
+    ).communicate()
+    connected_ssid = out[:-1].decode().replace(' ', '\ ')
 
     ssid_searcher = re.compile('ESSID=(.*)')
     netctl_dir = '/etc/netctl'
@@ -61,16 +82,12 @@ def current_pf_name():
     )
 
     for full_path in profiles:
-        read_cmd = subprocess.Popen([
-            'sudo', 'less', full_path, ],
-            stdout=subprocess.PIPE)
-        grep_cmd = subprocess.Popen([
-            'grep', 'ESSID=', ],
-            stdin=read_cmd.stdout, stdout=subprocess.PIPE
-        )
-        read_cmd.stdout.close()
-        profile_text = grep_cmd.communicate()[0].decode()
-        parsed_ssid = ssid_searcher.findall(profile_text)[0]
+        out, err = Ppipe(
+            akh(['sudo', 'less', full_path]),
+            akh(['egrep', 'ESSID='])
+        ).communicate()
+        profile_ssid = out.decode()
+        parsed_ssid = ssid_searcher.findall(profile_ssid)[0]
         if parsed_ssid == connected_ssid:
             return os.path.split(full_path)[1]
 
@@ -116,11 +133,18 @@ class Profile(MutableMapping):
 
     # implement class
 
-    def __init__(self, a_dict):
-        self.__dict = a_dict
-        self['key'] = ''
-        self.pf_name = f"{self['SSID'].split(' ')[0][:8]}-profile"
-        self.pf_path = f'/etc/netctl/{self.pf_name}'
+    empty = {
+        'SSID': '',
+        'connected': False,
+        'secure': False,
+        'signal': 0,
+        'key': '', }
+
+    def __init__(self, *a_dict_args, **a_dict_kwargs):
+        self.__dict = self.empty
+        self.__dict.update(dict(*a_dict_args, **a_dict_kwargs))
+        self.pf_name = '%s-profile' % self['SSID'].split(' ')[0][:8]
+        self.pf_path = '/etc/netctl/%s' % self.pf_name
 
     def profile_str(self):
         description, essid, key = (line.replace(' ', '\ ') for line in (
@@ -129,39 +153,45 @@ class Profile(MutableMapping):
             self['key']))
 
         return '\n'.join(filter(None, [
-            f'Description={description}',
+            'Description=%s' % description,
             'Interface=wlp6s0',
             'Connection=wireless',
             'Security=wpa' if self['secure'] else None,
-            f'ESSID={essid}',
+            'ESSID=%s' % essid,
             'IP=dhcp',
-            f'Key={key}' if self['secure'] else None, ])) + '\n'
+            'Key=%s' % key if self['secure'] else None, ])) + '\n'
 
     def generate_profile(self):
-        subprocess.run([
-            'sudo', 'tee', self.pf_path, ],
-            input=self.profile_str().encode()
-        )
+        out, err = Popen(
+            ['sudo', 'tee', self.pf_path],
+            stdin=PIPE, stdout=PIPE, stderr=STDOUT
+        ).communicate(input=self.profile_str().encode())
+        return err.decode() if err is not None else None
 
     def command(self, cmd):
-        subprocess.run([
-            'sudo', 'netctl', cmd, self.pf_name,
-        ])
+        out, err = Popen(
+            ['sudo', 'netctl', cmd, self.pf_name],
+            stdout=PIPE, stderr=STDOUT
+        ).communicate()
+        return err.decode() if err is not None else None
 
     @staticmethod
     def man_netctl():
-        # TODO: regex output to show commands for self.command
-        return subprocess.run([
-            'man', '-P cat', 'netctl', ],
-            stdout=subprocess.PIPE).stdout.decode()
+        # TODO: regex output to show commands for self.command()
+        out, err = Popen(
+            'man -P cat netctl'.split(),
+            stdout=PIPE, stderr=STDOUT
+        ).communicate()
+        return out.decode()
 
 
 def main():
     # for use with interactive shell
     global data
+    from pprint import pprint as print
     data = wifi_data()
     print(data)
 
 
 if __name__ == '__main__':
-    main  # ()
+    main()
