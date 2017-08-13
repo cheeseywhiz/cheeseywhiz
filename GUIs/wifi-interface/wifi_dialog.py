@@ -29,9 +29,8 @@ class WifiTool(QMainWindow):
 class CentralWidget(QWidget):
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
-
         self.widgets = self.init_sub_widgets()
-        self.layout_ = self.central_layout()
+        self.layout = self.central_layout()
 
     def init_sub_widgets(self):
         self.profiles_widget = ProfileTable()
@@ -50,7 +49,7 @@ class CentralWidget(QWidget):
         layout = QVBoxLayout()
 
         for widget in self.widgets:
-            layout.addWidget(widget)
+            layout += widget
 
         return layout
 
@@ -91,7 +90,6 @@ class CentralWidget(QWidget):
 class ProfileTable(QListWidget):
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
-
         self.alternating_row_colors = True
         self.horizontal_scroll_bar_policy = Qt.ScrollBarAlwaysOff
         self.vertical_scroll_mode = self.ScrollPerItem
@@ -105,15 +103,14 @@ class ProfileTable(QListWidget):
 class ButtonRow(QWidget):
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
-
-        self.layout_ = self.default_layout(self.widgets())
+        self.layout = self.default_layout(self.widgets())
 
     def widgets(self):
         self.scan_button = QPushButton('Scan')
         self.connect_button = QPushButton('Connect')
         self.pass_button = QPushButton('Enter password')
 
-        return [self.scan_button, self.connect_button, self.pass_button]
+        return (self.scan_button, self.connect_button, self.pass_button)
 
     def default_layout(self, widgets):
         layout = QHBoxLayout()
@@ -135,7 +132,7 @@ class QProfile(QWidget):
 
         self.widgets = self.init_sub_widgets()
         layout = self.pf_layout()
-        self.layout_ = layout
+        self.layout = layout
 
         old_min_height = self.size_hint.height()
         new_min_height = old_min_height * 4 / 3

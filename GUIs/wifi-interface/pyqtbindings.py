@@ -1,13 +1,17 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 class QWidget(QtWidgets.QWidget):
-    @property
-    def layout_(self):
-        return self.layout()
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
+        self.__layout = super().layout
 
-    @layout_.setter
-    def layout_(self, layout):
+    @property
+    def layout(self):
+        return self.__layout()
+
+    @layout.setter
+    def layout(self, layout):
         self.setLayout(layout)
 
     @property
@@ -26,14 +30,60 @@ class QWidget(QtWidgets.QWidget):
         return self.sizeHint()
 
 
+class QCheckBox(QtWidgets.QCheckBox, QWidget):
+    checked = QtCore.pyqtSignal()
+    unchecked = QtCore.pyqtSignal()
+
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
+        self.stateChanged.connect(self.handle_state_change)
+
+    def handle_state_change(self, state):
+        if state == QtCore.Qt.Checked:
+            self.checked.emit()
+        elif state == QtCore.Qt.Unchecked:
+            self.unchecked.emit()
+
+    @property
+    def check_state(self):
+        return self.checkState()
+
+    @check_state.setter
+    def check_state(self, state):
+        self.setCheckState(state)
+
+
+class QLineEdit(QtWidgets.QLineEdit, QWidget):
+    def __init__(self, *base_args, **base_kwargs):
+        super().__init__(*base_args, **base_kwargs)
+        self.__font = super().font
+        self.default_font = self.font
+
+    @property
+    def font(self):
+        return self.__font()
+
+    @font.setter
+    def font(self, font):
+        self.setFont(font)
+
+    @property
+    def echo_mode(self):
+        return self.echoMode()
+
+    @echo_mode.setter
+    def echo_mode(self, mode):
+        self.setEchoMode(mode)
+
+
 class QMainWindow(QtWidgets.QMainWindow, QWidget):
     @property
     def window_title(self):
         return self.windowTitle()
 
     @window_title.setter
-    def window_title(self, value):
-        self.setWindowTitle(value)
+    def window_title(self, title):
+        self.setWindowTitle(title)
 
     @property
     def central_widget(self):
@@ -42,6 +92,16 @@ class QMainWindow(QtWidgets.QMainWindow, QWidget):
     @central_widget.setter
     def central_widget(self, widget):
         self.setCentralWidget(widget)
+
+
+class QDialog(QtWidgets.QDialog, QWidget):
+    @property
+    def window_title(self):
+        return self.windowTitle()
+
+    @window_title.setter
+    def window_title(self, title):
+        self.setWindowTitle(title)
 
 
 class QListWidget(QtWidgets.QListWidget, QWidget):

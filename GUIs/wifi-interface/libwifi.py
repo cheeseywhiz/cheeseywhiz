@@ -131,13 +131,13 @@ class Profile(Mapping):
         'connected': False,
         'secure': False,
         'signal': 0, }
-    key = ''
     empty = __dict.copy()
 
     def __init__(self, *a_dict_args, **a_dict_kwargs):
         self.__dict.update(dict(*a_dict_args, **a_dict_kwargs))
         self.pf_name = '{}-profile'.format(self['SSID'].split(' ')[0][:8])
         self.pf_path = '/etc/netctl/{}'.format(self.pf_name)
+        self.key = ''
 
     def profile_str(self):
         escape_space = (lambda line: line.replace(' ', '\ '))
