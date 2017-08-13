@@ -7,8 +7,7 @@ def akh(*args, **kwargs):
     """
     akh: args/kwargs helper
 
-    Return a two-tuple containing the arguments tuple and the keyword
-    dictionary of the called function.
+    Return tuple (a, k) from f(*a, **k)
     """
     return args, kwargs
 
@@ -38,7 +37,7 @@ def wifi_data():
     networks = []
     out, err = Ppipe(
         akh('sudo iw dev wlp6s0 scan', shell=True),
-        akh('egrep "BSS ..:|SSID|RSN|signal"', shell=True)
+        akh('egrep "BSS ..:|SSID: |RSN|signal: "', shell=True)
     ).communicate()
     # TODO: regulate each profile to be exactly four lines long
     data = [
@@ -47,16 +46,16 @@ def wifi_data():
         for netw in re.split('BSS ..:', out.decode())[1:]]
 
     for profile_scan in data:
-        new_netw = Profile.empty
+        new_netw = Profile.empty.copy()
         for entry in profile_scan:
-            if 'SSID' in entry:
-                new_netw['SSID'] = re.split('SSID: *', entry)[1]
+            if 'SSID: ' in entry:
+                new_netw['SSID'] = re.findall('SSID: (.*)', entry)[0]
             elif 'associated' in entry:
                 new_netw['connected'] = True
             elif 'RSN' in entry:
                 new_netw['secure'] = True
-            elif 'signal' in entry:
-                signal = re.search(r'\d\d', entry).group(0)
+            elif 'signal: ' in entry:
+                signal = re.findall(r'signal: -(\d\d).00 dB', entry)[0]
                 new_netw['signal'] = int(signal)
         networks.append(new_netw)
 

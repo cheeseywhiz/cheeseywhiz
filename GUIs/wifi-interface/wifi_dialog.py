@@ -1,12 +1,13 @@
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QObject, QSize, Qt
-from PyQt5.QtWidgets import (
-    QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow,
-    QPushButton, QVBoxLayout, QWidget,
+from PyQt5.QtWidgets import QLabel, QPushButton
+from pyqtbindings import (
+    QHBoxLayout, QListWidget, QListWidgetItem, QMainWindow, QVBoxLayout,
+    QWidget,
 )
-from get_password import get_password
+from get_password import PasswordDialog
 from libwifi import Profile
 
-debug = 1
+debug = not __debug__
 
 if debug:
     from libwifi import random_data as wifi_data
@@ -17,13 +18,12 @@ else:
 class WifiTool(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('WiFi Tool')
-        self.widget = CentralWidget()
-        self.setCentralWidget(self.widget)
+        self.window_title = 'WiFi Tool'
+        self.central_widget = CentralWidget()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.widget.profiles_widget.setCurrentIndex(QModelIndex())
+            self.central_widget.profiles_widget.current_index = QModelIndex()
 
 
 class CentralWidget(QWidget):
@@ -31,7 +31,7 @@ class CentralWidget(QWidget):
         super().__init__(*base_args, **base_kwargs)
 
         self.widgets = self.init_sub_widgets()
-        self.setLayout(self.central_layout())
+        self.layout_ = self.central_layout()
 
     def init_sub_widgets(self):
         self.profiles_widget = ProfileTable()
@@ -57,7 +57,7 @@ class CentralWidget(QWidget):
     @pyqtSlot(QObject)
     def pf_click(self, clicked_pf):
         index = self.profiles_widget.indexFromItem(clicked_pf.item_widget)
-        self.profiles_widget.setCurrentIndex(index)
+        self.profiles_widget.current_index = index
 
     @pyqtSlot()
     def scan(self):
@@ -67,15 +67,15 @@ class CentralWidget(QWidget):
             new_item = QListWidgetItem()
             new_widget = QProfile(pf, item_widget=new_item)
             new_widget.clicked.connect(self.pf_click)
-            new_height = new_widget.minimumSize().height()
-            new_item.setSizeHint(QSize(-1, new_height))
+            new_height = new_widget.minimum_size.height()
+            new_item.size_hint = QSize(-1, new_height)
             self.profiles_widget.addItem(new_item)
             self.profiles_widget.setItemWidget(new_item, new_widget)
 
     def parse_password(self):
         while True:
             # Loop while user entry is invalid
-            key = get_password()
+            key = PasswordDialog.get_password()
 
             if key is None:
                 # Do nothing if user cancelled
@@ -92,21 +92,21 @@ class ProfileTable(QListWidget):
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
 
-        self.setAlternatingRowColors(True)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollMode(self.ScrollPerItem)
-        self.setSelectionMode(self.SingleSelection)
+        self.alternating_row_colors = True
+        self.horizontal_scroll_bar_policy = Qt.ScrollBarAlwaysOff
+        self.vertical_scroll_mode = self.ScrollPerItem
+        self.selection_mode = self.SingleSelection
 
+    @property
     def current_pf(self):
-        index = self.currentIndex()
-        return self.indexWidget(index)
+        return self[self.current_index]
 
 
 class ButtonRow(QWidget):
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
 
-        self.setLayout(self.layout(self.widgets()))
+        self.layout_ = self.default_layout(self.widgets())
 
     def widgets(self):
         self.scan_button = QPushButton('Scan')
@@ -115,12 +115,12 @@ class ButtonRow(QWidget):
 
         return [self.scan_button, self.connect_button, self.pass_button]
 
-    def layout(self, widgets):
+    def default_layout(self, widgets):
         layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.contents_margins = 0, 0, 0, 0
 
         for button in widgets:
-            layout.addWidget(button)
+            layout += button
 
         return layout
 
@@ -135,16 +135,16 @@ class QProfile(QWidget):
 
         self.widgets = self.init_sub_widgets()
         layout = self.pf_layout()
-        self.setLayout(layout)
+        self.layout_ = layout
 
-        old_min_height = self.sizeHint().height()
+        old_min_height = self.size_hint.height()
         new_min_height = old_min_height * 4 / 3
         min_height_diff = new_min_height - old_min_height
-        self.setMinimumSize(0, new_min_height)
+        self.minimum_size = 0, new_min_height
 
-        layout.setContentsMargins(min_height_diff, 0, 0, 0)
-        layout.setSizeConstraint(layout.SetMinimumSize)
-        layout.setAlignment(Qt.AlignVCenter)
+        layout.contents_margins = min_height_diff, 0, 0, 0
+        layout.size_constraint = layout.SetMinimumSize
+        layout.alignment_ = Qt.AlignVCenter
 
     def init_sub_widgets(self):
         pf_name = self.pf['SSID']
@@ -154,8 +154,8 @@ class QProfile(QWidget):
 
         pf_name = QLabel(pf_name)
         signal = QLabel(str(self.pf['signal']))
-        # font awesome lock () or empty string
-        secure = QLabel(chr(61475) if self.pf['secure'] else str())
+        # font awesome lock ()
+        secure = QLabel(chr(61475) if self.pf['secure'] else '')
 
         return (
             (0, signal),
@@ -165,7 +165,7 @@ class QProfile(QWidget):
 
     def pf_layout(self):
         layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.contents_margins = 0, 0, 0, 0
 
         for stretch, widget in self.widgets:
             layout.addWidget(widget, stretch=stretch)

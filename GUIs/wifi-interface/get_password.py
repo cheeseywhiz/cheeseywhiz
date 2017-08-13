@@ -8,10 +8,10 @@ from PyQt5.QtWidgets import (
 
 class PasswordDialog(QDialog):
     submitted = pyqtSignal(str)
+    value = None
 
     def __init__(self, *base_args, **base_kwargs):
         super().__init__(*base_args, **base_kwargs)
-        self.value = None
 
         self.setWindowTitle('Enter password')
 
@@ -62,7 +62,9 @@ class PasswordDialog(QDialog):
         self.submitted.emit(self.value)
         self.close()
 
-    def show_collect(self):
+    @staticmethod
+    def get_password():
+        self = PasswordDialog()
         self.exec_()
         return self.value
 
@@ -96,7 +98,3 @@ class SmartCheckBox(QCheckBox):
             self.checked.emit()
         elif state == Qt.Unchecked:
             self.unchecked.emit()
-
-
-def get_password():
-    return PasswordDialog().show_collect()
