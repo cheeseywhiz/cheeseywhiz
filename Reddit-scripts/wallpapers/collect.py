@@ -12,19 +12,36 @@ get = functools.partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
 
 
-def namedtuple(*field_names, **nt_kwargs):
-    def with_args(func):
-        type_name = f'{func.__name__}_result'
-        result_tuple = _namedtuple(type_name, field_names, **nt_kwargs)
+def named_tuple_wrapper(wrapped, type_name, field_names, *, verbose=False,
+                        rename=False, module=None):
+    """\
+    Wrap a function to turn its result into a named tuple.
+    """
+    if type_name is None:
+        type_name = f'{wrapped.__name__}_result'
 
-        @functools.wraps(func)
-        def decorated_func(*func_args, **func_kwargs):
-            result = func(*func_args, **func_kwargs)
-            return result_tuple(*result)
+    result_tuple = _namedtuple(
+        type_name, field_names, verbose=verbose, rename=rename, module=module)
 
-        return decorated_func
+    @functools.wraps(wrapped)
+    def wrapper(*func_args, **func_kwargs):
+        result = wrapped(*func_args, **func_kwargs)
+        return result_tuple(*result)
 
-    return with_args
+    return wrapper
+
+
+def namedtuple(*field_names, type_name=None, verbose=False, rename=False,
+               module=None):
+    """\
+    Decorator factory to turn named_tuple_wrapper into a proper decorator that
+    has a similar signature to collections.namedtuple but is more decorator
+    friendly.
+    """
+    return functools.partial(
+        named_tuple_wrapper,
+        type_name=type_name, field_names=field_names, verbose=verbose,
+        rename=rename, module=module)
 
 
 def random_map(func, *iterables):
