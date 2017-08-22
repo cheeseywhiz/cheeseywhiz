@@ -2,14 +2,27 @@
 import functools
 import random
 import requests
-import subprocess
 import sys
 from collections import namedtuple as _namedtuple
 from pathlib import Path
 from urllib.parse import urlparse
 
-get = functools.partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
+
+
+def log(message):
+    print(f'{Path(__file__).name}: {message}', file=sys.stderr)
+
+
+@functools.wraps(requests.get)
+def get(*args, **kwargs):
+    log(f'Requesting {args[0]}')
+    res = functools.partial(
+        requests.get,
+        headers={'User-Agent': 'u/cheeseywhiz'}
+    )(*args, **kwargs)
+    log(f'{res.status_code} {res.reason}')
+    return res
 
 
 def _named_tuple_wrapper(func, type_name, field_names, *, verbose=False,
@@ -56,55 +69,50 @@ def random_map(func, *iterables):
     return map(func, *zip(*args))
 
 
-def _mktemp_d():
-    return subprocess.Popen(
-        ['mktemp', '-d'],
-        stdout=subprocess.PIPE
-    ).communicate()[0].decode()[:-1]
-
-
 @namedtuple('succeeded', 'status', 'url', 'path')
 def download(dir, url):
     re = get(url)
 
+    error_msg = None
     type_ = re.headers['content-type']
-
-    if (
-        not type_.startswith('image')
-        or type_.endswith('gif')
-        or 'removed' in re.url
-    ):  # sad face
-        return False, 'not a still image', url, None
+    if not type_.startswith('image'):
+        error_msg = 'not an image'
+    if type_.endswith('gif'):
+        error_msg = 'is a .gif'
+    if 'removed' in re.url:
+        error_msg = 'appears to be removed'
+    if error_msg:
+        return False, error_msg, url, None
 
     new_path = dir / urlparse(re.url).path.split('/')[-1]
-
     if new_path.exists():
-        return False, 'exists', url, None
-
+        return True, 'Already downloaded', url, new_path
     with new_path.open('wb') as file:
         file.write(re.content)
-
-    return True, 'success', url, new_path
+    return True, 'Collected new image', url, new_path
 
 
 def main(argv):
     try:
         save_dir = Path(argv[1])
     except IndexError:
-        save_dir = Path(_mktemp_d())
+        save_dir = Path('/tmp/wal')
 
     save_dir.mkdir(exist_ok=True)
 
-    urls = [
+    urls = (
         post['data']['url']
-        for post in get(REDDIT_LINK).json()['data']['children']]
+        for post in get(REDDIT_LINK).json()['data']['children'])
 
     download_ = functools.partial(download, save_dir)
 
     for res in random_map(download_, urls):
         if not res.succeeded:
+            log(f'Error: {res.status}: {res.url}')
             continue
         else:
+            log(res.status)
+            log(f'Output: {res.path}')
             print(res.path)
             break
     else:  # no break
