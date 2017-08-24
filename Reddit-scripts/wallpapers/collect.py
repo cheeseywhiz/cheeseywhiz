@@ -1,47 +1,49 @@
 #!/home/cheese/cheeseywhiz/Reddit-scripts/wallpapers/bin/python
 import sys
-from builtins import map as _map
 from functools import partial, wraps
 from pathlib import Path
 from random import shuffle
 from requests import get as _get
 from subprocess import Popen, DEVNULL
-from time import sleep
+from time import sleep as _sleep
 from urllib.parse import urlparse
 import cache
 
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
-# REDDIT_LINK = 'https://www.reddit.com/r/houseporn/hot/.json?limit=100'
 download_cache = cache.DownloadCache(Path.home() / '.cache/wal/collect.cache')
 
 try:
-    get_cache = download_cache.read()
+    current_cache = download_cache.read()
 except EOFError:
-    get_cache = {}
+    current_cache = {}
 
 
-def _rich_message(*values, beginning=None, label=None, **print_kwargs):
-    """{beginning}{label}{value}{sep}{value}{sep}{value}{end}"""
-    if beginning is None:
-        beginning = Path(__file__).name + ': '
+def _rich_message(*values, beginning=None, label=None, sep=' ',
+                  **print_kwargs):
+    """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file"""
+    print_func = partial(partial(print, flush=True), **print_kwargs)
 
-    print_func = partial(partial(print, flush=False), **print_kwargs)
-    print_label = partial(print_func, end='')
+    parts = [beginning, label]
 
-    print_label(beginning)
+    for i, value in enumerate(values, 1):
+        parts.append(value)
 
-    if label is not None:
-        print_label(label)
+        if i != len(values):
+            parts.append(sep)
 
-    print_func(*values)
+    final = ''.join(str(part) for part in parts if part is not None)
+    print_func(final)
 
 
-log = partial(_rich_message, file=sys.stderr)
+log = partial(
+    _rich_message,
+    beginning=Path(__file__).name + ': ',
+    file=sys.stderr)
 error = partial(log, label='Error: ')
 
 
 def ping(host='8.8.8.8'):
-    """Test internet connection"""
+    """Internet connection test"""
     return not Popen(
         ['ping', '-c 1', '-w 1', host],
         stdout=DEVNULL, stderr=DEVNULL,
@@ -60,6 +62,7 @@ def get(*args, **kwargs):
 
 
 def random_map(func, *iterables):
+    """Implement map() by sending in arguments in a random order"""
     if len(iterables) == 1:
         args = zip(iterables[0])
     else:
@@ -68,11 +71,12 @@ def random_map(func, *iterables):
     args = list(args)
     shuffle(args)
 
-    return _map(func, *zip(*args))
+    return map(func, *zip(*args))
 
 
-@cache.cache(get_cache)
+@cache.cache(current_cache)
 def download(url):
+    """Download an image and return cache.DownloadResult with relevant info"""
     re = get(url)
 
     error_msg = None
@@ -92,6 +96,7 @@ def download(url):
 
 
 def write_image(download_result, path):
+    """Write an image to disk given a download() response and a full path"""
     if path.exists():
         return download_result._replace(status='Already downloaded')
 
@@ -108,7 +113,7 @@ def main(argv):
     for n_try in range(max_seconds // seconds_wait):
         if not ping('8.8.8.8'):
             error('Connection not found')
-            sleep(seconds_wait)
+            _sleep(seconds_wait)
         elif n_try:
             log('Connection found')
             break
