@@ -30,6 +30,10 @@ class DownloadCache:
             ['rm', self.path],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         ).wait()
+        subprocess.Popen(
+            ['touch', self.path],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).wait()
 
     def __repr__(self):
         return (
@@ -78,7 +82,7 @@ def cache(load=None):
     def decorator(func):
         new_func = _Cache(func, load)
 
-        @functools.wraps(func)
+        @functools.wraps(new_func)
         def wrapper(*args, **kwargs):
             return new_func(*args, **kwargs)
 
