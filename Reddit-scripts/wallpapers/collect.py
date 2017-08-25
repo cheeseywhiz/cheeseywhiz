@@ -18,6 +18,28 @@ try:
 except EOFError:
     current_cache = {}
 
+
+def ping(host='8.8.8.8'):
+    """Internet connection test"""
+    return not subprocess.Popen(
+        ['ping', '-c 1', '-w 1', host],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    ).wait()
+
+
+def random_map(func, *iterables):
+    """Implement map() by sending in arguments in a random order"""
+    if len(iterables) == 1:
+        args = zip(iterables[0])
+    else:
+        args = zip(*iterables)
+
+    args = list(args)
+    shuffle(args)
+
+    return map(func, *zip(*args))
+
+
 _no_doc = list(functools.WRAPPER_ASSIGNMENTS)
 _no_doc.remove('__doc__')
 
@@ -93,31 +115,10 @@ def error(*args, **kwargs):
     pass
 
 
-def ping(host='8.8.8.8'):
-    """Internet connection test"""
-    return not subprocess.Popen(
-        ['ping', '-c 1', '-w 1', host],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    ).wait()
-
-
 @partial(_get, headers={'User-Agent': 'u/cheeseywhiz'})
 def get(url, *args, **kwargs):
     yield log('Requesting', url, '...', end=' ')
     yield (lambda req: log(req.status_code, req.reason, beginning=''))
-
-
-def random_map(func, *iterables):
-    """Implement map() by sending in arguments in a random order"""
-    if len(iterables) == 1:
-        args = zip(iterables[0])
-    else:
-        args = zip(*iterables)
-
-    args = list(args)
-    shuffle(args)
-
-    return map(func, *zip(*args))
 
 
 @cache.cache(current_cache)
