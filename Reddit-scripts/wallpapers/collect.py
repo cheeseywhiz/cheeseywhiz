@@ -1,8 +1,8 @@
 #!/home/cheese/cheeseywhiz/Reddit-scripts/wallpapers/bin/python
 import functools
 import inspect
-import subprocess
 import sys
+import time
 from pathlib import Path
 from random import shuffle
 from requests import get as _get
@@ -11,20 +11,12 @@ from urllib.parse import urlparse
 import cache
 
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
-download_cache = cache.DownloadCache(Path.home() / '.cache/wal/collect.cache')
-
-try:
-    current_cache = download_cache.read()
-except EOFError:
-    current_cache = {}
+CACHE_PATH = Path.home() / '.cache/wal/collect.cache'
 
 
 def ping(host='8.8.8.8'):
     """Internet connection test"""
-    return not subprocess.Popen(
-        ['ping', '-c 1', '-w 1', host],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    ).wait()
+    return not cache.disown('ping', '-c 1', '-w 1', host).wait()
 
 
 def random_map(func, *iterables):
@@ -40,11 +32,14 @@ def random_map(func, *iterables):
     return map(func, *zip(*args))
 
 
-_no_doc = list(functools.WRAPPER_ASSIGNMENTS)
-_no_doc.remove('__doc__')
+_no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
+_removed = ['__doc__', '__module__']
+
+for name in _removed:
+    _no_doc_module.remove(name)
 
 
-@functools.wraps(functools.partial, assigned=_no_doc)
+@functools.wraps(functools.partial, assigned=_no_doc_module)
 def partial(func, *args, **kwargs):
     """partial(func, *args, **kwargs)
     functools.partial as a decorator for top level functions.
@@ -63,9 +58,6 @@ def partial(func, *args, **kwargs):
                 next(func_generator)
 
             result = partial_func(*wargs, **wkwargs)
-
-            if func_generator is None:
-                return result
 
             try:
                 yield_func = next(func_generator)
@@ -121,10 +113,11 @@ def get(url, *args, **kwargs):
     yield (lambda req: log(req.status_code, req.reason, beginning=''))
 
 
-@cache.cache(current_cache)
+@cache.cache(path=CACHE_PATH)
 def download(url):
     """Download an image and return cache.DownloadResult with relevant info"""
     req = get(url)
+    time_ = int(time.time())
 
     error_msg = None
     type_ = req.headers['content-type']
@@ -135,11 +128,11 @@ def download(url):
     if 'removed' in req.url:
         error_msg = 'Appears to be removed'
     if error_msg:
-        return cache.DownloadResult(False, error_msg, url, None, None)
+        return cache.DownloadResult(url, time_, False, error_msg, None, None)
 
     fname = urlparse(req.url).path.split('/')[-1]
     return cache.DownloadResult(
-        True, 'Collected new image', url, fname, req.content)
+        url, time_, True, 'Collected new image', fname, req.content)
 
 
 def write_image(download_result, path):
@@ -176,7 +169,6 @@ def main(_, save_dir=None):
         save_dir = '/tmp/wal'
 
     save_dir = Path(save_dir)
-
     save_dir.mkdir(exist_ok=True)
 
     urls = (
@@ -187,14 +179,13 @@ def main(_, save_dir=None):
         if not res.succeeded:
             error(res.status, res.url, sep=': ')
             continue
-        else:
-            path = save_dir / res.fname
-            print(path)
-            res = write_image(res, path)
-            log(res.url, label='Success: ')
-            log(res.status)
-            log(path, label='Output: ')
-            return 0
+        path = save_dir / res.fname
+        print(path)
+        res = write_image(res, path)
+        log(res.url, label='Success: ')
+        log(res.status)
+        log(path, label='Output: ')
+        return 0
     else:  # no break; did not succeed
         error('Could not find image')
         return 1
@@ -204,7 +195,7 @@ if __name__ == '__main__':
     try:
         main_return = main(*sys.argv)
     finally:
-        download_cache.write(download.cache)
+        download.save_cache()
 
     if main_return:
         sys.exit(main_return)
