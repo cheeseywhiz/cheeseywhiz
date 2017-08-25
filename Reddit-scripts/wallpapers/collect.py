@@ -1,17 +1,18 @@
-#!/home/cheese/cheeseywhiz/Reddit-scripts/wallpapers/bin/python
-import functools
-import inspect
+#!/usr/bin/env python3
+"""Automate downloading a picture from reddit"""
+import pathlib
+import random
 import sys
 import time
-from pathlib import Path
-from random import shuffle
-from requests import get as _get
-from time import sleep as _sleep
 from urllib.parse import urlparse
+
+import requests
+
 import cache
+import util
 
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
-CACHE_PATH = Path.home() / '.cache/wal/collect.cache'
+CACHE_PATH = pathlib.Path.home() / '.cache/wal/collect.cache'
 
 
 def ping(host='8.8.8.8'):
@@ -27,90 +28,26 @@ def random_map(func, *iterables):
         args = zip(*iterables)
 
     args = list(args)
-    shuffle(args)
+    random.shuffle(args)
 
     return map(func, *zip(*args))
 
 
-_no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
-_removed = ['__doc__', '__module__']
-
-for name in _removed:
-    _no_doc_module.remove(name)
-
-
-@functools.wraps(functools.partial, assigned=_no_doc_module)
-def partial(func, *args, **kwargs):
-    """partial(func, *args, **kwargs)
-    functools.partial as a decorator for top level functions.
-    Able to wrap itself with 0-2 yield statements where the second yields a
-    function that takes the result as an argument"""
-    partial_func = functools.partial(func, *args, **kwargs)
-    func_sig = inspect.signature(partial_func)
-
-    def decorator(wrapped):
-        @functools.wraps(func)
-        @functools.wraps(wrapped)
-        def wrapper(*wargs, **wkwargs):
-            func_generator = wrapped(*wargs, **wkwargs)
-
-            if func_generator is not None:
-                next(func_generator)
-
-            result = partial_func(*wargs, **wkwargs)
-
-            try:
-                yield_func = next(func_generator)
-                if yield_func is not None:
-                    yield_func(result)
-            finally:
-                return result
-
-        wrapper.__signature__ = func_sig
-        wrapper.__qualname__ = wrapped.__qualname__
-
-        return wrapper
-
-    return decorator
-
-
-def _rich_message(*values, beginning=None, label=None, sep=' ',
-                  **print_kwargs):
-    """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file"""
-    if not __debug__:
-        kwargs = {'beginning': beginning, 'label': label, 'sep': sep,
-                  **print_kwargs}
-        print('Called with', values, kwargs)
-
-    print_func = functools.partial(
-        functools.partial(print, flush=True),
-        **print_kwargs)
-
-    parts = [beginning, label]
-
-    for i, value in enumerate(values, 1):
-        parts.append(value)
-        if i != len(values):
-            parts.append(sep)
-
-    final = ''.join(str(part) for part in parts if part is not None)
-    print_func(final)
-
-
-@partial(_rich_message, beginning=Path(__file__).name + ': ', file=sys.stderr)
+@util.partial(util._rich_message, beginning=pathlib.Path(__file__).name + ': ',
+              file=sys.stderr)
 def log(*args, **kwargs):
     pass
 
 
-@partial(log, label='Error: ')
+@util.partial(log, label='Error: ')
 def error(*args, **kwargs):
     pass
 
 
-@partial(_get, headers={'User-Agent': 'u/cheeseywhiz'})
+@util.partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
 def get(url, *args, **kwargs):
     yield log('Requesting', url, '...', end=' ')
-    yield (lambda req: log(req.status_code, req.reason, beginning=''))
+    yield lambda req: log(req.status_code, req.reason, beginning='')
 
 
 @cache.cache(path=CACHE_PATH)
@@ -137,7 +74,7 @@ def download(url):
 
 def write_image(download_result, path):
     """Write an image to disk given a download() response and a full path"""
-    path = Path(path)
+    path = pathlib.Path(path)
 
     if path.exists():
         return download_result._replace(status='Already downloaded')
@@ -155,7 +92,7 @@ def main(_, save_dir=None):
     for n_try in range(max_seconds // seconds_wait):
         if not ping():
             error('Connection not found')
-            _sleep(seconds_wait)
+            time.sleep(seconds_wait)
         elif n_try:
             log('Connection found')
             break
@@ -168,7 +105,7 @@ def main(_, save_dir=None):
     if save_dir is None:
         save_dir = '/tmp/wal'
 
-    save_dir = Path(save_dir)
+    save_dir = pathlib.Path(save_dir)
     save_dir.mkdir(exist_ok=True)
 
     urls = (

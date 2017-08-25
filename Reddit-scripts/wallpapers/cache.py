@@ -1,7 +1,6 @@
 import collections
 import functools
 import os
-import pathlib
 import pickle
 import subprocess
 
@@ -52,15 +51,7 @@ class _DownloadCache:
     """A pickle I/O tool"""
 
     def __init__(self, path=None):
-        self.__path = path
-
-    @functools.partial(property, doc='path for cache I/O')
-    def path(self):
-        return self.__path
-
-    @path.setter
-    def path(self, path):
-        self.__path = pathlib.Path(path)
+        self.path = path
 
     def read(self):
         """Read and parse the pickle at the specified path"""
@@ -93,20 +84,20 @@ class _Cache(_DownloadCache):
     Set path attribute to read/write later."""
 
     def __init__(self, func=None, *, path=None, cache=None):
+        super().__init__(path=path)
         self.path_arg = bool(path)
         self.cache_arg = bool(cache)
-        super().__init__(path=path)
         self.__func = func
 
-        if path:
+        if self.path_arg:
             self.cache = self.read()
-        elif cache:
+        elif self.cache_arg:
             self.cache = cache
         else:
             self.cache = {}
 
     def save_cache(self):
-        """Save the cache to the specified file name"""
+        """Save the cache to the specified path"""
         return self.write(self.cache)
 
     def __call__(self, *args, **kwargs):
@@ -115,10 +106,8 @@ class _Cache(_DownloadCache):
         try:
             result = self.cache[key]
         except KeyError:
-            new = self.__func(*args, **kwargs)
-            self.cache[key] = new
-            return new
-        else:
+            result = self.cache[key] = self.__func(*args, **kwargs)
+        finally:
             return result
 
     def __repr__(self):
