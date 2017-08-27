@@ -1,5 +1,28 @@
 import functools
 import inspect
+import os
+import subprocess
+
+
+def filter_kwargs(func, **kwargs):
+    if func is None:
+        func = (lambda name, value: bool(value))
+
+    return {
+        name: value
+        for name, value in kwargs.items()
+        if func(name, value)}
+
+
+# copy/paste from pywal.util with slight modification
+def disown(*cmd):
+    """Call a system command in the background, disown it and hide it's
+    output."""
+    return subprocess.Popen(
+        ["nohup", *cmd],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        preexec_fn=os.setpgrp)
+
 
 _no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
 _removed = ['__doc__', '__module__']
@@ -43,13 +66,16 @@ def partial(func, *args, **kwargs):
     return decorator
 
 
-class NoneRepr:
+class _NoneRepr:
     def __repr__(self):
         return repr(None)
 
 
-def _rich_message(*values, beginning=None, label=None, sep=None,
-                  **print_kwargs):
+_none_repr = _NoneRepr()
+
+
+def rich_message(*values, beginning=None, label=None, sep=None,
+                 **print_kwargs):
     """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file"""
     if not __debug__:
         kwargs = {'beginning': beginning, 'label': label, 'sep': sep,
@@ -68,7 +94,7 @@ def _rich_message(*values, beginning=None, label=None, sep=None,
     for i, value in enumerate(values, 1):
         if value is None:
             # mimick print(None) which prints 'None'
-            value = NoneRepr()
+            value = _none_repr
         parts.append(value)
         if i != len(values):
             parts.append(sep)

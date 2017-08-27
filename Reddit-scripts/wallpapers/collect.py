@@ -6,18 +6,20 @@ import sys
 import time
 from urllib.parse import urlparse
 
+import pywal
 import requests
 
 import cache
 import util
 
 REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
-CACHE_PATH = pathlib.Path.home() / '.cache/wal/collect.cache'
+CACHE_PATH = pathlib.Path.home() / '.cache/wal/collect.pickle'
+SAVE_DIR = pathlib.Path(pywal.settings.CACHE_DIR) / 'collect'
 
 
 def ping(host='8.8.8.8'):
     """Internet connection test"""
-    return not cache.disown('ping', '-c 1', '-w 1', host).wait()
+    return not util.disown('ping', '-c 1', '-w 1', host).wait()
 
 
 def random_map(func, *iterables):
@@ -33,8 +35,9 @@ def random_map(func, *iterables):
     return map(func, *zip(*args))
 
 
-@util.partial(util._rich_message, beginning=pathlib.Path(__file__).name + ': ',
-              file=sys.stderr)
+@util.partial(
+    util.rich_message, beginning=pathlib.Path(__file__).name + ': ',
+    file=sys.stderr)
 def log(*args, **kwargs):
     pass
 
@@ -103,7 +106,7 @@ def main(_, save_dir=None):
         return 1
 
     if save_dir is None:
-        save_dir = '/tmp/wal'
+        save_dir = SAVE_DIR
 
     save_dir = pathlib.Path(save_dir)
     save_dir.mkdir(exist_ok=True)
@@ -117,11 +120,11 @@ def main(_, save_dir=None):
             error(res.status, res.url, sep=': ')
             continue
         path = save_dir / res.fname
-        print(path)
         res = write_image(res, path)
         log(res.url, label='Success: ')
         log(res.status)
         log(path, label='Output: ')
+        print(path)
         return 0
     else:  # no break; did not succeed
         error('Could not find image')
