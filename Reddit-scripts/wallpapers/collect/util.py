@@ -1,17 +1,10 @@
+"""Provides general utility functions"""
 import functools
 import inspect
 import os
 import subprocess
 
-
-def filter_kwargs(func, **kwargs):
-    if func is None:
-        func = (lambda name, value: bool(value))
-
-    return {
-        name: value
-        for name, value in kwargs.items()
-        if func(name, value)}
+VERBOSE = True
 
 
 # copy/paste from pywal.util with slight modification
@@ -22,6 +15,24 @@ def disown(*cmd):
         ["nohup", *cmd],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         preexec_fn=os.setpgrp)
+
+
+def ping(ip_address='8.8.8.8'):
+    """Internet connection test"""
+    return not disown('ping', '-c 1', '-w 1', ip_address).wait()
+
+
+def filter_dict(__func, *args, **kwargs):
+    """Filter adaptation for dicts. __func is the filter function a la filter()
+    and args and kwargs are passed to dict(). if __func is None than it filters
+    based on the bool value of the value of each item."""
+    if __func is None:
+        __func = (lambda name, value: bool(value))
+
+    return {
+        name: value
+        for name, value in dict(*args, **kwargs).items()
+        if __func(name, value)}
 
 
 _no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
@@ -36,7 +47,7 @@ def partial(func, *args, **kwargs):
     """partial(func, *args, **kwargs)
     functools.partial as a decorator for top level functions.
     Able to wrap itself with 0-2 yield statements where the second yields a
-    function that takes the result as an argument"""
+    function that takes the result as an argument."""
     partial_func = functools.partial(func, *args, **kwargs)
     func_sig = inspect.signature(partial_func)
 
@@ -77,6 +88,9 @@ _none_repr = _NoneRepr()
 def rich_message(*values, beginning=None, label=None, sep=None,
                  **print_kwargs):
     """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file"""
+    if not VERBOSE:
+        return
+
     if not __debug__:
         kwargs = {'beginning': beginning, 'label': label, 'sep': sep,
                   **print_kwargs}

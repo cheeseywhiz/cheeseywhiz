@@ -1,25 +1,15 @@
-#!/usr/bin/env python3
-"""Automate downloading a picture from reddit"""
+"""Provides functions for downloading images"""
 import pathlib
 import random
 import sys
 import time
 from urllib.parse import urlparse
 
-import pywal
 import requests
 
-import cache
-import util
-
-REDDIT_LINK = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
-CACHE_PATH = pathlib.Path.home() / '.cache/wal/collect.pickle'
-SAVE_DIR = pathlib.Path(pywal.settings.CACHE_DIR) / 'collect'
-
-
-def ping(host='8.8.8.8'):
-    """Internet connection test"""
-    return not util.disown('ping', '-c 1', '-w 1', host).wait()
+from . import util
+from . import cache
+from .config import REDDIT_LINK, SAVE_DIR
 
 
 def random_map(func, *iterables):
@@ -53,7 +43,7 @@ def get(url, *args, **kwargs):
     yield lambda req: log(req.status_code, req.reason, beginning='')
 
 
-@cache.cache(path=CACHE_PATH)
+@cache.cache()
 def download(url):
     """Download an image and return cache.DownloadResult with relevant info"""
     req = get(url)
@@ -88,12 +78,19 @@ def write_image(download_result, path):
     return download_result
 
 
-def main(_, save_dir=None):
+def collect(save_dir=None, url=None):
+    """Download a random image from a Reddit .json url and save it in the given
+    folder path."""
+    if save_dir is None:
+        save_dir = SAVE_DIR
+    if url is None:
+        url = REDDIT_LINK
+
     max_seconds = 60
     seconds_wait = 5
 
     for n_try in range(max_seconds // seconds_wait):
-        if not ping():
+        if not util.ping():
             error('Connection not found')
             time.sleep(seconds_wait)
         elif n_try:
@@ -105,37 +102,25 @@ def main(_, save_dir=None):
         error('Too many tries')
         return 1
 
-    if save_dir is None:
-        save_dir = SAVE_DIR
-
     save_dir = pathlib.Path(save_dir)
     save_dir.mkdir(exist_ok=True)
 
     urls = (
         post['data']['url']
-        for post in get(REDDIT_LINK).json()['data']['children'])
+        for post in get(url).json()['data']['children'])
 
-    for res in random_map(download, urls):
-        if not res.succeeded:
-            error(res.status, res.url, sep=': ')
-            continue
-        path = save_dir / res.fname
-        res = write_image(res, path)
-        log(res.url, label='Success: ')
-        log(res.status)
-        log(path, label='Output: ')
-        print(path)
-        return 0
-    else:  # no break; did not succeed
-        error('Could not find image')
-        return 1
-
-
-if __name__ == '__main__':
-    try:
-        main_return = main(*sys.argv)
-    finally:
-        download.save_cache()
-
-    if main_return:
-        sys.exit(main_return)
+    with download.saving():
+        for res in random_map(download, urls):
+            if not res.succeeded:
+                error(res.status, res.url, sep=': ')
+                continue
+            path = save_dir / res.fname
+            res = write_image(res, path)
+            log(res.url, label='Success: ')
+            log(res.status)
+            log(path, label='Output: ')
+            print(path)
+            return 0
+        else:  # no break; did not succeed
+            error('Could not find image')
+            return 1
