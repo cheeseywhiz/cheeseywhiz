@@ -178,6 +178,12 @@ class Profile(Mapping):
         ).communicate()
         return out.decode()
 
+    def __repr__(self):
+        return (
+            f'{self.__class__.__name__}('
+            f'{repr(self.__dict)}'
+            ')')
+
 
 def main():
     # for use with interactive shell
