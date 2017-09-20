@@ -1,4 +1,4 @@
-class CalculusBase:
+class MathBase:
     """Define prototypes for math objects."""
     __slots__ = ('__kwargs', )
 
@@ -10,11 +10,6 @@ class CalculusBase:
 
         for name, value in kwargs.items():
             setattr(self, name, value)
-
-    @property
-    def derivative(self):
-        """Calculate the derivative of this object."""
-        raise NotImplementedError
 
     def __int__(self):
         """Return the integer form of this object."""
@@ -47,6 +42,15 @@ class CalculusBase:
         """Return self ** other"""
         return NotImplemented
 
+    @staticmethod
+    def round(number):
+        """Cast number to int if number casted to int is equal to number casted
+        to float else return number casted to float."""
+        if int(number) == float(number):
+            return int(number)
+        else:
+            return float(number)
+
     @property
     def latex(self):
         """Return the LaTeX representation of the object."""
@@ -62,7 +66,7 @@ class CalculusBase:
         return f'{module}.{name}({kwargs_str})'
 
 
-class Constant(CalculusBase):
+class Constant(MathBase):
     """CAS version of a real number."""
     __slots__ = ('_value', )
 
@@ -70,7 +74,7 @@ class Constant(CalculusBase):
         return super().__new__(cls)
 
     def __init__(self, value):
-        super().__init__(_value=self.round(value))
+        super().__init__(value=self.round(value))
 
     @property
     def value(self):
@@ -79,10 +83,6 @@ class Constant(CalculusBase):
     @value.setter
     def value(self, number):
         self._value = self.round(number)
-
-    @property
-    def derivative(self):
-        return self.__class__(0)
 
     def __float__(self, other=None):
         if other is None:
@@ -98,15 +98,6 @@ class Constant(CalculusBase):
             other = self
 
         return int(self.__float__(other))
-
-    @staticmethod
-    def round(number):
-        """Cast number to int if number casted to int is equal to number casted
-        to float else return number casted to float."""
-        if int(number) == float(number):
-            return int(number)
-        else:
-            return float(number)
 
     def __eq__(self, other):
         if isinstance(other, (int, float, type(self))):
@@ -177,7 +168,7 @@ class Constant(CalculusBase):
         return str(self.value)
 
 
-class Fraction(CalculusBase):
+class Fraction(MathBase):
     """Special case of a number."""
     __slots__ = 'numerator', 'denominator'
 
@@ -256,16 +247,6 @@ class Fraction(CalculusBase):
 
         super().__init__(numerator=numerator, denominator=denominator)
 
-    @property
-    def derivative(self):
-        return (
-            (
-                self.denominator * self.numerator.derivative()
-                - self.numerator * self.denominator.derivative()
-            )
-            / (self.denominator ** Constant(2))
-        )
-
     def __float__(self, other=None):
         if other is None:
             other = self
@@ -279,6 +260,53 @@ class Fraction(CalculusBase):
             other = self
 
         return int(float(other))
+
+    def __bool__(self):
+        return bool(float(self))
+
+    @property
+    def reciprocal(self):
+        return self.__class__(self.denominator, self.numerator)
+
+    def __eq__(self, other):
+        return other == super().round(self)
+
+    def __lt__(self, other):
+        return other > super().round(self)
+
+    def __gt__(self, other):
+        return other < super().round(self)
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __ge__(self, other):
+        return self > other or self == other
+
+    def __add__(self, other, *, subtract=False):
+        if isinstance(other, type(self)):
+            num = other.numerator
+            denom = other.denominator
+        else:
+            try:
+                num = super().round(other)
+            except TypeError:
+                return NotImplemented
+            else:
+                denom = 1
+
+        term1 = self.numerator * denom
+        term2 = self.denominator * num
+
+        if subtract:
+            sum = term1 - term2
+        else:
+            sum = term1 + term2
+
+        return self.__class__(sum, self.denominator * denom)
+
+    def __sub__(self, other):
+        return self.__add__(other, subtract=True)
 
     def __mul__(self, other):
         if isinstance(other, type(self)):
@@ -294,13 +322,19 @@ class Fraction(CalculusBase):
             return self
 
         if isinstance(other, type(self)):
-            return self * (Constant(1) / other)
+            return self * other.reciprocal
 
-        return (self.numerator / other) / self.denominator
+        return self.numerator / (self.denominator * other)
 
     def __pow__(self, other):
-        if other == -1:
-            return Constant(1) / self
+        if other < 0:
+            other *= -1
+            reciprocal = self.__class__(self.denominator, self.numerator)
+
+            if not isinstance(reciprocal, type(self)):
+                return reciprocal ** other
+            else:
+                self = reciprocal
 
         return (self.numerator ** other) / (self.denominator ** other)
 
@@ -317,143 +351,3 @@ class Fraction(CalculusBase):
 
     def __repr__(self):
         return f'{self.numerator}/{self.denominator}'
-
-
-def expr_goal():
-    global Add, Sub, Var  # let's say
-    x = Var('x')
-    y = Var('y')
-    expr = PolyAdder((Add, x * Constant(3)), (Sub, y * Constant(4)))
-    print(expr)
-    # 3x+4y
-    x.plug(Constant(5))
-    print(expr)
-    # 15+4y
-    y.plug(Constant(2))
-    print(expr)
-    # 23
-
-
-def singleton(cls):
-    single = cls()
-
-    def __call__(self, *args, **kwargs):
-        return single
-
-    cls.__call__ = __call__
-    return single
-
-
-class ExprOps:
-    @singleton
-    class Add:
-        def __repr__(self):
-            return '+'
-
-    @singleton
-    class Sub:
-        def __repr__(self):
-            return '-'
-
-
-class MulVar:
-    def __init__(self, factor, var):
-        self.factor = factor
-        self.var = var
-
-    def plug(self, value):
-        return ArbitraryProduct(self.factor, value)
-
-    @property
-    def latex(self):
-        return r'%s\cdot %s' % (self.factor, self.var)
-
-    def __repr__(self):
-        return '%r*%r' % (self.factor, self.var)
-
-
-class ArbitraryProduct:
-    def __new__(cls, factor, value):
-        if isinstance(value, VarBase):
-            return MulVar(factor, value)
-
-        if isinstance(factor, CalculusBase)and isinstance(value, CalculusBase):
-            return factor * value
-
-        return super().__new__(cls)
-
-    def __init__(self, factor, value):
-        self.factor = factor
-        self.value = value
-
-    @property
-    def latex(self):
-        return r'%s\cdot %s' % (self.factor.latex, self.value.latex)
-
-    def __repr__(self):
-        return '%r*%r' % (self.factor, self.value)
-
-
-class VarBase:
-    def __init__(self):
-        self._value = None
-
-    def plug(self, value):
-        self._value = value
-
-    @property
-    def value(self):
-        if self._value is None:
-            return self
-        else:
-            return self._value
-
-    @property
-    def latex(self):
-        return repr(self)
-
-    def __repr__(self):
-        return self.__class__.__name__
-
-
-class Var(type):
-    def __new__(cls, name):
-        return type.__new__(cls, name, (VarBase, ), {})()
-
-
-class PolyAdder:
-    def __new__(cls, *terms):
-        return super().__new__(cls)
-
-    def __init__(self, *terms):
-        self.terms = terms
-
-    @property
-    def latex(self):
-        parts = []
-
-        op0, term0 = self.terms[0]
-
-        if op0 is ExprOps.Sub:
-            parts.append('-')
-
-        parts.append(term0.latex())
-
-        for op, term in self.terms[1:]:
-            parts.append(repr(op))
-            parts.append(term.latex)
-
-    def __repr__(self):
-        parts = []
-
-        op0, term0 = self.terms[0]
-
-        if op0 is ExprOps.Sub:
-            parts.append(f'(-{term0.latex})')
-        else:
-            parts.append(term0.latex)
-
-        for op, term in self.terms[1:]:
-            parts.append(r'%r(%s)' % (op, term.latex))
-
-        return ''.join(parts)
