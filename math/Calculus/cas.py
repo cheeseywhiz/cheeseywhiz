@@ -43,7 +43,7 @@ class MathBase:
         return NotImplemented
 
     @staticmethod
-    def round(number):
+    def fix(number):
         """Cast number to int if number casted to int is equal to number casted
         to float else return number casted to float."""
         if int(number) == float(number):
@@ -74,7 +74,7 @@ class Constant(MathBase):
         return super().__new__(cls)
 
     def __init__(self, value):
-        super().__init__(value=self.round(value))
+        super().__init__(value=super().fix(value))
 
     @property
     def value(self):
@@ -82,7 +82,7 @@ class Constant(MathBase):
 
     @value.setter
     def value(self, number):
-        self._value = self.round(number)
+        self._value = super().fix(number)
 
     def __float__(self, other=None):
         if other is None:
@@ -101,31 +101,31 @@ class Constant(MathBase):
 
     def __eq__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.value == self.round(other)
+            return self.value == super().fix(other)
         else:
             return NotImplemented
 
     def __lt__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.value < self.round(other)
+            return self.value < super().fix(other)
         else:
             return NotImplemented
 
     def __le__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.value <= self.round(other)
+            return self.value <= super().fix(other)
         else:
             return NotImplemented
 
     def __gt__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.value > self.round(other)
+            return self.value > super().fix(other)
         else:
             return NotImplemented
 
     def __ge__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.value >= self.round(other)
+            return self.value >= super().fix(other)
         else:
             return NotImplemented
 
@@ -135,13 +135,13 @@ class Constant(MathBase):
 
     def __add__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.__class__(self.value + self.round(other))
+            return self.__class__(self.value + super().fix(other))
         else:
             return NotImplemented
 
     def __mul__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.__class__(self.value * self.round(other))
+            return self.__class__(self.value * super().fix(other))
         else:
             return NotImplemented
 
@@ -150,15 +150,12 @@ class Constant(MathBase):
 
     def __sub__(self, other):
         if isinstance(other, (int, float, type(self))):
-            return self.__class__(self.value - self.round(other))
+            return self.__class__(self.value - super().fix(other))
         else:
             return NotImplemented
 
     def __pow__(self, other):
-        if isinstance(other, (int, float, type(self))):
-            return self.__class__(self.value ** self.round(other))
-        else:
-            return NotImplemented
+        return Exponent(self, other)
 
     @property
     def latex(self):
@@ -251,9 +248,9 @@ class Fraction(MathBase):
         if other is None:
             other = self
 
-        num = Constant.round(other.numerator)
-        denom = Constant.round(other.denominator)
-        return Constant.round(num / denom)
+        num = super().fix(other.numerator)
+        denom = super().fix(other.denominator)
+        return super().fix(num / denom)
 
     def __int__(self, other=None):
         if other is None:
@@ -269,13 +266,13 @@ class Fraction(MathBase):
         return self.__class__(self.denominator, self.numerator)
 
     def __eq__(self, other):
-        return other == super().round(self)
+        return other == super().fix(self)
 
     def __lt__(self, other):
-        return other > super().round(self)
+        return other > super().fix(self)
 
     def __gt__(self, other):
-        return other < super().round(self)
+        return other < super().fix(self)
 
     def __le__(self, other):
         return self < other or self == other
@@ -289,7 +286,7 @@ class Fraction(MathBase):
             denom = other.denominator
         else:
             try:
-                num = super().round(other)
+                num = super().fix(other)
             except TypeError:
                 return NotImplemented
             else:
@@ -329,14 +326,9 @@ class Fraction(MathBase):
     def __pow__(self, other):
         if other < 0:
             other *= -1
-            reciprocal = self.__class__(self.denominator, self.numerator)
+            self = self.reciprocal
 
-            if not isinstance(reciprocal, type(self)):
-                return reciprocal ** other
-            else:
-                self = reciprocal
-
-        return (self.numerator ** other) / (self.denominator ** other)
+        return Exponent(self, other)
 
     @classmethod
     def greatest_common_factor(cls, a, b):
@@ -351,3 +343,45 @@ class Fraction(MathBase):
 
     def __repr__(self):
         return f'{self.numerator}/{self.denominator}'
+
+
+class Exponent(MathBase):
+    __slots__ = 'base', 'exponent'
+
+    def __new__(cls, base, exponent):
+        if isinstance(exponent, Fraction):
+            return super().__new__(cls)
+
+        exponent = super().fix(exponent)
+
+        if isinstance(base, Fraction):
+            return (
+                base.numerator ** exponent) / (
+                base.denominator ** exponent)
+
+        base = super().fix(base)
+        return Constant(base ** exponent)
+
+    def __init__(self, base, exponent):
+        super().__init__(base=base, exponent=exponent)
+
+    def __float__(self):
+        base, exponent = map(super().fix, (self.base, self.exponent))
+        return float(base ** exponent)
+
+    def __int__(self):
+        return int(float(self))
+
+    def __repr__(self):
+        return f'((%s)^(%s))' % (self.base, self.exponent)
+
+
+def main():
+    import math
+    global pi, e
+    pi = Constant(math.pi)
+    e = Fraction(math.e)
+
+
+if __name__ == '__main__':
+    main()
