@@ -55,7 +55,14 @@ class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
                 path = '/' + new_path
                 raise HTTPException(path, 403)
 
-        return super().__new__(cls, self.relpath())
+        self = super().__new__(cls, self.relpath())
+        url = str(self.relpath(root))
+
+        if len(url) == 1 and url[0] == '.':
+            url = ''
+
+        self.url = '/' + url
+        return self
 
 
 class CaseInsensitiveDict(collections.abc.MutableMapping):
@@ -123,12 +130,15 @@ class HTTPException(Exception):
 
         super().__init__(exc_message)
 
+    def format(self):
+        return self.HTML_TEMPLATE % (
+            self.status_code, self.reason, self.message
+        )
+
     def send(self, connection):
         """Send the corresponding error data formatted to the connection
         socket."""
-        error_message = self.HTML_TEMPLATE % (
-            self.status_code, self.reason, self.message
-        )
+        error_message = self.format()
         header = {
             'Content-Type': 'text/html',
             'Date': HTTPResponse.rfc1123_datetime(),
@@ -151,6 +161,7 @@ class HTTPRequestParser:
 
         parse = urllib.parse.urlparse(uri)
         self.path = HTTPPath(parse.path)
+        self.url = self.path.url
         self.fragment = parse.fragment
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
@@ -190,6 +201,9 @@ class HTTPResponse:
 
         if headers is None:
             headers = {}
+
+        if 'Date' not in headers:
+            headers['Date'] = self.rfc1123_datetime()
 
         if content is None:
             content = b''

@@ -1,6 +1,6 @@
-import server
 import subprocess
 import traceback
+import server
 import httputil
 
 
@@ -12,7 +12,8 @@ class SimpleHTTPHandler(server.BaseHandler):
         req = httputil.HTTPRequestParser(connection.recv(8192).decode())
         content_type, content = self.file_contents(req.path)
         headers = {
-            'Content-Type': content_type, 'Date': self.rfc1123_datetime()
+            'Content-Type': content_type,
+            'Date': httputil.HTTPResponse.rfc1123_datetime()
         }
         httputil.HTTPResponse(200, headers, content).send(connection)
         return self
