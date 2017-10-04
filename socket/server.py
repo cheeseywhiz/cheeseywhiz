@@ -43,10 +43,13 @@ class Server(socket.socket, BaseHandler):
             while True:
                 threading.Thread(
                     target=self.thread_target(super().__call__),
-                    args=self.accept()
+                    args=super().accept()
                 ).start()
         except KeyboardInterrupt:
             print()
         finally:
             super().shutdown(socket.SHUT_RDWR)
+
+    def __del__(self):
             super().close()
+            super().__del__()
