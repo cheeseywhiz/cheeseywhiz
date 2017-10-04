@@ -1,16 +1,70 @@
 import collections.abc
 import http
 import server
+import subprocess
 import time
 import traceback
 import urllib.parse
 import collect
 
 
+class HTTPPathMeta(collect.path.PathMeta):
+    """Specialization of collect.path.PathMeta class with a root descriptor
+    for HTTP paths."""
+    def __new__(cls, name, bases, namespace):
+        self = super().__new__(cls, name, bases, namespace)
+        self.root = namespace.get('root')
+
+        return self
+
+    @property
+    def root(self):
+        """Holds the project's root directory. New values are passed to new
+        collect.path.Path."""
+        return self._root
+
+    @root.setter
+    def root(self, path):
+        self._root = collect.path.Path(path) if path is not None else None
+
+
+class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
+    """Relative path to the selected resource based on the class's root
+    property. Instance creation is restricted to the root directory and beyond
+    and HTTPException is raised if attempted."""
+    root = __file__ + '/..'
+
+    def __new__(cls, path=None):
+        if cls.root is None:
+            root = collect.path.Path.cwd()
+        else:
+            root = cls.root
+
+        if not path:
+            path = ''
+        elif path.startswith('/'):
+            path = path[1:]
+
+        parts = path.split('/')
+
+        for i in range(len(parts)):
+            new_path = '/'.join(parts[:1 + i])
+            self = root / new_path
+
+            if self == root:
+                continue
+
+            if self not in root:
+                path = '/' + new_path
+                raise HTTPException(path, 403)
+
+        return super().__new__(cls, self.relpath())
+
+
 class CaseInsensitiveDict(collections.abc.MutableMapping):
-    """A MutableMapping class that .lower()s the key when setting and
+    """A MutableMapping subclass that .lower()s the key when setting and
     getting."""
-    __slots__ = ('__dict')
+    __slots__ = ('__dict', )
 
     @staticmethod
     def _lower_key(key):
@@ -48,61 +102,102 @@ class CaseInsensitiveDict(collections.abc.MutableMapping):
 
 
 class HTTPException(Exception):
-    def __init__(self, status_code, message=None):
-        if message is None:
-            self.message = ''
-            sep = ''
-        else:
-            self.message = message
-            sep = ' '
+    """The main exception used in HTTP server programs. The exception is able
+    to send a formatted HTML to the specified connection."""
+    HTML_TEMPLATE = '''<!DOCTYPE html>
+<html>
+<body>
+    <h1>%d %s</h1>
+    <pre>%s</pre>
+</body>
+</html>
+'''
 
+    def __init__(self, message=None, status_code=500):
         self.status_code = http.HTTPStatus(status_code)
         self.reason = self.status_code.phrase
-        super().__init__(f'({self.status_code}){sep}{self.message}')
+        exc_message = f'{self.status_code} {self.reason}'
+
+        if message is None:
+            self.message = ''
+        else:
+            self.message = message
+            exc_message += f' ({message})'
+
+        super().__init__(exc_message)
 
     def send(self, connection):
         """Send the corresponding error data formatted to the connection
         socket."""
-        with open('static/httpexception.html') as file:
-            error_message = (file.read()
-                             % (self.status_code, self.reason, self.message))
-
-        http_header = HTTPResponse(self.status_code, {
+        error_message = self.HTML_TEMPLATE % (
+            self.status_code, self.reason, self.message
+        )
+        header = {
             'Content-Type': 'text/html',
-            'Date': SimpleHTTPHandler.rfc1123_datetime()})
+            'Date': SimpleHTTPHandler.rfc1123_datetime(),
+        }
 
-        connection.sendall(bytes(http_header))
-        connection.sendall(error_message.encode())
+        HTTPResponse(
+            self.status_code, header, error_message.encode()
+        ).send(connection)
+        return self
 
 
 class HTTPRequestParser:
     """Parse a raw HTTP request."""
 
-    def __init__(self, raw_request):
-        response, *headers = raw_request.split('\n')
-        self.method, uri, _ = response.split()
+    def __init__(self, raw_request: str):
+        status_line, *headers = raw_request.split('\r\n')
+        self.method, uri, version = status_line.split()
+        self.version = version.split('/')[1]
         self.headers = CaseInsensitiveDict()
 
         parse = urllib.parse.urlparse(uri)
-        self.path = parse.path[1:]
-        self.query = dict(
-            pair.split('=', maxsplit=1)
-            for pair in parse.query.split('&')
-            if '=' in pair)
+        self.path = HTTPPath(parse.path)
+        self.fragment = parse.fragment
+        self.params = self.parse_data_string(parse.params)
+        self.query = self.parse_data_string(parse.query)
 
-        for line in headers:
+        for i, line in enumerate(headers):
             if not line.strip():
-                continue
+                # seperator line reached
+                body = headers[i + 1:]
+                break
 
             name, value = line.split(':', maxsplit=1)
             self.headers.update({name: value.strip()})
 
+        self.body = self.parse_data_string(body[0])
+
+    @staticmethod
+    def parse_data_string(str):
+        """Parse a string of parameters and values such as
+        'search=hello+world&when=all'"""
+        res = {}
+
+        for pair in str.split('&'):
+            if '=' not in pair:
+                continue
+
+            name, value = pair.split('=', maxsplit=1)
+            res[name] = urllib.parse.unquote_plus(value)
+
+        return res
+
 
 class HTTPResponse:
-    """Prepare an HTTP response."""
-    __slots__ = '_str', '_repr'
+    """Prepare and send an HTTP response."""
 
-    def __init__(self, status_code: int, headers: dict):
+    def __init__(self, status_code: int=200, headers: dict=None,
+                 content: bytes=None):
+
+        if headers is None:
+            headers = {}
+
+        if content is None:
+            content = b''
+
+        self.content = content
         parts = []
 
         reason = http.HTTPStatus(status_code).phrase
@@ -117,8 +212,14 @@ class HTTPResponse:
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        args = ', '.join(tuple(map(repr, (status_code, headers))))
+        args = ', '.join(repr(obj) for obj in (status_code, headers))
         self._repr = '%s.%s(%s)' % (module, name, args)
+
+    def send(self, connection):
+        """Send the prepared request to the connection socket."""
+        connection.sendall(bytes(self))
+        connection.sendall(self.content)
+        return self
 
     def __str__(self):
         return self._str
@@ -134,52 +235,33 @@ class SimpleHTTPHandler(server.BaseHandler):
     """A simple connection handler that responds with a message."""
 
     def process_request(self, connection, address):
+        """Send the requested file to the connection socket."""
         req = HTTPRequestParser(connection.recv(8192).decode())
-
-        if 'favicon' in req.path:
-            raise HTTPException(404, 'No favicon specified')
-        elif len(req.path) and 'index' not in req.path:
-            self.send_success(
-                connection, self.file_contents(req.path),
-                {'Content-Type': 'text/html', 'Date': self.rfc1123_datetime()}
-            )
-        else:
-            self.send_success(
-                connection, self.form_message(req).encode(),
-                {'Content-Type': 'text/html', 'Date': self.rfc1123_datetime()}
-            )
+        content_type, content = self.file_contents(req.path)
+        headers = {
+            'Content-Type': content_type, 'Date': self.rfc1123_datetime()
+        }
+        HTTPResponse(200, headers, content).send(connection)
+        return self
 
     def file_contents(self, path):
-        path = collect.path.Path(path)
-
+        """Return a tuple (content_type, content) for the given file path."""
         if not path.exists():
-            raise HTTPException(404, f'File not found: {path}')
+            raise HTTPException(path, 404)
 
         if path.is_file():
             with path.open('rb') as f:
-                txtfmt = f.read()
-        else:
-            import subprocess
+                content = f.read()
 
-            txtfmt = subprocess.Popen(
-                ['ls', '-l', str(path.realpath())],
+            content_type = path.type
+        else:
+            content = subprocess.Popen(
+                ['ls', '-al', str(path.realpath())],
                 stdout=subprocess.PIPE
             ).communicate()[0]
+            content_type = 'text/plain'
 
-        with open('static/stdout.html', 'rb') as f:
-            return f.read() % txtfmt
-
-    def form_message(self, parsed_request):
-        pr = parsed_request
-        parts = []
-        parts.append(f'The user requested the file at /{pr.path}.')
-        parts.append('The user came from %s.' % pr.headers['host'])
-        return f'<p>%s</p>' % '<br/>'.join(parts)
-
-    def send_success(self, connection, content, headers):
-        http_header = HTTPResponse(200, headers)
-        connection.sendall(bytes(http_header))
-        connection.sendall(content)
+        return content_type, content
 
     def __call__(self, connection, address):
         try:
@@ -188,7 +270,7 @@ class SimpleHTTPHandler(server.BaseHandler):
             error.send(connection)
             raise
         except Exception as error:
-            HTTPException(500, traceback.format_exc()).send(connection)
+            HTTPException(traceback.format_exc(), 500).send(connection)
             raise
 
     @staticmethod
