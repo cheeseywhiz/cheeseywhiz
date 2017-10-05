@@ -1,8 +1,10 @@
+"""Provides classes for HTTP usage."""
 import collections.abc
 import http
 import time
 import urllib.parse
 import collect
+# TODO: logging
 
 
 class HTTPPathMeta(collect.path.PathMeta):
@@ -131,13 +133,14 @@ class HTTPException(Exception):
         super().__init__(exc_message)
 
     def format(self):
+        """Format the exception's data in a short HTML message."""
         return self.HTML_TEMPLATE % (
             self.status_code, self.reason, self.message
         )
 
-    def send(self, connection):
-        """Send the corresponding error data formatted to the connection
-        socket."""
+    def send(self, connection, address=None):
+        """Send the corresponding error data to the connection
+        socket in an HTML format."""
         error_message = self.format()
         header = {
             'Content-Type': 'text/html',
@@ -146,36 +149,62 @@ class HTTPException(Exception):
 
         HTTPResponse(
             self.status_code, header, error_message.encode()
-        ).send(connection)
+        ).send(connection, address)
         return self
 
 
-class HTTPRequestParser:
-    """Parse a raw HTTP request."""
+class HTTPRequest:
+    """Receive and parse bytes from the connection socket. Raises IOError if
+    the connection sent 0 bytes."""
 
-    def __init__(self, raw_request: str):
-        status_line, *headers = raw_request.split('\r\n')
-        self.method, uri, version = status_line.split()
-        self.version = version.split('/')[1]
+    def __new__(cls, connection, buf_size):
+        raw_request = connection.recv(buf_size).decode()
+
+        if not raw_request:
+            raise IOError('connection sent 0 bytes')
+
+        return cls._new_from_raw_request(raw_request)
+
+    def __init__(self, connection, buf_size):
+        content_length = self.headers.get('Content-Length')
+
+        if content_length and not self.after_header:
+            content_length = int(content_length)
+            n_full_packets = content_length // buf_size
+            n_left_over_bytes = content_length % buf_size
+            packets = [
+                connection.recv(buf_size)
+                for _ in range(n_full_packets)]
+            packets.append(connection.recv(n_left_over_bytes))
+            self.after_header = b''.join(packets).decode()
+
+        self.body = self.parse_data_string(self.after_header.split('\n')[0])
+
+    @classmethod
+    def _new_from_raw_request(cls, raw_request):
+        self = super().__new__(cls)
+        status_line, *headers = raw_request.split('\n')
+        self.request_line = status_line.strip()
+        self.method, uri, version = self.request_line.split()
+        self.http_version = version.split('/')[1]
         self.headers = CaseInsensitiveDict()
 
         parse = urllib.parse.urlparse(uri)
         self.path = HTTPPath(parse.path)
         self.url = self.path.url
-        self.fragment = parse.fragment
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
 
         for i, line in enumerate(headers):
             if not line.strip():
-                # seperator line reached
-                body = headers[i + 1:]
+                # separator line reached
+                self.after_header = '\r\n'.join(headers[i + 1:])
                 break
 
-            name, value = line.split(':', maxsplit=1)
+            name, value = line.strip().split(':', maxsplit=1)
             self.headers.update({name: value.strip()})
 
-        self.body = self.parse_data_string(body[0])
+        return self
 
     @staticmethod
     def parse_data_string(str):
@@ -187,7 +216,7 @@ class HTTPRequestParser:
             if '=' not in pair:
                 continue
 
-            name, value = pair.split('=', maxsplit=1)
+            name, value = pair.strip().split('=', maxsplit=1)
             res[name] = urllib.parse.unquote_plus(value)
 
         return res
@@ -199,60 +228,62 @@ class HTTPResponse:
     def __init__(self, status_code: int=200, headers: dict=None,
                  content: bytes=None):
 
-        if headers is None:
-            headers = {}
-
-        if 'Date' not in headers:
-            headers['Date'] = self.rfc1123_datetime()
-
         if content is None:
-            content = b''
+            self.content = b''
+        else:
+            self.content = content
 
-        self.content = content
-        parts = []
+        self.headers = {
+            'Date': self.rfc1123_datetime(),
+            'Connection': 'keep-alive',
+            'Content-Length': len(self.content),
+        }
+        self.headers.update(headers)
 
         reason = http.HTTPStatus(status_code).phrase
-        parts.append(f'HTTP/1.1 {status_code} {reason}')
-
-        for name, value in headers.items():
-            parts.append(f'{name}: {value}')
-
-        parts.extend([''] * 2)
-        self._str = '\r\n'.join(parts)
-
+        self._str = '\r\n'.join([
+            f'HTTP/1.1 {status_code} {reason}',
+            *(': '.join(map(str, pair)) for pair in self.headers.items()),
+            *([''] * 2)
+        ])
+        self._bytes = str(self).encode()
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        args = ', '.join(repr(obj) for obj in (status_code, headers))
+        args = ', '.join(repr(obj) for obj in (status_code, self.headers))
         self._repr = '%s.%s(%s)' % (module, name, args)
 
-    def send(self, connection):
+    def send(self, connection, address):
         """Send the prepared request to the connection socket."""
         connection.sendall(bytes(self))
         connection.sendall(self.content)
         return self
 
     @staticmethod
-    def rfc1123_datetime():
+    def rfc1123_datetime(time_struct=None):
         """Return the formatted date and time for the Date response header
         field."""
+        if time_struct is None:
+            time_struct = time.gmtime()
+
         day = {
             '0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu',
             '5': 'Fri', '6': 'Sat',
-        }[time.strftime('%w')]
+        }[time.strftime('%w', time_struct)]
         month = {
             '1': 'Jan', '2': 'Feb', '3': 'Mar', '4': 'Apr', '5': 'May',
             '6': 'Jun', '7': 'Jul', '8': 'Aug', '9': 'Sep', '10': 'Oct',
             '11': 'Nov', '12': 'Dec',
-        }[time.strftime('%m')]
+        }[time.strftime('%m', time_struct)]
+
         return time.strftime(
-            f'{day}, %d {month} %Y %H:%M:%S GMT', time.gmtime())
+            f'{day}, %d {month} %Y %H:%M:%S %Z', time_struct)
 
     def __str__(self):
         return self._str
 
     def __bytes__(self):
-        return str(self).encode()
+        return self._bytes
 
     def __repr__(self):
         return self._repr

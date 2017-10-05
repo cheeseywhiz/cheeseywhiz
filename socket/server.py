@@ -1,30 +1,22 @@
-#!/usr/bin/env python3
+"""Provides a simple TCP server class."""
 import socket
 import threading
 
 
-class BaseHandler:
-    """Base class for TCP server connection handler."""
-
-    def __call__(self, connection: socket.socket, address: tuple):
-        """Define how to respond to each connection socket. The connection is
-        by default shut down and closed by the server."""
-        pass
-
-
-class Server(socket.socket, BaseHandler):
+class Server(socket.socket):
     """A simple TCP server."""
+    max_recv_size = 4096
 
     def __init__(self, address, port):
         super().__init__()
         super().setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         super().bind((address, port))
 
-    def thread_target(self, handler_func):
-        """Wrap the handler's __call__ function so that the connection is shut
-        down and closed in a try/finally statement. This function has a
-        decorator-like structure, returning a wrapped function with the
-        specified capibality."""
+    def handle_connection(self, connection: socket.socket, address: tuple):
+        """Respond to a new connection socket."""
+        pass
+
+    def _set_up_closing(self, handler_func):
         def wrapper(connection, address):
             try:
                 handler_func(connection, address)
@@ -42,7 +34,7 @@ class Server(socket.socket, BaseHandler):
         try:
             while True:
                 threading.Thread(
-                    target=self.thread_target(super().__call__),
+                    target=self._set_up_closing(self.handle_connection),
                     args=super().accept()
                 ).start()
         except KeyboardInterrupt:
@@ -51,5 +43,6 @@ class Server(socket.socket, BaseHandler):
             super().shutdown(socket.SHUT_RDWR)
 
     def __del__(self):
+            """Ensure that the socket is closed when it goes out of scope."""
             super().close()
             super().__del__()

@@ -4,18 +4,15 @@ import server
 import httputil
 
 
-class SimpleHTTPHandler(server.BaseHandler):
-    """A simple connection handler that responds with a message."""
+class SimpleHTTPHandler(server.Server):
+    """A hello world kind of an HTTP server."""
 
     def process_request(self, connection, address):
         """Send the requested file to the connection socket."""
-        req = httputil.HTTPRequestParser(connection.recv(8192).decode())
+        req = httputil.HTTPRequest(connection, self.max_recv_size)
         content_type, content = self.file_contents(req.path)
-        headers = {
-            'Content-Type': content_type,
-            'Date': httputil.HTTPResponse.rfc1123_datetime()
-        }
-        httputil.HTTPResponse(200, headers, content).send(connection)
+        headers = {'Content-Type': content_type, 'Connection': 'close'}
+        httputil.HTTPResponse(200, headers, content).send(connection, address)
         return self
 
     def file_contents(self, path):
@@ -37,18 +34,14 @@ class SimpleHTTPHandler(server.BaseHandler):
 
         return content_type, content
 
-    def __call__(self, connection, address):
+    def handle_connection(self, connection, address):
         try:
             self.process_request(connection, address)
         except httputil.HTTPException as error:
-            error.send(connection)
+            error.send(connection, address)
             raise
         except Exception:
             httputil.HTTPException(
                 traceback.format_exc(), 500
-            ).send(connection)
+            ).send(connection, address)
             raise
-
-
-class SimpleHTTPServer(server.Server, SimpleHTTPHandler):
-    """A hello world kind of an HTTP server."""

@@ -1,37 +1,93 @@
-import traceback
+"""Provides a class for creating custom HTTP servers."""
+import socket
 import server
 import httputil
 
 
-class AppHandler(server.BaseHandler):
-    def route(self, url):
+class App(server.Server):
+    """Class with which to define the endpoints of an HTTP server."""
+    timeout = 60
+
+    def __init__(self, address, port):
+        super().__init__(address, port)
+        self.http_handlers = {}
+        self.error_handlers = {}
+
+    def register(self, url, *methods):
+        """Register an endpoint at the server. The handler will only be called
+        when the request matches the given HTTP method here. Handlers for the
+        same url but for different methods are allowed. The handler will be
+        called with an httputil.HTTPRequest object as the first argument. The
+        handler shall return the string of the page contents or a tuple
+        (status_code, headers, content) used to create the HTTP response."""
+        if not methods:
+            methods = ('GET', )
+
         def decorator(func):
-            self.targets[url] = func
+            for method in methods:
+                method = method.upper()
+                method_handlers = self.http_handlers.get(method)
+
+                if not method_handlers:
+                    self.http_handlers[method] = {url: func}
+                else:
+                    method_handlers[url] = func
+
             return func
 
         return decorator
 
-    def error_handler(self, type):
+    def handle_exc(self, type):
+        """Register an exception handler. The handler is called with the active
+        exception as the first argument. The handler shall return a tuple
+        (status_code, content)."""
         def decorator(func):
             self.error_handlers[type] = func
             return func
 
         return decorator
 
-    def process_connection(self, connection, address):
-        req = httputil.HTTPRequestParser(connection.recv(8192).decode())
+    def _handle_request(self, req: httputil.HTTPRequest):
+        method_handlers = self.http_handlers[req.method]
 
-        if req.url not in self.targets:
+        if req.url not in method_handlers:
             raise httputil.HTTPException(req.url, 404)
 
-        text = self.targets[req.url](req)
-        httputil.HTTPResponse(
-            200, {'Content-Type': 'text/html'}, text.encode()
-        ).send(connection)
+        header = {'Content-Type': 'text/html'}
+        handler = method_handlers[req.url]
+        response = handler(req)
 
-    def __call__(self, connection, address):
+        if isinstance(response, tuple):
+            status_code, user_header, text, *excess = response
+            if excess:
+                raise ValueError(
+                    f'Handler {handler} returned tuple of length '
+                    f'{len(response)} instead of length 3.')
+        else:
+            status_code, user_header, text = 200, {}, response
+
+        header.update(user_header)
+        return httputil.HTTPResponse(
+            status_code, header, text.encode()
+        )
+
+    def _set_up_keep_alive(self, connection, address):
+        while True:
+            try:
+                req = httputil.HTTPRequest(connection, self.max_recv_size)
+            except (socket.timeout, IOError):
+                break
+
+            self._handle_request(req).send(connection, address)
+
+            if req.headers.get('Connection') == 'close':
+                break
+
+    def handle_connection(self, connection, address):
+        connection.settimeout(self.timeout)
+
         try:
-            self.process_connection(connection, address)
+            self._set_up_keep_alive(connection, address)
         except Exception as error:
             try:
                 handler = next(
@@ -44,31 +100,7 @@ class AppHandler(server.BaseHandler):
                 code, text = handler(error)
                 httputil.HTTPResponse(
                     code, {'Content-Type': 'text/html'}, text.encode()
-                ).send(connection)
+                ).send(connection, address)
 
-
-class App(server.Server, AppHandler):
-    def __init__(self, address, port):
-        super().__init__(address, port)
-        self.targets = {}
-        self.error_handlers = {}
-
-
-app = App('0.0.0.0', 8080)
-
-
-@app.route('/')
-def index(req):
-    print(vars(req))
-    return '<p>Hello world</p>'
-
-
-@app.error_handler(httputil.HTTPException)
-def handle_http(error):
-    return error.status_code, error.format()
-
-
-@app.error_handler(Exception)
-def handle_exc(error):
-    new_error = httputil.HTTPException(traceback.format_exc(), 500)
-    return handle_http(new_error)
+            # TODO: log exception
+            raise
