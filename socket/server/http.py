@@ -1,10 +1,17 @@
-"""Provides classes for HTTP usage."""
+"""Provides classes for HTTP utility."""
 import collections.abc
+import html
 import http
 import time
 import urllib.parse
 import collect
-# TODO: logging
+
+from . import logger
+
+__all__ = [
+    'CaseInsensitiveDict', 'HTTPException', 'HTTPPath', 'HTTPPathMeta',
+    'HTTPRequest', 'HTTPResponse'
+]
 
 
 class HTTPPathMeta(collect.path.PathMeta):
@@ -13,7 +20,6 @@ class HTTPPathMeta(collect.path.PathMeta):
     def __new__(cls, name, bases, namespace):
         self = super().__new__(cls, name, bases, namespace)
         self.root = namespace.get('root')
-
         return self
 
     @property
@@ -135,7 +141,7 @@ class HTTPException(Exception):
     def format(self):
         """Format the exception's data in a short HTML message."""
         return self.HTML_TEMPLATE % (
-            self.status_code, self.reason, self.message
+            self.status_code, self.reason, html.escape(self.message)
         )
 
     def send(self, connection, address=None):
@@ -157,7 +163,7 @@ class HTTPRequest:
     """Receive and parse bytes from the connection socket. Raises IOError if
     the connection sent 0 bytes."""
 
-    def __new__(cls, connection, buf_size):
+    def __new__(cls, connection, address, buf_size):
         raw_request = connection.recv(buf_size).decode()
 
         if not raw_request:
@@ -165,7 +171,7 @@ class HTTPRequest:
 
         return cls._new_from_raw_request(raw_request)
 
-    def __init__(self, connection, buf_size):
+    def __init__(self, connection, address, buf_size):
         content_length = self.headers.get('Content-Length')
 
         if content_length and not self.after_header:
@@ -179,6 +185,7 @@ class HTTPRequest:
             self.after_header = b''.join(packets).decode()
 
         self.body = self.parse_data_string(self.after_header.split('\n')[0])
+        logger.log('%s requested from %s:%d', self.request_line, *address)
 
     @classmethod
     def _new_from_raw_request(cls, raw_request):
@@ -257,6 +264,8 @@ class HTTPResponse:
         """Send the prepared request to the connection socket."""
         connection.sendall(bytes(self))
         connection.sendall(self.content)
+        first_line = str(self).splitlines()[0]
+        logger.log('%s sent to %s:%d', first_line, *address)
         return self
 
     @staticmethod

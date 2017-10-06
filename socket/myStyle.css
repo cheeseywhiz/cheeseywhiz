@@ -1,0 +1,12 @@
+body {
+    background-color: #000000;
+    color: #00FF00;
+}
+
+#consolas {
+    font-family: Consolas;
+}
+
+a {
+    color: #0000FF;
+}

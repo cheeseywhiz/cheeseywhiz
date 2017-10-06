@@ -2,6 +2,10 @@
 import socket
 import threading
 
+from . import logger
+
+__all__ = ['Server']
+
 
 class Server(socket.socket):
     """A simple TCP server."""
@@ -18,11 +22,13 @@ class Server(socket.socket):
 
     def _set_up_closing(self, handler_func):
         def wrapper(connection, address):
+            logger.log('Opened: %s:%d', *address)
             try:
                 handler_func(connection, address)
             finally:
                 connection.shutdown(socket.SHUT_RDWR)
                 connection.close()
+                logger.log('Closed: %s:%d', *address)
 
         return wrapper
 
