@@ -1,4 +1,5 @@
 """A sample custom HTTP server."""
+import functools
 import html
 import traceback
 
@@ -7,9 +8,11 @@ import server
 HTML_TMPL = '''\
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="myStyle.css"/>
+    <link rel="stylesheet" type="text/css" href="/myStyle.css"/>
 </head>
-<body id="consolas">%s</body>
+<body id="consolas">
+%s
+</body>
 </html>
 '''
 
@@ -19,23 +22,56 @@ app.register_files({
     'img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
     'myStyle.css': 'myStyle.css'
 })
+app.register_folders({
+    'pkg': 'server',
+    'root': '/',
+    'imgs': '~/Pictures/',
+})
+
+
+def insert_body(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return HTML_TMPL % func(*args, **kwargs)
+
+    return wrapper
 
 
 @app.register('/')
+@insert_body
 def index(req):
-    return HTML_TMPL % '''
-    <img src="img.png" width="250"/>
+    return '''\
+    <a href="/img.png"><img src="/img.png" width="250"/></a>
     <form action="/" method="post">
         <input id="consolas" type="text" name="url"><br/>
         <input id="consolas" type="submit" value="Submit">
-    </form>
-'''
+    </form>'''
+
+
+@insert_body
+def dir_landing_page(uri_path, folder_path, req):
+    return (
+        f'    <h1>{uri_path}</h1>'
+        + '<br/>'.join(
+            '\n    <a href="%s">%s</a>' % (
+                server.http.HTTPPath(uri_path / file.relpath(folder_path)).url,
+                file.relpath(folder_path))
+            for file in folder_path
+            if file.is_file())
+    )
+
+
+for uri_path, (fs_path, _) in app.registered_folders.items():
+    app.register(uri_path)(
+        functools.partial(dir_landing_page, uri_path, fs_path)
+    )
 
 
 @app.register('/', 'post')
+@insert_body
 def index_post(req):
     input = req.body['url']
-    return HTML_TMPL % f'''
+    return f'''
     <p>
         {input}<br/>
         <a href="/">Home</a>
@@ -43,23 +79,22 @@ def index_post(req):
 '''
 
 
-@app.register('/page')
+@app.register('page')
 def page(req):
     return 307, {'Location': '/new'}, HTML_TMPL % ''
 
 
-@app.register('/new')
+@app.register('new')
+@insert_body
 def new(req):
-    return (
-        HTML_TMPL
-        % '<p>This is the new page. You may have been redirected.</p>')
+    return '<p>This is the new page. You may have been redirected.</p>'
 
 
 @app.register_exception(server.http.HTTPException)
 def handle_http(error):
     body = '''\
     <h1>%d %s</h1>
-    <pre>%s</pre>
+    <pre id="consolas">%s</pre>
 ''' % (error.status_code, error.reason, html.escape(error.message))
 
     return error.status_code, HTML_TMPL % body

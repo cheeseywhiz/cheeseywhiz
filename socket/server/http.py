@@ -2,8 +2,10 @@
 import collections.abc
 import html
 import http
+import os
 import time
 import urllib.parse
+
 import collect
 
 from . import logger
@@ -47,7 +49,10 @@ class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
 
         if not path:
             path = ''
-        elif path.startswith('/'):
+
+        path = os.fspath(path)
+
+        if path.startswith('/'):
             path = path[1:]
 
         parts = path.split('/')
@@ -71,6 +76,9 @@ class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
 
         self.url = '/' + url
         return self
+
+    def __str__(self):
+        return '/' + super().__str__()
 
 
 class CaseInsensitiveDict(collections.abc.MutableMapping):
@@ -248,16 +256,17 @@ class HTTPResponse:
         self.headers.update(headers)
 
         reason = http.HTTPStatus(status_code).phrase
-        self._str = '\r\n'.join([
+        self._str = '\r\n'.join((
             f'HTTP/1.1 {status_code} {reason}',
-            *(': '.join(map(str, pair)) for pair in self.headers.items()),
+            *(': '.join(map(str, pair))
+              for pair in self.headers.items()),
             *([''] * 2)
-        ])
+        ))
         self._bytes = str(self).encode()
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        args = ', '.join(repr(obj) for obj in (status_code, self.headers))
+        args = ', '.join(map(repr, (status_code, self.headers, content)))
         self._repr = '%s.%s(%s)' % (module, name, args)
 
     def send(self, connection, address):

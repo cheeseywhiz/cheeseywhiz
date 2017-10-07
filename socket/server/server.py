@@ -28,7 +28,7 @@ class Server(socket.socket):
             finally:
                 connection.shutdown(socket.SHUT_RDWR)
                 connection.close()
-                logger.log('Closed: %s:%d', *address)
+                logger.log('Closed: %s:%d', *address).flush()
 
         return wrapper
 

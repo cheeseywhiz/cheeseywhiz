@@ -1,4 +1,5 @@
 """Provides a class for creating custom HTTP servers."""
+import functools
 import socket
 
 import collect
@@ -19,7 +20,6 @@ class App(server.Server):
         self.http_handlers = {}
         self.error_handlers = {}
         self.registered_folders = {}
-        self.registered_files = {}
 
     def register(self, url, *methods):
         """Register an endpoint at the server. The handler will only be called
@@ -30,6 +30,8 @@ class App(server.Server):
         (status_code, headers, content) used to create the HTTP response."""
         if not methods:
             methods = ('GET', )
+
+        url = http.HTTPPath(url).url
 
         def decorator(func):
             for method in methods:
@@ -45,26 +47,28 @@ class App(server.Server):
 
         return decorator
 
-    def _return_file(self, req):
-        fs_path = self.registered_files[req.path.url]
+    def _return_file(self, file, req):
+        with file.open('rb') as file_bytes:
+            content = file_bytes.read()
 
-        with fs_path.open('rb') as file:
-            content = file.read()
-
-        return 302, {'Content-Type': fs_path.type}, content
+        return 302, {'Content-Type': file.type}, content
 
     def register_files(self, mapping):
+        """Let the server recognize and respond with files from the
+        filesystem. The mapping argument shall have the desired URI paths as
+        the keys and the filesystem path as the values."""
         for target_uri, fs_path in mapping.items():
             uri_path = http.HTTPPath(target_uri)
-            self.register(uri_path.url)(self._return_file_)
-            self.registered_files[uri_path.url] = collect.path.Path(fs_path)
+            file = collect.path.Path(fs_path)
+            func = functools.partial(self._return_file, file)
+            self.register(uri_path.url)(func)
 
-    def register_folder(self, *uri_paths):
-        """Register an entire's folder worth of files."""
-        for folder in uri_paths:
-            fs_path = collect.path.Path(folder)
-            uri_path = http.HTTPPath(http.HTTPPath.root / fs_path.basename)
-            self.registered_folders[uri_path.url] = fs_path
+    def register_folders(self, mapping, recursive=True):
+        """Let the server recognize any file within the given folders."""
+        for target_uri, fs_path in mapping.items():
+            uri_path = http.HTTPPath(target_uri)
+            file = collect.path.Path(fs_path)
+            self.registered_folders[uri_path] = file, recursive
 
     def register_exception(self, type):
         """Register an exception handler. The handler is called with the active
@@ -79,14 +83,22 @@ class App(server.Server):
     def _handle_request(self, req: http.HTTPRequest):
         method_handlers = self.http_handlers[req.method]
 
-        if any(req.path in folder for folder in self.registered_folders):
-            pass
-
-        if req.url not in method_handlers:
-            raise http.HTTPException(req.url, 404)
+        if req.url in method_handlers:
+            handler = method_handlers[req.url]
+        else:
+            for uri_path, (dir_path, recur) in self.registered_folders.items():
+                file_path = dir_path / (req.path.relpath(uri_path))
+                if (
+                    file_path in dir_path
+                    if recur else
+                    dir_path.contains_toplevel(file_path)
+                ) and file_path.is_file():
+                    handler = functools.partial(self._return_file, file_path)
+                    break
+            else:
+                raise http.HTTPException(req.url, 404)
 
         header = {'Content-Type': 'text/html'}
-        handler = method_handlers[req.url]
         response = handler(req)
 
         if isinstance(response, tuple):
@@ -117,7 +129,7 @@ class App(server.Server):
                 code, {'Content-Type': 'text/html'}, text.encode()
             ).send(connection, address)
 
-        logger.log_exc('An exception was raised:').flush()
+        logger.log_exc('An exception was raised:')
 
     def handle_connection(self, connection, address):
         connection.settimeout(self.timeout)
@@ -134,7 +146,5 @@ class App(server.Server):
 
                 if req.headers.get('Connection') == 'close':
                     break
-                else:
-                    logger.flush()
             except Exception as error:
                 self._handle_exception(connection, address, error)
