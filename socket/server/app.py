@@ -53,22 +53,28 @@ class App(server.Server):
 
         return 302, {'Content-Type': file.type}, content
 
-    def register_files(self, mapping):
-        """Let the server recognize and respond with files from the
-        filesystem. The mapping argument shall have the desired URI paths as
-        the keys and the filesystem path as the values."""
+    def register_filesystem(self, mapping):
+        """Let the server recognize and serve individual files from the
+        filesytem or any file within a directory. The given mapping shall
+        map target URIs to a file path. A directory entry may be specified as a
+        path string or a tuple (path, bool) where bool decides wether files
+        will be served recursively within the directory."""
         for target_uri, fs_path in mapping.items():
-            uri_path = http.HTTPPath(target_uri)
-            file = collect.path.Path(fs_path)
-            func = functools.partial(self._return_file, file)
-            self.register(uri_path.url)(func)
+            if isinstance(fs_path, tuple):
+                fs_path, recursive = fs_path
+            else:
+                recursive = True
 
-    def register_folders(self, mapping, recursive=True):
-        """Let the server recognize any file within the given folders."""
-        for target_uri, fs_path in mapping.items():
             uri_path = http.HTTPPath(target_uri)
             file = collect.path.Path(fs_path)
-            self.registered_folders[uri_path] = file, recursive
+
+            if file.is_file():
+                func = functools.partial(self._return_file, file)
+                self.register(uri_path.url)(func)
+            elif file.is_dir():
+                self.registered_folders[uri_path] = file, recursive
+            else:
+                raise ValueError(f'Not directory or file: {file}')
 
     def register_exception(self, type):
         """Register an exception handler. The handler is called with the active

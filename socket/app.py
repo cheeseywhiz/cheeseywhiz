@@ -18,14 +18,13 @@ HTML_TMPL = '''\
 
 app = server.app.App('0.0.0.0', 8080)
 server.http.HTTPPath.root = __file__ + '/..'
-app.register_files({
+app.register_filesystem({
     'img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
-    'myStyle.css': 'myStyle.css'
-})
-app.register_folders({
+    'myStyle.css': 'myStyle.css',
     'pkg': 'server',
     'root': '/',
     'imgs': '~/Pictures/',
+    'imgs/wallpapers': '~/Pictures/wallpapers',
 })
 
 
@@ -57,7 +56,8 @@ def dir_landing_page(uri_path, folder_path, req):
                 server.http.HTTPPath(uri_path / file.relpath(folder_path)).url,
                 file.relpath(folder_path))
             for file in folder_path
-            if file.is_file())
+            # if file.is_file()
+        )
     )
 
 
