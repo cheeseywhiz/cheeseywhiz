@@ -4,7 +4,7 @@ body {
 }
 
 #consolas {
-    font-family: Consolas;
+    font-family: Consolas, Monospace, "Courier New";
 }
 
 a {

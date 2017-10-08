@@ -5,33 +5,39 @@ import traceback
 
 import server
 
+server.Logger.name = __file__
 HTML_TMPL = '''\
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="/myStyle.css"/>
 </head>
 <body id="consolas">
-%s
-</body>
+%s</body>
 </html>
 '''
+LINK_HOME = '<a href="/">Home</a>'
 
 app = server.app.App('0.0.0.0', 8080)
-server.http.HTTPPath.root = __file__ + '/..'
+server.http.HTTPPath.root = ''
 app.register_filesystem({
     'img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
     'myStyle.css': 'myStyle.css',
     'pkg': 'server',
-    'root': '/',
+    'home': ('~', False),
     'imgs': '~/Pictures/',
-    'imgs/wallpapers': '~/Pictures/wallpapers',
 })
 
 
 def insert_body(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return HTML_TMPL % func(*args, **kwargs)
+        response = func(*args, **kwargs)
+
+        if isinstance(response, tuple):
+            status_code, headers, text = response
+            return status_code, headers, HTML_TMPL % text
+        else:
+            return HTML_TMPL % response
 
     return wrapper
 
@@ -44,58 +50,90 @@ def index(req):
     <form action="/" method="post">
         <input id="consolas" type="text" name="url"><br/>
         <input id="consolas" type="submit" value="Submit">
-    </form>'''
+    </form>
+'''
 
 
 @insert_body
-def dir_landing_page(uri_path, folder_path, req):
-    return (
-        f'    <h1>{uri_path}</h1>'
-        + '<br/>'.join(
-            '\n    <a href="%s">%s</a>' % (
-                server.http.HTTPPath(uri_path / file.relpath(folder_path)).url,
-                file.relpath(folder_path))
-            for file in folder_path
-            # if file.is_file()
-        )
-    )
+def dir_landing_page(uri_path, folder_path, recursive, req):
+    def contents():
+        yield folder_path.parent
+        yield folder_path
+        yield from folder_path
 
+    parts = []
 
-for uri_path, (fs_path, _) in app.registered_folders.items():
-    app.register(uri_path)(
-        functools.partial(dir_landing_page, uri_path, fs_path)
-    )
+    for file in contents():
+        rel_path = file.relpath(folder_path)
+        new_uri = uri_path / rel_path
+        if recursive or file.is_file():
+            parts.append(f'''
+        <a href="{new_uri}">{rel_path}</a>''')
 
-
-@app.register('/', 'post')
-@insert_body
-def index_post(req):
-    input = req.body['url']
-    return f'''
-    <p>
-        {input}<br/>
-        <a href="/">Home</a>
+    inner = '<br/>'.join(parts)
+    return f'''\
+    <h1>{LINK_HOME}{uri_path}</h1>
+    <p>{inner}
     </p>
 '''
 
 
+for uri_path, fs_path in app.registered_fs_paths.items():
+    if isinstance(fs_path, tuple):
+        fs_path, recursive = fs_path
+    else:
+        recursive = True
+
+    if not fs_path.is_dir():
+        continue
+
+    def contents():
+        if recursive:
+            yield from fs_path.tree
+        else:
+            yield fs_path
+
+    for file in contents():
+        if not file.is_dir():
+            continue
+
+        rel_file = file.relpath(fs_path)
+        new_uri = uri_path / rel_file
+        app.register(new_uri)(
+            functools.partial(dir_landing_page, new_uri, file, recursive)
+        )
+
+
+@app.register('/', 'post')
+def index_post(req):
+    input = req.body['url']
+    new_uri = server.http.HTTPPath(input)
+    return 303, {'Location': str(new_uri)}, ''
+
+
 @app.register('page')
 def page(req):
-    return 307, {'Location': '/new'}, HTML_TMPL % ''
+    return 307, {'Location': '/new'}, ''
 
 
 @app.register('new')
 @insert_body
 def new(req):
-    return '<p>This is the new page. You may have been redirected.</p>'
+    return f'''\
+    <p>
+        This is the new page. You may have been redirected.<br/>
+        {LINK_HOME}
+    </p>
+'''
 
 
 @app.register_exception(server.http.HTTPException)
 def handle_http(error):
-    body = '''\
+    body = f'''\
     <h1>%d %s</h1>
     <pre id="consolas">%s</pre>
-''' % (error.status_code, error.reason, html.escape(error.message))
+    {LINK_HOME}
+''' % (error.status_code, error.reason, html.escape(str(error.message)))
 
     return error.status_code, HTML_TMPL % body
 

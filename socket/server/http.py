@@ -1,5 +1,6 @@
 """Provides classes for HTTP utility."""
 import collections.abc
+import gzip
 import html
 import http
 import os
@@ -8,7 +9,7 @@ import urllib.parse
 
 import collect
 
-from . import logger
+from .logger import Logger
 
 __all__ = [
     'CaseInsensitiveDict', 'HTTPException', 'HTTPPath', 'HTTPPathMeta',
@@ -39,8 +40,6 @@ class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
     """Relative path to the selected resource based on the class's root
     property. Instance creation is restricted to the root directory and beyond
     and HTTPException is raised if attempted."""
-    root = __file__ + '/..'
-
     def __new__(cls, path=None):
         if cls.root is None:
             root = collect.path.Path.cwd()
@@ -68,17 +67,26 @@ class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
                 path = '/' + new_path
                 raise HTTPException(path, 403)
 
-        self = super().__new__(cls, self.relpath())
+        return super().__new__(cls, self.relpath())
+
+    @collect.path.PathBase.MakeStr
+    def join(self, *others):
+        return os.path.join(self, *others)
+
+    def __str__(self):
+        cls = self.__class__
+
+        if cls.root is None:
+            root = collect.path.Path.cwd()
+        else:
+            root = cls.root
+
         url = str(self.relpath(root))
 
         if len(url) == 1 and url[0] == '.':
             url = ''
 
-        self.url = '/' + url
-        return self
-
-    def __str__(self):
-        return '/' + super().__str__()
+        return '/' + url
 
 
 class CaseInsensitiveDict(collections.abc.MutableMapping):
@@ -124,7 +132,8 @@ class CaseInsensitiveDict(collections.abc.MutableMapping):
 class HTTPException(Exception):
     """The main exception used in HTTP server programs. The exception is able
     to send a formatted HTML to the specified connection."""
-    HTML_TEMPLATE = '''<!DOCTYPE html>
+    HTML_TEMPLATE = '''\
+<!DOCTYPE html>
 <html>
 <body>
     <h1>%d %s</h1>
@@ -134,37 +143,50 @@ class HTTPException(Exception):
 '''
 
     def __init__(self, message=None, status_code=500):
-        self.status_code = http.HTTPStatus(status_code)
-        self.reason = self.status_code.phrase
+        self.message = message
+        self.status_code = status_code
+        self.reason = http.HTTPStatus(status_code).phrase
         exc_message = f'{self.status_code} {self.reason}'
 
-        if message is None:
-            self.message = ''
-        else:
-            self.message = message
-            exc_message += f' ({message})'
+        if self.message is not None:
+            exc_message += f' ({self.message})'
 
         super().__init__(exc_message)
 
     def format(self):
         """Format the exception's data in a short HTML message."""
-        return self.HTML_TEMPLATE % (
-            self.status_code, self.reason, html.escape(self.message)
-        )
+        if self.message is None:
+            message = ''
+        else:
+            message = str(self.message)
 
-    def send(self, connection, address=None):
+        return self.HTML_TEMPLATE % (
+            self.status_code, self.reason, html.escape(message))
+
+    def send(self, connection, address):
         """Send the corresponding error data to the connection
         socket in an HTML format."""
         error_message = self.format()
         header = {
             'Content-Type': 'text/html',
-            'Date': HTTPResponse.rfc1123_datetime(),
         }
 
         HTTPResponse(
             self.status_code, header, error_message.encode()
         ).send(connection, address)
         return self
+
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        defaults = dict(message=None, status_code=500)
+        kwargs = dict(message=self.message, status_code=self.status_code)
+        kwargs_str = ', '.join(
+            '%s=%r' % (name, value)
+            for name, value in kwargs.items()
+            if value != defaults[name])
+        return f'{module}.{name}({kwargs_str})'
 
 
 class HTTPRequest:
@@ -177,26 +199,29 @@ class HTTPRequest:
         if not raw_request:
             raise IOError('connection sent 0 bytes')
 
-        return cls._new_from_raw_request(raw_request)
+        return cls._new_from_raw_request(raw_request, _init_body=False)
 
     def __init__(self, connection, address, buf_size):
-        content_length = self.headers.get('Content-Length')
+        content_length = int(self.headers.get('Content-Length', 0))
 
-        if content_length and not self.after_header:
-            content_length = int(content_length)
-            n_full_packets = content_length // buf_size
-            n_left_over_bytes = content_length % buf_size
-            packets = [
-                connection.recv(buf_size)
-                for _ in range(n_full_packets)]
-            packets.append(connection.recv(n_left_over_bytes))
-            self.after_header = b''.join(packets).decode()
+        if content_length and len(self.after_header) < content_length:
+            diff = content_length - len(self.after_header)
+            n_full_packets = diff // buf_size
+            n_left_over_bytes = diff % buf_size
+            self.after_header = b''.join((
+                *(connection.recv(buf_size)
+                  for _ in range(n_full_packets)),
+                connection.recv(n_left_over_bytes)
+            )).decode()
 
+        self._init_body()
+        Logger.log('%s requested from %s:%d', self.request_line, *address)
+
+    def _init_body(self):
         self.body = self.parse_data_string(self.after_header.split('\n')[0])
-        logger.log('%s requested from %s:%d', self.request_line, *address)
 
     @classmethod
-    def _new_from_raw_request(cls, raw_request):
+    def _new_from_raw_request(cls, raw_request, _init_body=True):
         self = super().__new__(cls)
         status_line, *headers = raw_request.split('\n')
         self.request_line = status_line.strip()
@@ -205,8 +230,7 @@ class HTTPRequest:
         self.headers = CaseInsensitiveDict()
 
         parse = urllib.parse.urlparse(uri)
-        self.path = HTTPPath(parse.path)
-        self.url = self.path.url
+        self.path = HTTPPath(urllib.parse.unquote_plus(parse.path))
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
 
@@ -218,6 +242,13 @@ class HTTPRequest:
 
             name, value = line.strip().split(':', maxsplit=1)
             self.headers.update({name: value.strip()})
+        else:
+            self.after_header = ''
+
+        if _init_body:
+            self._init_body()
+        else:
+            self.body = ''
 
         return self
 
@@ -241,46 +272,39 @@ class HTTPResponse:
     """Prepare and send an HTTP response."""
 
     def __init__(self, status_code: int=200, headers: dict=None,
-                 content: bytes=None):
+                 content: bytes=b'', compress: bool=False):
 
-        if content is None:
-            self.content = b''
-        else:
-            self.content = content
+        self.status_code = status_code
+        self.reason = http.HTTPStatus(self.status_code).phrase
+        self.headers = {}
 
-        self.headers = {
-            'Date': self.rfc1123_datetime(),
+        if headers is None:
+            headers = {}
+
+        self.content = content
+        self.compress = compress
+
+        if self.compress:
+            self.content = gzip.compress(self.content)
+            self.headers['Content-Encoding'] = 'gzip'
+
+        self.headers.update({
+            'Date': self.datetime(),
             'Connection': 'keep-alive',
             'Content-Length': len(self.content),
-        }
-        self.headers.update(headers)
-
-        reason = http.HTTPStatus(status_code).phrase
-        self._str = '\r\n'.join((
-            f'HTTP/1.1 {status_code} {reason}',
-            *(': '.join(map(str, pair))
-              for pair in self.headers.items()),
-            *([''] * 2)
-        ))
-        self._bytes = str(self).encode()
-        cls = self.__class__
-        module = cls.__module__
-        name = cls.__name__
-        args = ', '.join(map(repr, (status_code, self.headers, content)))
-        self._repr = '%s.%s(%s)' % (module, name, args)
+        }, **headers)
 
     def send(self, connection, address):
         """Send the prepared request to the connection socket."""
         connection.sendall(bytes(self))
         connection.sendall(self.content)
         first_line = str(self).splitlines()[0]
-        logger.log('%s sent to %s:%d', first_line, *address)
+        Logger.log('%s sent to %s:%d', first_line, *address)
         return self
 
     @staticmethod
-    def rfc1123_datetime(time_struct=None):
-        """Return the formatted date and time for the Date response header
-        field."""
+    def datetime(time_struct=None):
+        """Return the RFC 1123 formatted date and time."""
         if time_struct is None:
             time_struct = time.gmtime()
 
@@ -298,10 +322,28 @@ class HTTPResponse:
             f'{day}, %d {month} %Y %H:%M:%S %Z', time_struct)
 
     def __str__(self):
-        return self._str
+        return '\r\n'.join((
+            f'HTTP/1.1 {self.status_code} {self.reason}',
+            *('%s: %s' % pair
+              for pair in self.headers.items()),
+            *([''] * 2)
+        ))
 
     def __bytes__(self):
-        return self._bytes
+        return str(self).encode()
 
     def __repr__(self):
-        return self._repr
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        defaults = dict(
+            status_code=200, headers=None, content=b'', compress=False)
+        kwargs = dict(
+            status_code=self.status_code, headers=self.headers,
+            content=self.content, compress=self.compress)
+        kwargs_str = ', '.join(
+            '%s=%r' % (name, value)
+            for name, value in kwargs.items()
+            if value != defaults[name]
+        )
+        self._repr = f'{module}.{name}({kwargs_str})'
