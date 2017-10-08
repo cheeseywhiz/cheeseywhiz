@@ -89,17 +89,17 @@ class App(server.Server):
 
         return decorator
 
-    def _get_handler_from_fs(self, req):
+    def _get_handler_from_fs(self, req_path):
         for uri_path, fs_path in self.registered_fs_paths.items():
             if isinstance(fs_path, tuple):
                 fs_path, recursive = fs_path
             else:
                 recursive = True
 
-            if req.path == uri_path and fs_path.is_file():
+            if req_path == uri_path and fs_path.is_file():
                 return functools.partial(self._return_file, fs_path)
 
-            new_file = fs_path / (req.path.relpath(uri_path))
+            new_file = fs_path / (req_path.relpath(uri_path))
             if (
                 new_file in fs_path
                 if recursive else
@@ -113,7 +113,7 @@ class App(server.Server):
         if req.path in method_handlers:
             handler = method_handlers[req.path]
         else:
-            handler = self._get_handler_from_fs(req)
+            handler = self._get_handler_from_fs(req.path)
 
         if handler is None:
             raise http.HTTPException(req.path, 404)
@@ -132,7 +132,7 @@ class App(server.Server):
             'gzip' in req.headers.get('Accept-Encoding', '')
         )
 
-    def _handle_exception(self, connection, address, error):
+    def _handle_exception(self, connection, address, error, req):
         try:
             handler = next(
                 func
@@ -143,7 +143,8 @@ class App(server.Server):
         else:
             code, text = handler(error)
             http.HTTPResponse(
-                code, {'Content-Type': 'text/html'}, text.encode()
+                code, {'Content-Type': 'text/html'}, text.encode(),
+                'gzip' in req.headers.get('Accept-Encoding', '')
             ).send(connection, address)
 
         Logger.exception('An exception was raised:')
@@ -153,16 +154,15 @@ class App(server.Server):
 
         while True:
             try:
-                try:
-                    req = http.HTTPRequest(
-                        connection, address, self.max_recv_size)
-                except (socket.timeout, IOError):
-                    break
+                req = http.HTTPRequest(connection, address, self.max_recv_size)
+            except (socket.timeout, IOError):
+                break
 
+            try:
                 self._handle_request(req).send(connection, address)
-
+            except Exception as error:
+                self._handle_exception(connection, address, error, req)
+            else:
                 if req.headers.get('Connection') == 'close':
                     Logger.log('Deliberately closing %s:%d' % address)
                     break
-            except Exception as error:
-                self._handle_exception(connection, address, error)

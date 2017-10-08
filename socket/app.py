@@ -130,10 +130,10 @@ def new(req):
 @app.register_exception(server.http.HTTPException)
 def handle_http(error):
     body = f'''\
-    <h1>%d %s</h1>
-    <pre id="consolas">%s</pre>
+    <h1>{error.status_code} {error.reason}</h1>
+    <pre id="consolas">{html.escape(str(error.message))}</pre>
     {LINK_HOME}
-''' % (error.status_code, error.reason, html.escape(str(error.message)))
+'''
 
     return error.status_code, HTML_TMPL % body
 
@@ -143,6 +143,8 @@ def handle_exc(error):
     new_error = server.http.HTTPException(traceback.format_exc(), 500)
     return handle_http(new_error)
 
+
+print('ready')
 
 if __name__ == '__main__':
     app.run()
