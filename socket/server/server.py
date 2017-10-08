@@ -1,6 +1,9 @@
 """Provides a simple TCP server class."""
+import os
 import socket
 import threading
+
+import collect
 
 from .logger import Logger
 
@@ -52,3 +55,74 @@ class Server(socket.socket):
             """Ensure that the socket is closed when it goes out of scope."""
             super().close()
             super().__del__()
+
+
+class PathMeta(collect.path.PathMeta):
+    """Specialization of collect.path.PathMeta class with a root descriptor."""
+    def __new__(cls, name, bases, namespace):
+        self = super().__new__(cls, name, bases, namespace)
+        self.root = namespace.get('root')
+        return self
+
+    @property
+    def root(self):
+        """Holds the project's root directory. New values are passed to new
+        collect.path.Path."""
+        return self._root
+
+    @root.setter
+    def root(self, path):
+        self._root = collect.path.Path(path) if path is not None else None
+
+
+class Path(collect.path.Path, metaclass=PathMeta):
+    """Relative path to the selected resource based on the class's root
+    property. Instance creation is restricted to the root directory and beyond
+    and PermissionError is raised if attempted."""
+    def __new__(cls, path=None):
+        if cls.root is None:
+            root = collect.path.Path.cwd()
+        else:
+            root = cls.root
+
+        if not path:
+            path = ''
+
+        path = os.fspath(path)
+
+        if path.startswith('/'):
+            path = path[1:]
+
+        parts = path.split('/')
+
+        for i in range(len(parts)):
+            new_path = '/'.join(parts[:1 + i])
+            self = root / new_path
+
+            if self == root:
+                continue
+
+            if self not in root:
+                path = '/' + new_path
+                raise PermissionError(path)
+
+        return super().__new__(cls, self.relpath())
+
+    @collect.path.PathBase.MakeStr
+    def join(self, *others):
+        return os.path.join(self, *others)
+
+    def __str__(self):
+        cls = self.__class__
+
+        if cls.root is None:
+            root = collect.path.Path.cwd()
+        else:
+            root = cls.root
+
+        url = str(self.relpath(root))
+
+        if len(url) == 1 and url[0] == '.':
+            url = ''
+
+        return '/' + url

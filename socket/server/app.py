@@ -31,7 +31,7 @@ class App(server.Server):
         if not methods:
             methods = ('GET', )
 
-        url_path = http.Path(url)
+        url_path = server.Path(url)
 
         def decorator(func):
             for method in methods:
@@ -71,7 +71,7 @@ class App(server.Server):
             else:
                 recursive = True
 
-            uri_path = http.Path(target_uri)
+            uri_path = server.Path(target_uri)
             file = collect.path.Path(fs_path)
 
             if not recursive:

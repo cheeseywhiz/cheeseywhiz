@@ -3,90 +3,15 @@ import collections.abc
 import gzip
 import html
 import http
-import os
 import time
 import urllib.parse
 
-import collect
-
+from . import server
 from .logger import Logger
 
 __all__ = [
-    'CaseInsensitiveDict', 'HTTPException', 'Path', 'PathMeta', 'Request',
-    'Response',
+    'CaseInsensitiveDict', 'HTTPException', 'Request', 'Response',
 ]
-
-
-class PathMeta(collect.path.PathMeta):
-    """Specialization of collect.path.PathMeta class with a root descriptor
-    for HTTP paths."""
-    def __new__(cls, name, bases, namespace):
-        self = super().__new__(cls, name, bases, namespace)
-        self.root = namespace.get('root')
-        return self
-
-    @property
-    def root(self):
-        """Holds the project's root directory. New values are passed to new
-        collect.path.Path."""
-        return self._root
-
-    @root.setter
-    def root(self, path):
-        self._root = collect.path.Path(path) if path is not None else None
-
-
-class Path(collect.path.Path, metaclass=PathMeta):
-    """Relative path to the selected resource based on the class's root
-    property. Instance creation is restricted to the root directory and beyond
-    and HTTPException is raised if attempted."""
-    def __new__(cls, path=None):
-        if cls.root is None:
-            root = collect.path.Path.cwd()
-        else:
-            root = cls.root
-
-        if not path:
-            path = ''
-
-        path = os.fspath(path)
-
-        if path.startswith('/'):
-            path = path[1:]
-
-        parts = path.split('/')
-
-        for i in range(len(parts)):
-            new_path = '/'.join(parts[:1 + i])
-            self = root / new_path
-
-            if self == root:
-                continue
-
-            if self not in root:
-                path = '/' + new_path
-                raise HTTPException(path, 403)
-
-        return super().__new__(cls, self.relpath())
-
-    @collect.path.PathBase.MakeStr
-    def join(self, *others):
-        return os.path.join(self, *others)
-
-    def __str__(self):
-        cls = self.__class__
-
-        if cls.root is None:
-            root = collect.path.Path.cwd()
-        else:
-            root = cls.root
-
-        url = str(self.relpath(root))
-
-        if len(url) == 1 and url[0] == '.':
-            url = ''
-
-        return '/' + url
 
 
 class CaseInsensitiveDict(collections.abc.MutableMapping):
@@ -239,7 +164,7 @@ class Request:
         self.headers = CaseInsensitiveDict()
 
         parse = urllib.parse.urlparse(uri)
-        self.path = Path(urllib.parse.unquote_plus(parse.path))
+        self.path = server.Path(urllib.parse.unquote_plus(parse.path))
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
 

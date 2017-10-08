@@ -18,7 +18,7 @@ HTML_TMPL = '''\
 LINK_HOME = '<a href="/">Home</a>'
 
 app = server.app.App('0.0.0.0', 8080)
-server.http.Path.root = ''
+server.server.Path.root = ''
 app.register_filesystem({
     'img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
     'myStyle.css': 'myStyle.css',
@@ -108,7 +108,7 @@ for uri_path, fs_path in app.registered_fs_paths.items():
 @app.register('/', 'post')
 def index_post(req):
     input = req.body['url']
-    new_uri = server.http.Path(input)
+    new_uri = server.server.Path(input)
     return 303, {'Location': str(new_uri)}, ''
 
 
