@@ -190,32 +190,40 @@ class HTTPException(Exception):
 
 
 class Request:
-    """Receive and parse bytes from the connection socket. Raises IOError if
-    the connection sent 0 bytes."""
+    """Receive and parse bytes from a connection socket or from a raw request
+    string. Raises IOError if the connection sends 0 bytes."""
 
-    def __new__(cls, connection, address, buf_size):
-        raw_request = connection.recv(buf_size).decode()
+    def __new__(cls, connection, address=None, buf_size=None):
+        if isinstance(connection, str):
+            raw_request = connection
+            _init_body = True
+        else:
+            raw_request = connection.recv(buf_size).decode()
 
-        if not raw_request:
-            raise IOError('connection sent 0 bytes')
+            if not raw_request:
+                raise IOError('Connection sent 0 bytes')
 
-        return cls._new_from_raw_request(raw_request, _init_body=False)
+            _init_body = False
 
-    def __init__(self, connection, address, buf_size):
-        content_length = int(self.headers.get('Content-Length', 0))
+        return cls._new_from_raw_request(raw_request, _init_body=_init_body)
 
-        if content_length and len(self.after_header) < content_length:
-            diff = content_length - len(self.after_header)
-            n_full_packets = diff // buf_size
-            n_left_over_bytes = diff % buf_size
-            self.after_header = b''.join((
-                *(connection.recv(buf_size)
-                  for _ in range(n_full_packets)),
-                connection.recv(n_left_over_bytes)
-            )).decode()
+    def __init__(self, connection, address=None, buf_size=None):
+        if not isinstance(connection, str):
+            content_length = int(self.headers.get('Content-Length', 0))
 
-        self._init_body()
-        Logger.log('%s requested from %s:%d', self.request_line, *address)
+            if content_length and len(self.after_header) < content_length:
+                diff = content_length - len(self.after_header)
+                n_full_packets = diff // buf_size
+                n_left_over_bytes = diff % buf_size
+                new_data = b''.join((
+                    *(connection.recv(buf_size)
+                      for _ in range(n_full_packets)),
+                    connection.recv(n_left_over_bytes)
+                )).decode()
+                self.after_header += new_data
+                self.raw_request += new_data
+
+            self._init_body()
 
     def _init_body(self):
         self.body = self.parse_data_string(self.after_header.split('\n')[0])
@@ -223,6 +231,7 @@ class Request:
     @classmethod
     def _new_from_raw_request(cls, raw_request, _init_body=True):
         self = super().__new__(cls)
+        self.raw_request = raw_request
         status_line, *headers = raw_request.split('\n')
         self.request_line = status_line.strip()
         self.method, uri, version = self.request_line.split()
@@ -267,12 +276,18 @@ class Request:
 
         return res
 
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        return f'{module}.{name}({self.raw_request !r})'
+
 
 class Response:
     """Prepare and send an HTTP response."""
 
     def __init__(self, status_code: int=200, headers: dict=None,
-                 content: bytes=b'', compress: bool=False):
+                 content: bytes=b'', from_request: Request=None):
 
         self.status_code = status_code
         self.reason = http.HTTPStatus(self.status_code).phrase
@@ -282,11 +297,13 @@ class Response:
             headers = {}
 
         self.content = content
-        self.compress = compress
+        self.from_request = from_request
 
-        if self.compress:
-            self.content = gzip.compress(self.content)
-            self.headers['Content-Encoding'] = 'gzip'
+        if 'gzip' in self.from_request.headers.get('Accept-Encoding', ''):
+            compressed = gzip.compress(self.content)
+            if len(self.content) - len(compressed) > 0:
+                self.content = compressed
+                self.headers['Content-Encoding'] = 'gzip'
 
         self.headers.update({
             'Date': self.datetime(),
@@ -298,8 +315,11 @@ class Response:
         """Send the prepared request to the connection socket."""
         connection.sendall(bytes(self))
         connection.sendall(self.content)
-        first_line = str(self).splitlines()[0]
-        Logger.log('%s sent to %s:%d', first_line, *address)
+        response_line = str(self).splitlines()[0]
+        Logger.log(
+            '%s requested from %s:%d',
+            self.from_request.request_line, *address)
+        Logger.log('%s sent to %s:%d', response_line, *address)
         return self
 
     @staticmethod
@@ -337,13 +357,13 @@ class Response:
         module = cls.__module__
         name = cls.__name__
         defaults = dict(
-            status_code=200, headers=None, content=b'', compress=False)
+            status_code=200, headers=None, content=b'', from_request=None)
         kwargs = dict(
             status_code=self.status_code, headers=self.headers,
-            content=self.content, compress=self.compress)
+            content=self.content, from_request=self.from_request)
         kwargs_str = ', '.join(
             '%s=%r' % (name, value)
             for name, value in kwargs.items()
             if value != defaults[name]
         )
-        self._repr = f'{module}.{name}({kwargs_str})'
+        return f'{module}.{name}({kwargs_str})'

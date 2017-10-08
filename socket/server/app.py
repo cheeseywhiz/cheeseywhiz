@@ -100,6 +100,7 @@ class App(server.Server):
                 return functools.partial(self._return_file, fs_path)
 
             new_file = fs_path / (req_path.relpath(uri_path))
+
             if (
                 new_file in fs_path
                 if recursive else
@@ -127,27 +128,26 @@ class App(server.Server):
             status_code, user_header, text = 200, {}, response
 
         header.update(user_header)
-        return http.Response(
-            status_code, header, getattr(text, 'encode', lambda: text)(),
-            'gzip' in req.headers.get('Accept-Encoding', '')
-        )
+        return status_code, header, getattr(text, 'encode', lambda: text)()
 
-    def _handle_exception(self, connection, address, error, req):
+    def _handle_exception(self, error):
+        Logger.exception('An exception was raised:')
+
         try:
             handler = next(
                 func
                 for type, func in self.error_handlers.items()
                 if isinstance(error, type))
         except StopIteration:
-            pass
+            new_exc = http.HTTPException(
+                f'An exception ({type(error).__name__}: {error}) went'
+                ' unhandled')
+            text = new_exc.format()
+            status_code = new_exc.status_code
         else:
-            code, text = handler(error)
-            http.Response(
-                code, {'Content-Type': 'text/html'}, text.encode(),
-                'gzip' in req.headers.get('Accept-Encoding', '')
-            ).send(connection, address)
+            status_code, text = handler(error)
 
-        Logger.exception('An exception was raised:')
+        return status_code, {'Content-Type': 'text/html'}, text.encode()
 
     def handle_connection(self, connection, address):
         connection.settimeout(self.timeout)
@@ -156,13 +156,16 @@ class App(server.Server):
             try:
                 req = http.Request(connection, address, self.max_recv_size)
             except (socket.timeout, IOError):
+                Logger.log('Timed out: %s:%s', *address)
                 break
 
             try:
-                self._handle_request(req).send(connection, address)
+                args = self._handle_request(req)
             except Exception as error:
-                self._handle_exception(connection, address, error, req)
+                args = self._handle_exception(error)
             else:
                 if req.headers.get('Connection') == 'close':
-                    Logger.log('Deliberately closing %s:%d' % address)
+                    Logger.log('Deliberately closing %s:%d', *address)
                     break
+
+            http.Response(*args, req).send(connection, address)

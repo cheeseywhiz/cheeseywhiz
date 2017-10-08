@@ -25,6 +25,7 @@ app.register_filesystem({
     'pkg': 'server',
     'home': ('~', False),
     'imgs': '~/Pictures/',
+    'cfg': '~/.config',
 })
 
 
