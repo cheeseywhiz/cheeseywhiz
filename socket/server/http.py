@@ -12,12 +12,12 @@ import collect
 from .logger import Logger
 
 __all__ = [
-    'CaseInsensitiveDict', 'HTTPException', 'HTTPPath', 'HTTPPathMeta',
-    'HTTPRequest', 'HTTPResponse'
+    'CaseInsensitiveDict', 'HTTPException', 'Path', 'PathMeta', 'Request',
+    'Response',
 ]
 
 
-class HTTPPathMeta(collect.path.PathMeta):
+class PathMeta(collect.path.PathMeta):
     """Specialization of collect.path.PathMeta class with a root descriptor
     for HTTP paths."""
     def __new__(cls, name, bases, namespace):
@@ -36,7 +36,7 @@ class HTTPPathMeta(collect.path.PathMeta):
         self._root = collect.path.Path(path) if path is not None else None
 
 
-class HTTPPath(collect.path.Path, metaclass=HTTPPathMeta):
+class Path(collect.path.Path, metaclass=PathMeta):
     """Relative path to the selected resource based on the class's root
     property. Instance creation is restricted to the root directory and beyond
     and HTTPException is raised if attempted."""
@@ -171,7 +171,7 @@ class HTTPException(Exception):
             'Content-Type': 'text/html',
         }
 
-        HTTPResponse(
+        Response(
             self.status_code, header, error_message.encode()
         ).send(connection, address)
         return self
@@ -189,7 +189,7 @@ class HTTPException(Exception):
         return f'{module}.{name}({kwargs_str})'
 
 
-class HTTPRequest:
+class Request:
     """Receive and parse bytes from the connection socket. Raises IOError if
     the connection sent 0 bytes."""
 
@@ -230,7 +230,7 @@ class HTTPRequest:
         self.headers = CaseInsensitiveDict()
 
         parse = urllib.parse.urlparse(uri)
-        self.path = HTTPPath(urllib.parse.unquote_plus(parse.path))
+        self.path = Path(urllib.parse.unquote_plus(parse.path))
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
 
@@ -268,7 +268,7 @@ class HTTPRequest:
         return res
 
 
-class HTTPResponse:
+class Response:
     """Prepare and send an HTTP response."""
 
     def __init__(self, status_code: int=200, headers: dict=None,

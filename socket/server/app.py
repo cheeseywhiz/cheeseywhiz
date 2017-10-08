@@ -25,13 +25,13 @@ class App(server.Server):
         """Register an endpoint at the server. The handler will only be called
         when the request matches the given HTTP method here. Handlers for the
         same url but for different methods are allowed. The handler will be
-        called with an http.HTTPRequest object as the first argument. The
+        called with an http.Request object as the first argument. The
         handler shall return the string of the page contents or a tuple
         (status_code, headers, content) used to create the HTTP response."""
         if not methods:
             methods = ('GET', )
 
-        url_path = http.HTTPPath(url)
+        url_path = http.Path(url)
 
         def decorator(func):
             for method in methods:
@@ -71,7 +71,7 @@ class App(server.Server):
             else:
                 recursive = True
 
-            uri_path = http.HTTPPath(target_uri)
+            uri_path = http.Path(target_uri)
             file = collect.path.Path(fs_path)
 
             if not recursive:
@@ -107,7 +107,7 @@ class App(server.Server):
             ) and new_file.is_file():
                 return functools.partial(self._return_file, new_file)
 
-    def _handle_request(self, req: http.HTTPRequest):
+    def _handle_request(self, req: http.Request):
         method_handlers = self.http_handlers[req.method]
 
         if req.path in method_handlers:
@@ -127,7 +127,7 @@ class App(server.Server):
             status_code, user_header, text = 200, {}, response
 
         header.update(user_header)
-        return http.HTTPResponse(
+        return http.Response(
             status_code, header, getattr(text, 'encode', lambda: text)(),
             'gzip' in req.headers.get('Accept-Encoding', '')
         )
@@ -142,7 +142,7 @@ class App(server.Server):
             pass
         else:
             code, text = handler(error)
-            http.HTTPResponse(
+            http.Response(
                 code, {'Content-Type': 'text/html'}, text.encode(),
                 'gzip' in req.headers.get('Accept-Encoding', '')
             ).send(connection, address)
@@ -154,7 +154,7 @@ class App(server.Server):
 
         while True:
             try:
-                req = http.HTTPRequest(connection, address, self.max_recv_size)
+                req = http.Request(connection, address, self.max_recv_size)
             except (socket.timeout, IOError):
                 break
 
