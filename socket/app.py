@@ -3,6 +3,8 @@ import functools
 import html
 import traceback
 
+import collect
+
 import server
 
 server.Logger.name = __file__
@@ -18,14 +20,13 @@ HTML_TMPL = '''\
 LINK_HOME = '<a href="/">Home</a>'
 
 app = server.app.App('0.0.0.0', 8080)
-server.server.Path.root = ''
-app.register_filesystem({
-    'img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
-    'myStyle.css': 'myStyle.css',
-    'pkg': 'server',
-    'home': ('~', False),
-    'imgs': '~/Pictures/',
-    'cfg': '~/.config',
+app.resolver.update({
+    '/img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
+    '/myStyle.css': 'myStyle.css',
+    '/pkg': 'server',
+    '/home': ('~', False),
+    '/imgs': '~/Pictures/',
+    '/cfg': '~/.config',
 })
 
 
@@ -56,7 +57,7 @@ def index(req):
 
 
 @insert_body
-def dir_landing_page(uri_path, folder_path, recursive, req):
+def dir_landing_page(url_path, folder_path, recursive, req):
     def contents():
         yield folder_path.parent
         yield folder_path
@@ -66,27 +67,21 @@ def dir_landing_page(uri_path, folder_path, recursive, req):
 
     for file in contents():
         rel_path = file.relpath(folder_path)
-        new_uri = uri_path / rel_path
+        new_url = url_path / rel_path
         if recursive or file.is_file():
             parts.append(f'''
-        <a href="{new_uri}">{rel_path}</a>''')
+        <a href="{new_url}">{rel_path}</a>''')
 
     inner = '<br/>'.join(parts)
     return f'''\
-    <h1>{LINK_HOME}{uri_path}</h1>
+    <h1>{LINK_HOME}{url_path}</h1>
     <p>{inner}
     </p>
 '''
 
 
-for uri_path, fs_path in app.registered_fs_paths.items():
-    if isinstance(fs_path, tuple):
-        fs_path, recursive = fs_path
-    else:
-        recursive = True
-
-    if not fs_path.is_dir():
-        continue
+for url_path, fs_path in app.resolver.dirs.items():
+    recursive = app.resolver.recursive(fs_path)
 
     def contents():
         if recursive:
@@ -99,25 +94,25 @@ for uri_path, fs_path in app.registered_fs_paths.items():
             continue
 
         rel_file = file.relpath(fs_path)
-        new_uri = uri_path / rel_file
-        app.register(new_uri)(
-            functools.partial(dir_landing_page, new_uri, file, recursive)
+        new_url = url_path / rel_file
+        app.register(new_url)(
+            functools.partial(dir_landing_page, new_url, file, recursive)
         )
 
 
 @app.register('/', 'post')
 def index_post(req):
     input = req.body['url']
-    new_uri = server.server.Path(input)
-    return 303, {'Location': str(new_uri)}, ''
+    new_url = collect.path.Path(input)
+    return 303, {'Location': str(new_url)}, ''
 
 
-@app.register('page')
+@app.register('/page')
 def page(req):
     return 307, {'Location': '/new'}, ''
 
 
-@app.register('new')
+@app.register('/new')
 @insert_body
 def new(req):
     return f'''\

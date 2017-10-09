@@ -1,4 +1,5 @@
 """Provides a simple TCP server class."""
+import collections
 import os
 import socket
 import threading
@@ -7,7 +8,7 @@ import collect
 
 from .logger import Logger
 
-__all__ = ['Server']
+__all__ = ['Server', 'URLResolver']
 
 
 class Server(socket.socket):
@@ -57,72 +58,107 @@ class Server(socket.socket):
             super().__del__()
 
 
-class PathMeta(collect.path.PathMeta):
-    """Specialization of collect.path.PathMeta class with a root descriptor."""
-    def __new__(cls, name, bases, namespace):
-        self = super().__new__(cls, name, bases, namespace)
-        self.root = namespace.get('root')
-        return self
+class URLResolver(collections.abc.MutableMapping):
+    """Map URL endpoints to file system paths. It will resolve an arbitrary URL
+    path that is inside a directory to the corresponding path in the
+    corresponding directory."""
+    __slots__ = '__files', '__dirs', '__recursive'
+
+    def __getitem__(self, key):
+        if key in self.__files:
+            return self.__files[key]
+        elif key in self.__dirs:
+            return self.__dirs[key]
+
+        for dir_url, value in self.__dirs.items():
+            recursive = self.__recursive[value]
+            new_path = value / (os.path.relpath(key, dir_url))
+
+            if (
+                new_path in value
+                if recursive
+                else value.contains_toplevel(new_path)
+            ):
+                return new_path
+        else:
+            raise KeyError(key)
 
     @property
-    def root(self):
-        """Holds the project's root directory. New values are passed to new
-        collect.path.Path."""
-        return self._root
+    def files(self):
+        return self.__files
 
-    @root.setter
-    def root(self, path):
-        self._root = collect.path.Path(path) if path is not None else None
+    @property
+    def dirs(self):
+        return self.__dirs
 
+    def recursive(self, key):
+        return self.__recursive[key]
 
-class Path(collect.path.Path, metaclass=PathMeta):
-    """Relative path to the selected resource based on the class's root
-    property. Instance creation is restricted to the root directory and beyond
-    and PermissionError is raised if attempted."""
-    def __new__(cls, path=None):
-        if cls.root is None:
-            root = collect.path.Path.cwd()
+    def __setitem__(self, key, value):
+        if isinstance(value, tuple):
+            value, recursive = value
         else:
-            root = cls.root
+            recursive = True
 
-        if not path:
-            path = ''
+        key_path, value_path = map(collect.path.Path, (key, value))
 
-        path = os.fspath(path)
+        if value_path.is_file():
+            self.__files[key_path] = value_path
+        elif value_path.is_dir():
+            self.__dirs[key_path] = value_path
+            self.__recursive[value_path] = recursive
+        elif not value_path.exists():
+            raise ValueError(f'Value {value} does not exist.')
+        else:
+            raise ValueError(f'Value {value} is not a directory or file.')
 
-        if path.startswith('/'):
-            path = path[1:]
+    def __delitem__(self, key):
+        if key in self.__files:
+            d = self.__files
+        elif key in self.__dirs:
+            d = self.__dirs
+            self.__recursive.__delitem__(self.__dirs[key])
+        else:
+            raise KeyError(key)
 
-        parts = path.split('/')
+        d.__delitem__(key)
 
-        for i in range(len(parts)):
-            new_path = '/'.join(parts[:1 + i])
-            self = root / new_path
+    def __iter__(self):
+        return iter(self.__dict)
 
-            if self == root:
+    def __len__(self):
+        return len(self.__dict)
+
+    @property
+    def __dict(self):
+        d = self.__dirs.copy()
+        d.update(self.__files.copy())
+        return d
+
+    def __new__(cls, *args, **kwargs):
+        self = super().__new__(cls)
+        self.__files = {}
+        self.__dirs = {}
+        self.__recursive = {}
+        return self
+
+    def __init__(self, *args, **kwargs):
+        self.update(dict(*args, **kwargs))
+
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        d = self.__dict.copy()
+
+        for key, value in d.items():
+            if key not in self.__dirs:
                 continue
 
-            if self not in root:
-                path = '/' + new_path
-                raise PermissionError(path)
+            recursive = self.__recursive[value]
 
-        return super().__new__(cls, self.relpath())
+            if not recursive:
+                d[key] = value, recursive
 
-    @collect.path.PathBase.MakeStr
-    def join(self, *others):
-        return os.path.join(self, *others)
-
-    def __str__(self):
-        cls = self.__class__
-
-        if cls.root is None:
-            root = collect.path.Path.cwd()
-        else:
-            root = cls.root
-
-        url = str(self.relpath(root))
-
-        if len(url) == 1 and url[0] == '.':
-            url = ''
-
-        return '/' + url
+        d_repr = repr(d) if d else ''
+        return f'{module}.{name}({d_repr})'

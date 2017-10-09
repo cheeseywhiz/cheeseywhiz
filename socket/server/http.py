@@ -6,52 +6,13 @@ import http
 import time
 import urllib.parse
 
-from . import server
+import collect
+
 from .logger import Logger
 
 __all__ = [
-    'CaseInsensitiveDict', 'HTTPException', 'Request', 'Response',
+    'HTTPException', 'Request', 'Response',
 ]
-
-
-class CaseInsensitiveDict(collections.abc.MutableMapping):
-    """A MutableMapping subclass that .lower()s the key when setting and
-    getting."""
-    __slots__ = ('__dict', )
-
-    @staticmethod
-    def _lower_key(key):
-        return getattr(key, 'lower', lambda: key)()
-
-    def __getitem__(self, key):
-        key = self._lower_key(key)
-        return self.__dict[key]
-
-    def __setitem__(self, key, value):
-        key = self._lower_key(key)
-        self.__dict[key] = value
-
-    def __delitem__(self, key):
-        key = self._lower_key(key)
-        self.__dict.__delitem__(key)
-
-    def __iter__(self):
-        return iter(self.__dict)
-
-    def __len__(self):
-        return len(self.__dict)
-
-    def __repr__(self):
-        return repr(self.__dict)
-
-    def __new__(cls, *args, **kwargs):
-        self = super().__new__(cls)
-        self.__dict = {}
-        self.update(dict(*args, **kwargs))
-        return self
-
-    def __init__(self, *args, **kwargs):
-        pass
 
 
 class HTTPException(Exception):
@@ -114,6 +75,46 @@ class HTTPException(Exception):
         return f'{module}.{name}({kwargs_str})'
 
 
+class CaseInsensitiveDict(collections.abc.MutableMapping):
+    """A MutableMapping subclass that .lower()s the key when setting and
+    getting."""
+    __slots__ = ('__dict', )
+
+    @staticmethod
+    def _lower_key(key):
+        return getattr(key, 'lower', lambda: key)()
+
+    def __getitem__(self, key):
+        key = self._lower_key(key)
+        return self.__dict[key]
+
+    def __setitem__(self, key, value):
+        key = self._lower_key(key)
+        self.__dict[key] = value
+
+    def __delitem__(self, key):
+        key = self._lower_key(key)
+        self.__dict.__delitem__(key)
+
+    def __iter__(self):
+        return iter(self.__dict)
+
+    def __len__(self):
+        return len(self.__dict)
+
+    def __repr__(self):
+        return repr(self.__dict)
+
+    def __new__(cls, *args, **kwargs):
+        self = super().__new__(cls)
+        self.__dict = {}
+        self.update(dict(*args, **kwargs))
+        return self
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+
 class Request:
     """Receive and parse bytes from a connection socket or from a raw request
     string. Raises IOError if the connection sends 0 bytes."""
@@ -159,12 +160,12 @@ class Request:
         self.raw_request = raw_request
         status_line, *headers = raw_request.split('\n')
         self.request_line = status_line.strip()
-        self.method, uri, version = self.request_line.split()
+        self.method, url, version = self.request_line.split()
         self.http_version = version.split('/')[1]
         self.headers = CaseInsensitiveDict()
 
-        parse = urllib.parse.urlparse(uri)
-        self.path = server.Path(urllib.parse.unquote_plus(parse.path))
+        parse = urllib.parse.urlparse(url)
+        self.path = collect.path.Path(urllib.parse.unquote_plus(parse.path))
         self.params = self.parse_data_string(parse.params)
         self.query = self.parse_data_string(parse.query)
 

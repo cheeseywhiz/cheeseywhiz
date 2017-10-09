@@ -19,7 +19,7 @@ class App(server.Server):
         super().__init__(address, port)
         self.http_handlers = {}
         self.error_handlers = {}
-        self.registered_fs_paths = {}
+        self.resolver = server.URLResolver()
 
     def register(self, url, *methods):
         """Register an endpoint at the server. The handler will only be called
@@ -31,7 +31,7 @@ class App(server.Server):
         if not methods:
             methods = ('GET', )
 
-        url_path = server.Path(url)
+        url_path = collect.path.Path(url)
 
         def decorator(func):
             for method in methods:
@@ -58,27 +58,6 @@ class App(server.Server):
 
         return 200, {'Content-Type': file.type}, content
 
-    def register_filesystem(self, mapping):
-        """Let the server recognize and serve individual files from the
-        filesytem or any file within a directory. The given mapping shall
-        map target URIs to file paths. A directory path may be specified as
-        just a os.PathLike object or a tuple (os.PathLike, bool) where bool
-        decides whether files will be served recursively within the
-        directory."""
-        for target_uri, fs_path in mapping.items():
-            if isinstance(fs_path, tuple):
-                fs_path, recursive = fs_path
-            else:
-                recursive = True
-
-            uri_path = server.Path(target_uri)
-            file = collect.path.Path(fs_path)
-
-            if not recursive:
-                file = file, recursive
-
-            self.registered_fs_paths[uri_path] = file
-
     def register_exception(self, type):
         """Register an exception handler. The handler is called with the active
         exception as the first argument. The handler shall return a tuple
@@ -89,35 +68,18 @@ class App(server.Server):
 
         return decorator
 
-    def _get_handler_from_fs(self, req_path):
-        for uri_path, fs_path in self.registered_fs_paths.items():
-            if isinstance(fs_path, tuple):
-                fs_path, recursive = fs_path
-            else:
-                recursive = True
-
-            if req_path == uri_path and fs_path.is_file():
-                return functools.partial(self._return_file, fs_path)
-
-            new_file = fs_path / (req_path.relpath(uri_path))
-
-            if (
-                new_file in fs_path
-                if recursive else
-                fs_path.contains_toplevel(new_file)
-            ) and new_file.is_file():
-                return functools.partial(self._return_file, new_file)
-
     def _handle_request(self, req: http.Request):
         method_handlers = self.http_handlers[req.method]
 
         if req.path in method_handlers:
             handler = method_handlers[req.path]
         else:
-            handler = self._get_handler_from_fs(req.path)
-
-        if handler is None:
-            raise http.HTTPException(req.path, 404)
+            try:
+                file = self.resolver[req.path]
+            except KeyError:
+                raise http.HTTPException(req.path, 404)
+            else:
+                handler = functools.partial(self._return_file, file)
 
         header = {'Content-Type': 'text/html'}
         response = handler(req)
