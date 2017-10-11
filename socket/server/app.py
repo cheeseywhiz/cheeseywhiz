@@ -1,6 +1,8 @@
 """Provides a class for creating custom HTTP servers."""
 import functools
+import queue
 import socket
+import threading
 
 import collect
 
@@ -9,6 +11,21 @@ from . import http
 from .logger import Logger
 
 __all__ = ['App']
+
+sender_q = queue.Queue()
+
+
+def sender_d():
+    """Daemon procedure for FIFO HTTP Requests/Responses."""
+    while True:
+        req = sender_q.get()
+        res, connection, address = req.queue.get()
+        sender_q.task_done()
+        res.send(connection, address)
+        req.queue.task_done()
+
+
+threading.Thread(target=sender_d, daemon=True).start()
 
 
 class App(server.Server):
@@ -76,6 +93,9 @@ class App(server.Server):
         else:
             try:
                 file = self.resolver[req.path]
+
+                if not file.is_file():
+                    raise KeyError
             except KeyError:
                 raise http.HTTPException(req.path, 404)
             else:
@@ -111,8 +131,18 @@ class App(server.Server):
 
         return status_code, {'Content-Type': 'text/html'}, text.encode()
 
+    def _set_up_exception_handling(self, connection, address, req):
+        try:
+            args = self._handle_request(req)
+        except Exception as error:
+            args = self._handle_exception(error)
+
+        res = http.Response(*args, req)
+        req.queue.put((res, connection, address))
+
     def handle_connection(self, connection, address):
         connection.settimeout(self.timeout)
+        threads = []
 
         while True:
             try:
@@ -120,14 +150,19 @@ class App(server.Server):
             except (socket.timeout, IOError):
                 Logger.log('Timed out: %s:%s', *address)
                 break
-
-            try:
-                args = self._handle_request(req)
-            except Exception as error:
-                args = self._handle_exception(error)
             else:
-                if req.headers.get('Connection') == 'close':
-                    Logger.log('Deliberately closing %s:%d', *address)
-                    break
+                sender_q.put(req)
 
-            http.Response(*args, req).send(connection, address)
+            new_thread = threading.Thread(
+                target=self._set_up_exception_handling,
+                args=(connection, address, req),
+            )
+            threads.append(new_thread)
+            new_thread.start()
+
+            if req.headers.get('Connection') == 'close':
+                Logger.log('Deliberately closing %s:%d', *address)
+                break
+
+        for thread in threads:
+            thread.join()

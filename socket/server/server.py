@@ -45,7 +45,7 @@ class Server(socket.socket):
             while True:
                 threading.Thread(
                     target=self._set_up_closing(self.handle_connection),
-                    args=super().accept()
+                    args=super().accept(), daemon=True,
                 ).start()
         except KeyboardInterrupt:
             print()
@@ -60,8 +60,10 @@ class Server(socket.socket):
 
 class URLResolver(collections.abc.MutableMapping):
     """Map URL endpoints to file system paths. It will resolve an arbitrary URL
-    path that is inside a directory to the corresponding path in the
-    corresponding directory."""
+    path that is in a subdirectory of any given directories. Directory entries
+    may be specified as just an os.PathLike object or a tuple
+    (os.PathLike, bool) where bool specifies if subdirectory paths are resolved
+    recursively."""
     __slots__ = '__files', '__dirs', '__recursive'
 
     def __getitem__(self, key):
@@ -85,11 +87,11 @@ class URLResolver(collections.abc.MutableMapping):
 
     @property
     def files(self):
-        return self.__files
+        return self.__files.copy()
 
     @property
     def dirs(self):
-        return self.__dirs
+        return self.__dirs.copy()
 
     def recursive(self, key):
         return self.__recursive[key]

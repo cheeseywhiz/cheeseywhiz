@@ -3,6 +3,7 @@ import collections.abc
 import gzip
 import html
 import http
+import queue
 import time
 import urllib.parse
 
@@ -157,6 +158,7 @@ class Request:
     @classmethod
     def _new_from_raw_request(cls, raw_request, _init_body=True):
         self = super().__new__(cls)
+        self.queue = queue.Queue()
         self.raw_request = raw_request
         status_line, *headers = raw_request.split('\n')
         self.request_line = status_line.strip()
@@ -176,7 +178,7 @@ class Request:
                 break
 
             name, value = line.strip().split(':', maxsplit=1)
-            self.headers.update({name: value.strip()})
+            self.headers[name] = value.strip()
         else:
             self.after_header = ''
 
@@ -241,10 +243,13 @@ class Response:
         """Send the prepared request to the connection socket."""
         connection.sendall(bytes(self))
         connection.sendall(self.content)
+
+        if self.from_request is not None:
+            Logger.log(
+                '%s requested from %s:%d',
+                self.from_request.request_line, *address)
+
         response_line = str(self).splitlines()[0]
-        Logger.log(
-            '%s requested from %s:%d',
-            self.from_request.request_line, *address)
         Logger.log('%s sent to %s:%d', response_line, *address)
         return self
 
