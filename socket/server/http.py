@@ -1,5 +1,5 @@
 """Provides classes for HTTP utility."""
-import collections.abc
+import collections
 import gzip
 import html
 import http
@@ -116,65 +116,53 @@ class CaseInsensitiveDict(collections.abc.MutableMapping):
         pass
 
 
+def _parse_data_string(data_string):
+    res = {}
+
+    for pair in data_string.split('&'):
+        if '=' not in pair:
+            continue
+
+        name, value = pair.strip().split('=', maxsplit=1)
+        res[name] = urllib.parse.unquote_plus(value)
+
+    return res
+
+
 class Request:
     """Receive and parse bytes from a connection socket or from a raw request
     string. Raises IOError if the connection sends 0 bytes."""
 
-    def __new__(cls, connection, address=None, buf_size=None):
-        if isinstance(connection, str):
-            raw_request = connection
-            _init_body = True
-        else:
-            raw_request = connection.recv(buf_size).decode()
+    def __init__(self, connection=None, address=None, buf_size=None, *,
+                 raw=None):
 
-            if not raw_request:
+        if raw is not None:
+            self.raw_request = raw
+        elif connection is None:
+            raise ValueError('No connection or raw request string provided.')
+        else:
+            self.raw_request = connection.recv(buf_size).decode()
+
+            if not self.raw_request:
                 raise IOError('Connection sent 0 bytes')
 
-            _init_body = False
-
-        return cls._new_from_raw_request(raw_request, _init_body=_init_body)
-
-    def __init__(self, connection, address=None, buf_size=None):
-        if not isinstance(connection, str):
-            content_length = int(self.headers.get('Content-Length', 0))
-
-            if content_length and len(self.after_header) < content_length:
-                diff = content_length - len(self.after_header)
-                n_full_packets = diff // buf_size
-                n_left_over_bytes = diff % buf_size
-                new_data = b''.join((
-                    *(connection.recv(buf_size)
-                      for _ in range(n_full_packets)),
-                    connection.recv(n_left_over_bytes)
-                )).decode()
-                self.after_header += new_data
-                self.raw_request += new_data
-
-            self._init_body()
-
-    def _init_body(self):
-        self.body = self.parse_data_string(self.after_header.split('\n')[0])
-
-    @classmethod
-    def _new_from_raw_request(cls, raw_request, _init_body=True):
-        self = super().__new__(cls)
-        self.queue = queue.Queue()
-        self.raw_request = raw_request
-        status_line, *headers = raw_request.split('\n')
-        self.request_line = status_line.strip()
+        self._queue = queue.Queue()
+        request_line, *headers = self.raw_request.splitlines()
+        self.request_line = request_line.strip()
         self.method, url, version = self.request_line.split()
         self.http_version = version.split('/')[1]
         self.headers = CaseInsensitiveDict()
 
-        parse = urllib.parse.urlparse(url)
-        self.path = collect.path.Path(urllib.parse.unquote_plus(parse.path))
-        self.params = self.parse_data_string(parse.params)
-        self.query = self.parse_data_string(parse.query)
+        parsed_url = urllib.parse.urlparse(url)
+        self.path = collect.path.Path(
+            urllib.parse.unquote_plus(parsed_url.path))
+        self.params = _parse_data_string(parsed_url.params)
+        self.query = _parse_data_string(parsed_url.query)
 
         for i, line in enumerate(headers):
             if not line.strip():
                 # separator line reached
-                self.after_header = '\r\n'.join(headers[i + 1:])
+                self.after_header = '\n'.join(headers[i + 1:])
                 break
 
             name, value = line.strip().split(':', maxsplit=1)
@@ -182,33 +170,34 @@ class Request:
         else:
             self.after_header = ''
 
-        if _init_body:
-            self._init_body()
+        diff = (
+            int(self.headers.get('Content-Length', 0))
+            - len(self.after_header))
+
+        if connection is not None and diff > 0:
+            n_full_packets = diff // buf_size
+            n_left_over_bytes = diff % buf_size
+            new_data = b''.join((
+                *(connection.recv(buf_size)
+                  for _ in range(n_full_packets)),
+                connection.recv(n_left_over_bytes)
+            )).decode()
+            self.after_header += new_data
+            self.raw_request += new_data
+
+        if (
+            'application/x-www-form-urlencoded'
+            in self.headers.get('Content-Type', '')
+        ):
+            self.body = _parse_data_string(self.after_header.split('\n')[0])
         else:
-            self.body = ''
-
-        return self
-
-    @staticmethod
-    def parse_data_string(str):
-        """Parse a string of parameters and values such as
-        'search=hello+world&when=all'"""
-        res = {}
-
-        for pair in str.split('&'):
-            if '=' not in pair:
-                continue
-
-            name, value = pair.strip().split('=', maxsplit=1)
-            res[name] = urllib.parse.unquote_plus(value)
-
-        return res
+            self.body = self.after_header
 
     def __repr__(self):
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        return f'{module}.{name}({self.raw_request !r})'
+        return '%s.%s(%s=%r)' % (module, name, 'raw', self.raw_request)
 
 
 class Response:

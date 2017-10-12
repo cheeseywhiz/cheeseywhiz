@@ -45,8 +45,9 @@ class Server(socket.socket):
             while True:
                 threading.Thread(
                     target=self._set_up_closing(self.handle_connection),
-                    args=super().accept(), daemon=True,
+                    args=super().accept()
                 ).start()
+                # Not a daemon thread because we need to shut down gracefully
         except KeyboardInterrupt:
             print()
         finally:

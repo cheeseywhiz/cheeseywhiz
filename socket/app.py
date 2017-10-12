@@ -46,7 +46,7 @@ def insert_body(func):
 
 @app.register('/')
 @insert_body
-def index(req):
+def index():
     return '''\
     <a href="/img.png"><img src="/img.png" width="250"/></a>
     <form action="/" method="post">
@@ -57,7 +57,7 @@ def index(req):
 
 
 @insert_body
-def dir_landing_page(url_path, folder_path, recursive, req):
+def dir_landing_page(url_path, folder_path, recursive):
     def contents():
         yield folder_path.parent
         yield folder_path
@@ -101,26 +101,33 @@ for url_path, fs_path in app.resolver.dirs.items():
 
 
 @app.register('/', 'post')
-def index_post(req):
-    input = req.body['url']
+def index_post():
+    input = server.app.ActiveRequest.body['url']
     new_url = collect.path.Path(input)
     return 303, {'Location': str(new_url)}, ''
 
 
 @app.register('/page')
-def page(req):
+def page():
     return 307, {'Location': '/new'}, ''
 
 
 @app.register('/new')
 @insert_body
-def new(req):
+def new():
     return f'''\
     <p>
         This is the new page. You may have been redirected.<br/>
         {LINK_HOME}
     </p>
 '''
+
+
+@app.register('/req', 'GET', 'POST')
+def req_():
+    return (
+        200, {'Content-Type': 'text/plain'},
+        server.app.ActiveRequest.raw_request)
 
 
 @app.register_exception(server.http.HTTPException)

@@ -10,7 +10,7 @@ from . import server
 from . import http
 from .logger import Logger
 
-__all__ = ['App']
+__all__ = ['ActiveRequest', 'App']
 
 sender_q = queue.Queue()
 
@@ -19,13 +19,32 @@ def sender_d():
     """Daemon procedure for FIFO HTTP Requests/Responses."""
     while True:
         req = sender_q.get()
-        res, connection, address = req.queue.get()
-        sender_q.task_done()
+        res, connection, address = req._queue.get()
         res.send(connection, address)
-        req.queue.task_done()
+        sender_q.task_done()
+        req._queue.task_done()
 
 
 threading.Thread(target=sender_d, daemon=True).start()
+
+
+def _instantiate(cls):
+    return cls()
+
+
+@_instantiate
+class ActiveRequest(http.Request, threading.local):
+    """A thread local representing the current HTTP request object."""
+
+    def __init__(self):
+        name = threading.current_thread().name
+        super().__init__(raw=(
+            'GET / HTTP/1.1\r\n'
+            '\r\n'
+            f'thread_name={name}'))
+
+    def _set_active(self, req):
+        super().__init__(raw=req.raw_request)
 
 
 class App(server.Server):
@@ -41,9 +60,8 @@ class App(server.Server):
     def register(self, url, *methods):
         """Register an endpoint at the server. The handler will only be called
         when the request matches the given HTTP method here. Handlers for the
-        same url but for different methods are allowed. The handler will be
-        called with an http.Request object as the first argument. The
-        handler shall return the string of the page contents or a tuple
+        same url but for different methods are allowed. The handler shall
+        return the string of the page contents or a tuple
         (status_code, headers, content) used to create the HTTP response."""
         if not methods:
             methods = ('GET', )
@@ -64,7 +82,7 @@ class App(server.Server):
 
         return decorator
 
-    def _return_file(self, file, req):
+    def _return_file(self, file):
         try:
             file_p = file.open('rb')
         except PermissionError:
@@ -86,7 +104,7 @@ class App(server.Server):
         return decorator
 
     def _handle_request(self, req: http.Request):
-        method_handlers = self.http_handlers[req.method]
+        method_handlers = self.http_handlers.get(req.method, {})
 
         if req.path in method_handlers:
             handler = method_handlers[req.path]
@@ -102,7 +120,7 @@ class App(server.Server):
                 handler = functools.partial(self._return_file, file)
 
         header = {'Content-Type': 'text/html'}
-        response = handler(req)
+        response = handler()
 
         if isinstance(response, tuple):
             status_code, user_header, text = response
@@ -132,13 +150,15 @@ class App(server.Server):
         return status_code, {'Content-Type': 'text/html'}, text.encode()
 
     def _set_up_exception_handling(self, connection, address, req):
+        ActiveRequest._set_active(req)
+
         try:
             args = self._handle_request(req)
         except Exception as error:
             args = self._handle_exception(error)
 
         res = http.Response(*args, req)
-        req.queue.put((res, connection, address))
+        req._queue.put((res, connection, address))
 
     def handle_connection(self, connection, address):
         connection.settimeout(self.timeout)
@@ -147,8 +167,11 @@ class App(server.Server):
         while True:
             try:
                 req = http.Request(connection, address, self.max_recv_size)
-            except (socket.timeout, IOError):
+            except socket.timeout:
                 Logger.log('Timed out: %s:%s', *address)
+                break
+            except IOError:
+                Logger.log('Client closed: %s:%d', *address)
                 break
             else:
                 sender_q.put(req)
@@ -163,6 +186,8 @@ class App(server.Server):
             if req.headers.get('Connection') == 'close':
                 Logger.log('Deliberately closing %s:%d', *address)
                 break
+
+        sender_q.join()
 
         for thread in threads:
             thread.join()

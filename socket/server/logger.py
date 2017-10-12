@@ -2,11 +2,6 @@ import logging
 import sys
 
 
-class Instantiate(type):
-    def __new__(cls, name, bases, namespace):
-        return type.__new__(cls, name, bases, namespace)()
-
-
 class StdErrHandler(logging.Handler):
     def __init__(self, level=None):
         if level is None:
@@ -24,7 +19,12 @@ class StdErrHandler(logging.Handler):
         print(message, file=sys.stderr)
 
 
-class Logger(logging.Logger, metaclass=Instantiate):
+def _instantiate(cls):
+    return cls()
+
+
+@_instantiate
+class Logger(logging.Logger):
     def __init__(self):
         super().__init__(__name__)
         self.handler = StdErrHandler()
