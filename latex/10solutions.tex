@@ -1,0 +1,183 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\DeclareMathOperator{\sech}{sech}
+\DeclareMathOperator{\invcos}{cos^{-1}}
+
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\bfit}[2]{\textbf{#1}\ \textit{#2}}
+\renewcommand{\title}[2]{\huge\bfit{#1}{#2}\normalsize}
+\newcommand{\double}[0]{\par\null\par}
+\renewcommand{\section}[2]{\double\LARGE\bfit{#1}{\##2}\normalsize\\}
+\newcommand{\ddx}[0]{\frac{d}{dx}}
+\renewcommand{\exp}[1]{e^{#1}}
+\newcommand{\paren}[1]{\left({#1}\right)}
+
+\let\xint\int
+\renewcommand{\int}[2]{\xint{#1}\,d#2}
+
+\begin{document}
+\fontfamily{lmr}\selectfont
+\title{10 detailed solutions}{by Spencer Todd}
+\section{6.1}{39}
+Find $\paren{f^{-1}}'\paren{a}$ of $f\paren{x}=3x^3+4x^2+6x+5$, $a=5$.\double
+
+Theorem 7 in Section 6.1 establishes that if $f$ is one-to-one, its inverse is
+$f^{-1}$, and $f'\paren{f^{-1}\paren{a}}\neq 0$, then
+%
+\begin{equation*}
+\paren{f^{-1}}'\paren{a}=\frac{1}{f'\paren{f^{-1}\paren{a}}}.
+\end{equation*}
+
+To begin, a sketch of the graph of $f$ shows that it is one-to-one.
+\vspace{1.5in}
+
+Next, we must find the derivative of $f\paren{x}$, then apply Theorem 7. Additionally, $f\paren{x}=5$ when $x=0$, so
+$f^{-1}\paren{5}=0$.
+%
+\begin{align*}
+f'\paren{x}&=9x^2+8x+6 \\
+%
+\paren{f^{-1}}'\paren{a}&=\frac{1}{f'\paren{f^{-1}\paren{5}}} \\
+&=\frac{1}{f'\paren{0}} \\
+&=\frac{1}{6}.
+\end{align*}
+
+\section{6.8}{29}
+Find the limit:
+%
+\begin{equation*}
+\lim_{x\to 0}\frac{\tanh{x}}{\tan{x}}
+\end{equation*}\double
+
+Since $\displaystyle\lim_{x\to 0}\tanh{x}=0$ and $\displaystyle\lim_{x\to 0}\tan{x}=0$, this limit is of the
+$\frac{0}{0}$ indeterminate form, so we can use L'H\^{o}pital's Rule.
+%
+\begin{align*}
+\lim_{x\to 0}\frac{\tanh{x}}{\tan{x}}&=\lim_{x\to 0}\frac{\ddx\tanh{x}}{\ddx\tan{x}} \\
+&=\lim_{x\to 0}\frac{\sech^2 x}{\sec^2 x} \\
+&=\frac{1^2}{1^2} \\
+&=1.
+\end{align*}
+
+\section{7.1}{9}
+Evaluate the integral:
+%
+\begin{equation*}
+\int{\invcos{x}}{x}
+\end{equation*}\double
+
+Since $\invcos{x}$ has an easy derivative, we can use integration by parts by differentiating the $\invcos{x}$ and
+integrating the $dx$.
+%
+\begin{equation*}
+\int{u}{v}=u\,v-\int{v}{u}
+\end{equation*}
+%
+\begin{alignat*}{2}
+u&=\invcos{x} &\quad dv&=dx \\
+du&=\frac{-dx}{\sqrt{1-x^2}} &\quad v&=x
+\end{alignat*}
+%
+\begin{align*}
+\int{\invcos{x}}{x}&=x\invcos{x}-\int{\frac{-x}{\sqrt{1-x^2}}}{x}
+\end{align*}
+%
+We can set everything inside the radical to a new variable, $a$.
+%
+\begin{align*}
+a&=1-x^2 \\
+da&=-2x\,dx \\
+-x\,dx&=\frac{1}{2}\,da
+\end{align*}
+%
+\begin{align*}
+\int{\invcos{x}}{x}&=x\invcos{x}-\xint{\frac{da}{2\sqrt{a}}} \\
+&=x\invcos{x}-\sqrt{a}+C \\
+&=x\invcos{x}-\sqrt{1-x^2}+C.
+\end{align*}
+
+\section{7.2}{1}
+Evaluate the integral:
+%
+\begin{equation*}
+\int{\sin^2{x}\cos^3{x}}{x}
+\end{equation*}\double
+
+Since the power of $\cos$ is odd, $z=\sin{x}$ will work.
+%
+\begin{align*}
+z&=\sin{x} \\
+\frac{dz}{dx}&=\cos{x} \\
+dx&=\frac{dz}{\cos{x}}
+\end{align*}
+
+We can use a trigonometric identity to handle the $\cos$.
+%
+\begin{align*}
+\sin^2{x}+\cos^2{x}&=1 \\
+\cos^2{x}&=1-\sin^2{x} \\
+&=1-z^2
+\end{align*}
+
+Blocking the expression as follows will highlight our choices of substitutions:
+%
+\begin{align*}
+&\xint\paren{\sin{x}}^2\paren{\cos^2{x}}\paren{\cos{x}\,dx} \\
+&\xint{z}^2\paren{1-z^2}\paren{\cos{x}\,\frac{dz}{\cos{x}}} \\
+&\int{z^2-z^4}{z} \\
+&\frac{z^3}{3}-\frac{z^5}{5}+C \\
+&\frac{\sin^3{x}}{3}-\frac{\sin^5{x}}{5}+C.
+\end{align*}
+
+\section{9.5}{7}
+Solve the differential equation:
+%
+\begin{equation*}
+y'+y=x \tag{1}
+\end{equation*}\double
+We are given an inhomogenous equation, so we must first solve the corresponding homogenous equation:
+%
+\begin{align*}
+\frac{dy_0}{dx}+y_0&=0 \\
+\frac{dy_0}{dx}&=-y_0 \\
+\frac{dy_0}{y_0}&=-dx \\
+\xint\frac{dy_0}{y_0}&=-\xint{dx} \\
+\ln{|y_0|}&=-x+A \\
+|y_0|&=\exp{-x+A} \\
+y_0&=B\exp{-x}\text{, whereas $B=\pm\exp{A}$}
+%
+\intertext{Returning to the original equation, we can replace $B$ with a differable function, $u$.}
+%
+y&=u\,\exp{-x} \tag{2} \\
+y'&=u'\exp{-x}-u\,\exp{-x} \tag{3}
+%
+\intertext{Now, we can plug (2) and (3) in to (1) and solve for $u$. Notice that a nice cancellation occurs.}
+%
+u'\exp{-x}-u\,\exp{-x}+u\,\exp{-x}&=x \\
+u'\exp{-x}&=x \\
+u'&=x\,\exp{x} \\
+\xint{u}&=\int{x\,\exp{x}}{x}
+\end{align*}
+
+We may proceed using integration by parts $\paren{\int{g}{h}=g\,h-\int{h}{g}}$.
+%
+\begin{alignat*}{2}
+g&=x &\quad dh&=\exp{x}\,dx \\
+dg&=dx &\quad h&=\exp{x}
+\end{alignat*}
+%
+\begin{align*}
+u&=x\,\exp{x}-\int{\exp{x}}{x} \\
+&=x\,\exp{x}-\exp{x}+C \tag{4}
+\intertext{Finally, we can plug (4) into (2) for our final answer.}
+y&=\exp{-x}\paren{x\,\exp{x}-\exp{x}+C} \\
+&=x-1+C\exp{-x}
+\end{align*}
+
+\end{document}
