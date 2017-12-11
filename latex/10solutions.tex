@@ -1,4 +1,4 @@
-\documentclass[10pt]{article}
+\documentclass[12pt]{article}
 
 \usepackage[margin=1in]{geometry}
 \usepackage[protrusion=true,expansion=true]{microtype}
@@ -14,7 +14,6 @@
 \renewcommand{\title}[2]{\huge\bfit{#1}{#2}\normalsize}
 \newcommand{\double}[0]{\par\null\par}
 \renewcommand{\section}[2]{\double\LARGE\bfit{#1}{\##2}\normalsize\\}
-\newcommand{\ddx}[0]{\frac{d}{dx}}
 \renewcommand{\exp}[1]{e^{#1}}
 \newcommand{\paren}[1]{\left({#1}\right)}
 
@@ -25,19 +24,16 @@
 \fontfamily{lmr}\selectfont
 \title{10 detailed solutions}{by Spencer Todd}
 \section{6.1}{39}
-Find $\paren{f^{-1}}'\paren{a}$ of $f\paren{x}=3x^3+4x^2+6x+5$, $a=5$.\double
+Find $\paren{f^{-1}}'\paren{a}$ if $f\paren{x}=3x^3+4x^2+6x+5$ and $a=5$.\double
 
 Theorem 7 in Section 6.1 establishes that if $f$ is one-to-one, its inverse is
-$f^{-1}$, and $f'\paren{f^{-1}\paren{a}}\neq 0$, then
+$f^{-1}$, and \\$f'\paren{f^{-1}\paren{a}}\neq 0$, then
 %
 \begin{equation*}
 \paren{f^{-1}}'\paren{a}=\frac{1}{f'\paren{f^{-1}\paren{a}}}.
 \end{equation*}
 
-To begin, a sketch of the graph of $f$ shows that it is one-to-one.
-\vspace{1.5in}
-
-Next, we must find the derivative of $f\paren{x}$, then apply Theorem 7. Additionally, $f\paren{x}=5$ when $x=0$, so
+(A glance at $f'$ indicates that $f$ is monotonic increasing.) First, we must find the derivative of $f\paren{x}$, then apply Theorem 7. Additionally, $f\paren{x}=5$ when $x=0$, so
 $f^{-1}\paren{5}=0$.
 %
 \begin{align*}
@@ -45,35 +41,34 @@ f'\paren{x}&=9x^2+8x+6 \\
 %
 \paren{f^{-1}}'\paren{a}&=\frac{1}{f'\paren{f^{-1}\paren{5}}} \\
 &=\frac{1}{f'\paren{0}} \\
-&=\frac{1}{6}.
+&=\frac{1}{6}
 \end{align*}
 
 \section{6.8}{29}
 Find the limit:
 %
 \begin{equation*}
-\lim_{x\to 0}\frac{\tanh{x}}{\tan{x}}
+\lim_{x\to 0}\frac{\tanh{x}}{\tan{x}}.
 \end{equation*}\double
 
 Since $\displaystyle\lim_{x\to 0}\tanh{x}=0$ and $\displaystyle\lim_{x\to 0}\tan{x}=0$, this limit is of the
 $\frac{0}{0}$ indeterminate form, so we can use L'H\^{o}pital's Rule.
 %
 \begin{align*}
-\lim_{x\to 0}\frac{\tanh{x}}{\tan{x}}&=\lim_{x\to 0}\frac{\ddx\tanh{x}}{\ddx\tan{x}} \\
-&=\lim_{x\to 0}\frac{\sech^2 x}{\sec^2 x} \\
-&=\frac{1^2}{1^2} \\
-&=1.
+&\lim_{x\to 0}\frac{\frac{d}{dx}\tanh{x}}{\frac{d}{dx}\tan{x}} \\
+&\lim_{x\to 0}\frac{\sech^2 x}{\sec^2 x} \\
+&\frac{1^2}{1^2} \\
+&1
 \end{align*}
 
 \section{7.1}{9}
 Evaluate the integral:
 %
 \begin{equation*}
-\int{\invcos{x}}{x}
+\int{\invcos{x}}{x}.
 \end{equation*}\double
 
-Since $\invcos{x}$ has an easy derivative, we can use integration by parts by differentiating the $\invcos{x}$ and
-integrating the $dx$.
+Since $\invcos{x}$ has an easy derivative, we can use integration by parts by differentiating $\invcos{x}$ and integrating $dx$.
 %
 \begin{equation*}
 \int{u}{v}=u\,v-\int{v}{u}
@@ -93,20 +88,20 @@ We can set everything inside the radical to a new variable, $a$.
 \begin{align*}
 a&=1-x^2 \\
 da&=-2x\,dx \\
--x\,dx&=\frac{1}{2}\,da
+\frac{da}{2}&=-x\,dx
 \end{align*}
 %
 \begin{align*}
 \int{\invcos{x}}{x}&=x\invcos{x}-\xint{\frac{da}{2\sqrt{a}}} \\
 &=x\invcos{x}-\sqrt{a}+C \\
-&=x\invcos{x}-\sqrt{1-x^2}+C.
+&=x\invcos{x}-\sqrt{1-x^2}+C
 \end{align*}
 
 \section{7.2}{1}
 Evaluate the integral:
 %
 \begin{equation*}
-\int{\sin^2{x}\cos^3{x}}{x}
+\int{\sin^2{x}\cos^3{x}}{x}.
 \end{equation*}\double
 
 Since the power of $\cos$ is odd, $z=\sin{x}$ will work.
@@ -128,31 +123,30 @@ We can use a trigonometric identity to handle the $\cos$.
 Arranging the expression as follows will highlight our choices of substitutions:
 %
 \begin{align*}
-&\xint\paren{\sin{x}}^2\paren{\cos^2{x}}\paren{\cos{x}\,dx} \\
-&\xint{z}^2\paren{1-z^2}\paren{\cos{x}\,\frac{dz}{\cos{x}}} \\
-&\int{z^2-z^4}{z} \\
-&\frac{z^3}{3}-\frac{z^5}{5}+C \\
-&\frac{\sin^3{x}}{3}-\frac{\sin^5{x}}{5}+C.
+\int{\sin^2{x}\cos^3{x}}{x}&=\xint\paren{\sin{x}}^2\paren{\cos^2{x}}\paren{\cos{x}\,dx}. \\
+&=\xint{z}^2\paren{1-z^2}\paren{\cos{x}\,\frac{dz}{\cos{x}}} \\
+&=\int{z^2-z^4}{z} \\
+&=\frac{z^3}{3}-\frac{z^5}{5}+C \\
+&=\frac{\sin^3{x}}{3}-\frac{\sin^5{x}}{5}+C
 \end{align*}
 
 \section{9.5}{7}
 Solve the differential equation:
 %
 \begin{equation*}
-y'+y=x \tag{1}
+y'+y=x. \tag{1}
 \end{equation*}\double
 We are given an inhomogenous equation, so we must first solve the corresponding homogenous equation:
 %
 \begin{align*}
-\frac{dy_0}{dx}+y_0&=0 \\
-\frac{dy_0}{dx}&=-y_0 \\
+\frac{dy_0}{dx}+y_0&=0. \\
 \frac{dy_0}{y_0}&=-dx \\
 \xint\frac{dy_0}{y_0}&=-\xint{dx} \\
 \ln{|y_0|}&=-x+A \\
 |y_0|&=\exp{-x+A} \\
 y_0&=B\exp{-x}\text{, whereas $B=\pm\exp{A}$}
 %
-\intertext{Returning to the original equation, we can replace $B$ with a differable function, $u$.}
+\intertext{Returning to the original equation, we can replace $B$ with a differentiable function, $u$.}
 %
 y&=u\,\exp{-x} \tag{2} \\
 y'&=u'\exp{-x}-u\,\exp{-x} \tag{3}
@@ -162,7 +156,7 @@ y'&=u'\exp{-x}-u\,\exp{-x} \tag{3}
 u'\exp{-x}-u\,\exp{-x}+u\,\exp{-x}&=x \\
 u'\exp{-x}&=x \\
 u'&=x\,\exp{x} \\
-\xint{u}&=\int{x\,\exp{x}}{x}
+\xint{du}&=\int{x\,\exp{x}}{x}
 \end{align*}
 
 We may proceed using integration by parts $\paren{\int{g}{h}=g\,h-\int{h}{g}}$.
@@ -181,7 +175,7 @@ y&=\exp{-x}\paren{x\,\exp{x}-\exp{x}+C} \\
 \end{align*}
 
 \section{10.2}{15}
-Find $\frac{dy}{dx}$ and $\frac{d^2y}{dx^2}.$
+Find $\displaystyle\frac{dy}{dx}$ and $\displaystyle\frac{d^2y}{dx^2}.$
 %
 \begin{align*}
 x&=t-\ln{t} \\
@@ -191,47 +185,47 @@ y&=t+\ln{t}
 By the chain rule, $\displaystyle\frac{dy}{dx}=\frac{dy}{dt}\frac{dt}{dx}=\frac{\frac{dy}{dt}}{\frac{dx}{dt}}$.
 %
 \begin{align*}
-\frac{dx}{dt}&=1-\frac{1}{t} \\
 \frac{dy}{dt}&=1+\frac{1}{t} \\
-\frac{\frac{dy}{dt}}{\frac{dx}{dt}}&=\frac{1-\frac{1}{t}}{1+\frac{1}{t}} \\
-\frac{dy}{dx}&=\frac{t-1}{t+1}
+\frac{dx}{dt}&=1-\frac{1}{t} \\
+\frac{\frac{dy}{dt}}{\frac{dx}{dt}}&=\frac{1+\frac{1}{t}}{1-\frac{1}{t}} \\
+\frac{dy}{dx}&=\frac{t+1}{t-1}
 \end{align*}
 %
 By the chain rule, $\displaystyle
 \frac{d^2y}{dx^2}
 =\frac{d}{dx}\frac{dy}{dx}
-=\frac{d}{dx}\frac{dy}{dt}\frac{dt}{dx}
-=\frac{d}{dt}\frac{dy}{dx}\frac{dt}{dx}
+=\frac{d}{dt}\frac{dt}{dx}\frac{dy}{dx}
 =\frac{\frac{d}{dt}\paren{\frac{dy}{dx}}}{\frac{dx}{dt}}
 $.
 %
 \begin{align*}
-\frac{d}{dt}\paren{\frac{dy}{dx}}&=1 \\
+\frac{d}{dt}\paren{\frac{dy}{dx}}&=\frac{\paren{t-1}\paren{1}-\paren{t+1}\paren{1}}{\paren{t-1}^2} \\
+&=\frac{-2}{\paren{t-1}^2} \\
 \frac{dx}{dt}&=1-\frac{1}{t} \\
-\frac{\frac{d}{dt}\paren{\frac{dy}{dx}}}{\frac{dx}{dt}}&=\frac{1}{1-\frac{1}{t}} \\
-\frac{d^2y}{dx^2}&=\frac{t}{t-1}
+\frac{\frac{d}{dt}\paren{\frac{dy}{dx}}}{\frac{dx}{dt}}&=\frac{-2}{\paren{t-1}^2}\cdot\frac{1}{1-\frac{1}{t}} \\
+\frac{d^2y}{dx^2}&=\frac{-2t}{\paren{t-1}^3}
 \end{align*}
 
 \section{10.4}{2}
 Find the area of the region that is bounded by the given curve and lies in the specified sector.
 %
 \begin{equation*}
-r=\cos{\theta},\ 0\leq\theta\leq\frac{\pi}{6}
+r\paren\theta=\cos{\theta},\ 0\leq\theta\leq\frac\pi{6}
 \end{equation*}\double
 
-The area of a sector of a circle, $\paren{A=\frac{1}{2}\theta{r}^2}$, leads us to the equation for the integral of polar equations:
+The area of a sector of a circle $\paren{A=\frac{1}{2}{r}^2\theta}$ leads us to the equation for the integral of polar equations:
 %
 \begin{align*}
-&\frac{1}{2}\xint_a^b{r\paren{\theta}^2}\,{d\theta} \\
+&\frac{1}{2}\xint_a^b{r\paren\theta^2}\,{d\theta}. \\
 \\
-&\frac{1}{2}\xint_0^{\frac{\pi}{6}}{\cos^2\theta}\,{d\theta}
-\intertext{Since the power of $\sin$ $\paren{0}$ and $\cos$ $\paren{2}$ are both even, we may proceed using a double angle formula for
-cosine.}
-&\frac{1}{4}\xint_0^{\frac{\pi}{6}}{1+\cos{2\theta}}\,{d\theta} \\
-&\frac{1}{4}\left({\theta+\frac{1}{2}\sin{2\theta}}\right|_0^\frac{\pi}{6} \\
-&\frac{1}{4}\paren{\frac{\pi}{6}+\frac{1}{2}\sin{\frac{\pi}{3}}} \\
+&\frac{1}{2}\xint_0^{\frac\pi{6}}{\cos^2\theta}\,{d\theta}
+\intertext{Since the power of $\sin$ $\paren{0}$ and $\cos$ $\paren{2}$ are both even, we may proceed using the double angle
+formula for cosine.}
+&\frac{1}{4}\xint_0^{\frac\pi{6}}{1+\cos{2\theta}}\,{d\theta} \\
+&\frac{1}{4}\left({\theta+\frac{1}{2}\sin{2\theta}}\right|_0^\frac\pi{6} \\
+&\frac{1}{4}\paren{\frac\pi{6}+\frac{1}{2}\sin{\frac\pi{3}}} \\
 \intertext{Notice that the expression evaluated at $0$ is $0$.}
-&\frac{\pi}{24}+\frac{\sqrt{3}}{16}
+&\frac\pi{24}+\frac{\sqrt{3}}{16}
 \end{align*}
 
 \end{document}
