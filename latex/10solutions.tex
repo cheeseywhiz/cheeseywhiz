@@ -16,7 +16,7 @@
 \renewcommand{\section}[2]{\double\LARGE\bfit{#1}{\##2}\normalsize\\}
 \renewcommand{\exp}[1]{e^{#1}}
 \newcommand{\paren}[1]{\left({#1}\right)}
-
+\let\infinity\infty
 \let\xint\int
 \renewcommand{\int}[2]{\xint{#1}\,d#2}
 
@@ -104,7 +104,7 @@ Evaluate the integral:
 \int{\sin^2{x}\cos^3{x}}{x}.
 \end{equation*}\double
 
-Since the power of $\cos$ is odd, $z=\sin{x}$ will work.
+Since the power of $\cos$ is odd, the substitution $z=\sin{x}$ will work.
 %
 \begin{align*}
 z&=\sin{x} \\
@@ -125,7 +125,8 @@ Arranging the expression as follows will highlight our choices of substitutions:
 \begin{align*}
 \int{\sin^2{x}\cos^3{x}}{x}&=\xint\paren{\sin{x}}^2\paren{\cos^2{x}}\paren{\cos{x}\,dx}. \\
 &=\xint{z}^2\paren{1-z^2}\paren{\cos{x}\,\frac{dz}{\cos{x}}} \\
-&=\int{z^2-z^4}{z} \\
+&=\int{z^2-z^4}{z}
+\intertext{Now we may finish the integral using the power rule and substitution.}
 &=\frac{z^3}{3}-\frac{z^5}{5}+C \\
 &=\frac{\sin^3{x}}{3}-\frac{\sin^5{x}}{5}+C
 \end{align*}
@@ -146,12 +147,12 @@ We are given an inhomogenous equation, so we must first solve the corresponding 
 |y_0|&=\exp{-x+A} \\
 y_0&=B\exp{-x}\text{, whereas $B=\pm\exp{A}$}
 %
-\intertext{Returning to the original equation, we can replace $B$ with a differentiable function, $u$.}
+\intertext{Returning to the original equation, we can replace the constant $B$ with a differentiable function, $u$.}
 %
 y&=u\,\exp{-x} \tag{2} \\
 y'&=u'\exp{-x}-u\,\exp{-x} \tag{3}
 %
-\intertext{Now, we can plug (2) and (3) in to (1) and solve for $u$. Notice that a nice cancellation occurs.}
+\intertext{Now, we can plug equations (2) and (3) in to (1) and solve for $u$. Notice that a nice cancellation occurs.}
 %
 u'\exp{-x}-u\,\exp{-x}+u\,\exp{-x}&=x \\
 u'\exp{-x}&=x \\
@@ -169,7 +170,7 @@ dg&=dx &\quad h&=\exp{x}
 \begin{align*}
 u&=x\,\exp{x}-\int{\exp{x}}{x} \\
 &=x\,\exp{x}-\exp{x}+C \tag{4}
-\intertext{Finally, we can plug (4) into (2) for our final answer.}
+\intertext{Finally, we can plug equation (4) in to (2) for our final answer.}
 y&=\exp{-x}\paren{x\,\exp{x}-\exp{x}+C} \\
 &=x-1+C\exp{-x}
 \end{align*}
@@ -226,6 +227,19 @@ formula for cosine.}
 &\frac{1}{4}\paren{\frac\pi{6}+\frac{1}{2}\sin{\frac\pi{3}}} \\
 \intertext{Notice that the expression evaluated at $0$ is $0$.}
 &\frac\pi{24}+\frac{\sqrt{3}}{16}
+\end{align*}
+
+\section{11.10}{78}
+Find the sum of the series.
+%
+\begin{align*}
+&1-\ln{2}+\frac{\paren{\ln{2}}^2}{2!}-\frac{\paren{\ln{2}}^3}{3!}+\dots \\
+\\
+\intertext{Writing the equation for the sum will clearly show us a necessary substitution.}
+&\sum_{n=0}^\infinity\paren{-1}^n\frac{\paren{\ln{2}}^n}{n!}
+\intertext{Since the factors $-1$ and $\ln{2}$ both have power $n$, the $-1$ can multiply in to the numerator to make $\paren{-\ln{2}}^n$. Then we can make the substitution $x=-\ln{2}$, resulting in:}
+&\sum_{n=0}^\infinity\frac{x^n}{n!}.
+\intertext{We know that this is also the power series for $\exp{x}$ for all $x$. So, the solution is $\exp{x}$ evaluated at $x=-\ln{2}$, or $\frac{1}{2}$.}
 \end{align*}
 
 \end{document}
