@@ -1,3 +1,6 @@
+% Spencer Todd
+% December 2017, Calc II, Aquinas College, Jasho
+
 \documentclass[12pt]{article}
 
 \usepackage[margin=1in]{geometry}
@@ -11,11 +14,12 @@
 \setlength\parindent{0em}
 
 \newcommand{\bfit}[2]{\textbf{#1}\ \textit{#2}}
-\renewcommand{\title}[2]{\huge\bfit{#1}{#2}\normalsize}
+\renewcommand{\title}[2]{\large\bfit{#1}{#2}\normalsize}
 \newcommand{\double}[0]{\par\null\par}
 \renewcommand{\section}[2]{\double\LARGE\bfit{#1}{\##2}\normalsize\\}
 \renewcommand{\exp}[1]{e^{#1}}
 \newcommand{\paren}[1]{\left({#1}\right)}
+\newcommand{\abs}[1]{\left|{#1}\right|}
 \let\infinity\infty
 \let\xint\int
 \renewcommand{\int}[2]{\xint{#1}\,d#2}
@@ -33,7 +37,8 @@ $f^{-1}$, and \\$f'\paren{f^{-1}\paren{a}}\neq 0$, then
 \paren{f^{-1}}'\paren{a}=\frac{1}{f'\paren{f^{-1}\paren{a}}}.
 \end{equation*}
 
-(A glance at $f'$ indicates that $f$ is monotonic increasing.) First, we must find the derivative of $f\paren{x}$, then apply Theorem 7. Additionally, $f\paren{x}=5$ when $x=0$, so
+(A glance at $f'$ indicates that $f$ is monotonic increasing.) First, we must find the derivative of $f\paren{x}$, then apply
+Theorem 7. Additionally, $f\paren{x}=5$ when $x=0$, so
 $f^{-1}\paren{5}=0$.
 %
 \begin{align*}
@@ -83,7 +88,7 @@ du&=\frac{-dx}{\sqrt{1-x^2}} &\quad v&=x
 \int{\invcos{x}}{x}&=x\invcos{x}-\int{\frac{-x}{\sqrt{1-x^2}}}{x}
 \end{align*}
 %
-We can set everything inside the radical to a new variable, $a$.
+We can set a new variable equal to everything inside the radical.
 %
 \begin{align*}
 a&=1-x^2 \\
@@ -109,7 +114,7 @@ Since the power of $\cos$ is odd, the substitution $z=\sin{x}$ will work.
 \begin{align*}
 z&=\sin{x} \\
 \frac{dz}{dx}&=\cos{x} \\
-dx&=\frac{dz}{\cos{x}}
+\frac{dz}{\cos{x}}&=dx
 \end{align*}
 
 We can use a trigonometric identity to handle the $\cos$.
@@ -120,13 +125,13 @@ We can use a trigonometric identity to handle the $\cos$.
 &=1-z^2
 \end{align*}
 
-Arranging the expression as follows will highlight our choices of substitutions:
+Arranging the integrand as follows will highlight our choices of substitutions:
 %
 \begin{align*}
 \int{\sin^2{x}\cos^3{x}}{x}&=\xint\paren{\sin{x}}^2\paren{\cos^2{x}}\paren{\cos{x}\,dx}. \\
 &=\xint{z}^2\paren{1-z^2}\paren{\cos{x}\,\frac{dz}{\cos{x}}} \\
 &=\int{z^2-z^4}{z}
-\intertext{Now we may finish the integral using the power rule and substitution.}
+\intertext{Now we may finish the integral using the power rule.}
 &=\frac{z^3}{3}-\frac{z^5}{5}+C \\
 &=\frac{\sin^3{x}}{3}-\frac{\sin^5{x}}{5}+C
 \end{align*}
@@ -137,14 +142,16 @@ Solve the differential equation:
 \begin{equation*}
 y'+y=x. \tag{1}
 \end{equation*}\double
+
 We are given an inhomogenous equation, so we must first solve the corresponding homogenous equation:
 %
 \begin{align*}
-\frac{dy_0}{dx}+y_0&=0. \\
+\frac{dy_0}{dx}+y_0&=0.
+\intertext{The homogenous equation is seperable, and we can solve it using the integral $\xint\frac{du}{u}=\ln{\abs{u}}$.}
 \frac{dy_0}{y_0}&=-dx \\
 \xint\frac{dy_0}{y_0}&=-\xint{dx} \\
-\ln{|y_0|}&=-x+A \\
-|y_0|&=\exp{-x+A} \\
+\ln{\abs{y_0}}&=-x+A \\
+\abs{y_0}&=\exp{-x+A} \\
 y_0&=B\exp{-x}\text{, whereas $B=\pm\exp{A}$}
 %
 \intertext{Returning to the original equation, we can replace the constant $B$ with a differentiable function, $u$.}
@@ -152,7 +159,7 @@ y_0&=B\exp{-x}\text{, whereas $B=\pm\exp{A}$}
 y&=u\,\exp{-x} \tag{2} \\
 y'&=u'\exp{-x}-u\,\exp{-x} \tag{3}
 %
-\intertext{Now, we can plug equations (2) and (3) in to (1) and solve for $u$. Notice that a nice cancellation occurs.}
+\intertext{Now, we can plug equations (2) and (3) in to equation (1) and solve for $u$. Notice that a nice cancellation occurs.}
 %
 u'\exp{-x}-u\,\exp{-x}+u\,\exp{-x}&=x \\
 u'\exp{-x}&=x \\
@@ -170,7 +177,7 @@ dg&=dx &\quad h&=\exp{x}
 \begin{align*}
 u&=x\,\exp{x}-\int{\exp{x}}{x} \\
 &=x\,\exp{x}-\exp{x}+C \tag{4}
-\intertext{Finally, we can plug equation (4) in to (2) for our final answer.}
+\intertext{Finally, we can plug equation (4) in to equation (2) for our final answer.}
 y&=\exp{-x}\paren{x\,\exp{x}-\exp{x}+C} \\
 &=x-1+C\exp{-x}
 \end{align*}
@@ -192,12 +199,11 @@ By the chain rule, $\displaystyle\frac{dy}{dx}=\frac{dy}{dt}\frac{dt}{dx}=\frac{
 \frac{dy}{dx}&=\frac{t+1}{t-1}
 \end{align*}
 %
-By the chain rule, $\displaystyle
-\frac{d^2y}{dx^2}
-=\frac{d}{dx}\frac{dy}{dx}
-=\frac{d}{dt}\frac{dt}{dx}\frac{dy}{dx}
-=\frac{\frac{d}{dt}\paren{\frac{dy}{dx}}}{\frac{dx}{dt}}
-$.
+The second derivative $\displaystyle
+\paren{\frac{d^2y}{dx^2}=\frac{d}{dx}\frac{dy}{dx}}$,
+by the chain rule, equals $\displaystyle
+\frac{d}{dt}\frac{dt}{dx}\frac{dy}{dx}$ or $\displaystyle
+\frac{\frac{d}{dt}\paren{\frac{dy}{dx}}}{\frac{dx}{dt}}$.
 %
 \begin{align*}
 \frac{d}{dt}\paren{\frac{dy}{dx}}&=\frac{\paren{t-1}\paren{1}-\paren{t+1}\paren{1}}{\paren{t-1}^2} \\
@@ -214,14 +220,15 @@ Find the area of the region that is bounded by the given curve and lies in the s
 r\paren\theta=\cos{\theta},\ 0\leq\theta\leq\frac\pi{6}
 \end{equation*}\double
 
-The area of a sector of a circle $\paren{A=\frac{1}{2}{r}^2\theta}$ leads us to the equation for the integral of polar equations:
+The area of a sector of a circle $\paren{A=\frac{1}{2}{r}^2\theta}$ leads us to the equation for the integral of polar
+equations:
 %
 \begin{align*}
 &\frac{1}{2}\xint_a^b{r\paren\theta^2}\,{d\theta}. \\
 \\
 &\frac{1}{2}\xint_0^{\frac\pi{6}}{\cos^2\theta}\,{d\theta}
 \intertext{Since the power of $\sin$ $\paren{0}$ and $\cos$ $\paren{2}$ are both even, we may proceed using the double angle
-formula for cosine.}
+formula for cosine, $\cos^2{x}=\frac{1}{2}\paren{1+\cos{2x}}$.}
 &\frac{1}{4}\xint_0^{\frac\pi{6}}{1+\cos{2\theta}}\,{d\theta} \\
 &\frac{1}{4}\left({\theta+\frac{1}{2}\sin{2\theta}}\right|_0^\frac\pi{6} \\
 &\frac{1}{4}\paren{\frac\pi{6}+\frac{1}{2}\sin{\frac\pi{3}}} \\
@@ -229,17 +236,62 @@ formula for cosine.}
 &\frac\pi{24}+\frac{\sqrt{3}}{16}
 \end{align*}
 
+\section{10.6}{10}
+Find the eccentricity, identify the conic, and give an equation of the directrix.
+%
+\begin{equation*}
+r=\frac{1}{2+\sin\theta}
+\end{equation*}\double
+
+Theorem 6 in Section 10.6 tells us that a conic section with eccentricity $e$ can be represented by a polar equation
+%
+\begin{equation*}
+r=\frac{ed}{1\pm{e}\cos\theta}\text{ or }r=\frac{ed}{1\pm{e}\sin\theta}.
+\end{equation*}
+%
+It also says that the conic is an ellipse if $e<1$, a parabola if $e=1$, or a hyperbola if $e>1$. \\
+We must manipulate the given equation so that it matches the form $1\pm{e}\sin\theta$ in the denominator.
+%
+\begin{align*}
+r&=\frac{1}{2\paren{1+\frac{1}{2}\sin\theta}} \\
+&=\frac{\frac{1}{2}}{1+\frac{1}{2}\sin\theta}
+\end{align*}
+%
+Our equation gives $e=\frac{1}{2}$ and $ed=\frac{1}{2}$, so $d=1$, the directrix is $y=1$, and the equation represents an
+ellipse, because $e<1$.
+
+\section{11.4}{3}
+Determine whether $\sum_{n=1}^\infinity{a_n}$ converges or diverges.
+%
+\begin{equation*}
+a_n=\frac{1}{n^3+8}
+\end{equation*}\double
+
+We can compare $a_n$ to another series, $b_n=\frac{1}{n^3}$, to determine convergence.
+%
+\begin{equation*}
+\sum_{n=1}^\infinity\frac{1}{n^3+8}<\sum_{n=1}^\infinity\frac{1}{n^3}
+\end{equation*}
+%
+Since $a_n<b_n$ for any positive integer $n$, $a_n$ will converge if $b_n$ converges. The series $b_n$ is of the $p$-series form
+$\sum\frac{1}{n^p}$, which converges if $p>1$. In the case of $b_n$, $p=3>1$, so $b_n$ and $a_n$ converge.
+
 \section{11.10}{78}
 Find the sum of the series.
 %
+\begin{equation*}
+1-\ln{2}+\frac{\paren{\ln{2}}^2}{2!}-\frac{\paren{\ln{2}}^3}{3!}+\cdots
+\end{equation*}\double
+
+Writing the equation for the series will clearly show us a necessary substitution.
+%
 \begin{align*}
-&1-\ln{2}+\frac{\paren{\ln{2}}^2}{2!}-\frac{\paren{\ln{2}}^3}{3!}+\dots \\
-\\
-\intertext{Writing the equation for the sum will clearly show us a necessary substitution.}
 &\sum_{n=0}^\infinity\paren{-1}^n\frac{\paren{\ln{2}}^n}{n!}
-\intertext{Since the factors $-1$ and $\ln{2}$ both have power $n$, the $-1$ can multiply in to the numerator to make $\paren{-\ln{2}}^n$. Then we can make the substitution $x=-\ln{2}$, resulting in:}
+\intertext{Since the factors $-1$ and $\ln{2}$ both are raised to power $n$, the $-1$ can multiply in to the numerator to make
+$\paren{-\ln{2}}^n$. Then we can make the substitution $x=-\ln{2}$, resulting in the power series}
 &\sum_{n=0}^\infinity\frac{x^n}{n!}.
-\intertext{We know that this is also the power series for $\exp{x}$ for all $x$. So, the solution is $\exp{x}$ evaluated at $x=-\ln{2}$, or $\frac{1}{2}$.}
+\intertext{We know that this is also the power series for $\exp{x}$ evaluated at any complex number $x$. So, the solution is
+$\exp{x}$ evaluated at $x=-\ln{2}$, or $\frac{1}{2}$.}
 \end{align*}
 
 \end{document}
