@@ -1,0 +1,69 @@
+% Spencer Todd
+% April 2018, AP Computer Science Principles, Mr. Tull
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\double}[0]{\par\null\par}
+\renewcommand{\section}[1]{\textbf{#1}\\}
+\newcommand{\paren}[1]{\left({#1}\right)}
+
+\begin{document}\fontfamily{lmr}\selectfont
+\section{2a.}
+This project was written in Python and uses a number of Python third-party libraries, such as Matplotlib, NumPy, and
+SymPy.\double
+
+This program implements a level surface visualization for functions of three variables by graphing the function's level
+surfaces. The visualization is an analog to level curves for functions of two variables. Functions of one and two variables
+are trivial to represent in our three dimensional world, but functions of three dimensions are not. On a level surface graph,
+the surfaces represent where the function has the same value. An application of level surfaces would be to visualize how a
+variable changes over three dimensions, such as temperature, air pressure, or brightness from a light source.\double
+The video demonstrates the visualization of the function $f\paren{x,y,z}=\frac{z}{\sqrt{x^2+y^2}}$, as well as one possible interface
+to the program, the command line parameters.\double
+
+\section{2b.}
+Before starting this project, I was already familiar with Matplotlib 2D plotting, as well as how I can use NumPy matrices to
+plot data. In order to become familiar with the Matplotlib 3D interface, I initially plotted two variable functions by hard
+coding transformations of the $x$ and $y$ domain matrices. To make the program interactive, I replaced the hard coded
+expressions with evaluated interactive input. Then, I familiarized myself with enough relevant functions of the SymPy library
+in order to implement my mathematical algorithm. Using the interactive Python console to tinker with the libraries readily
+sped up my learning process. For the program as a whole, I initially implemented the program all in one to two functions,
+then I would separate different chunks into more readable, individual functions.\double
+
+All development and library research was independent.\double
+
+\section{2c.}
+The \verb|solve_z_prompt()| function integrates a mathematical algorithm with a logical algorithm in order to collect a string
+and manipulate it mathematically. There are two main branches of the algorithm in order to achieve this, the functions \verb|solve_z()|
+and \verb|prompt_expr()|.\double
+
+The function \verb|prompt_expr()| gathers a string of text from the user. The function does not decide whether the string is a valid
+expression. The algorithm selects which source the user has provided their expression: the command line
+parameters (\verb|sys.argv[1]|), a shell pipe (\verb|sys.stdin.read()|), or from an interactive prompt (\verb|input()|). The
+algorithm also decides whether the shell pipe flag (\verb|-|) should have or should not have been provided.\double
+
+The mathematical formula is applied to this newly formed string. First, the user's expression $f\paren{x,y,z}$ is put into an
+equation, $C=f\paren{x,y,z}$. Then, this equation is solved for $z$, and the result (the right hand side) is returned. The
+library call dictates that the list of all possible solutions is returned. This forms new expressions, $g_i\paren{x,y}$, which
+can be plotted on an $x,\ y,\ z$ plane when $C$ is replaced with a real number. This algorithm is implemented in the
+function \verb|solve_z()|.\double
+
+Putting these functions together, the function \verb|solve_z_prompt()| prompts the user for an expression, then returns the
+list of solutions of that expression set equal to $C$ and solved for $z$.\double
+
+\section{2d.}
+The function \verb|map_f_xy()| makes it simple to iterate over a 2D table of coordinate pairs (which is a 3D table of numbers).
+The function is analogous to a Numpy vector function, like the functions \verb|np.sin()| or \verb|np.sqrt()|, which apply the
+same function to each individual number in the matrix, but \verb|map_f_xy()| applies the same function to each coordinate pair
+in the input meshgrid. The structure of the meshgrid is that $x$ and $y$ values are stored in separate tables but in the same
+index, so working with individual coordinate pairs is difficult. Applying a transposition to the meshgrid will pair each
+corresponding $x$ and $y$ and arrange them in a 2D table. Then, it is simple to iterate through each row. On each iteration,
+the input function is applied to the coordinate pair, and the answer is stored in the output matrix.\double
+
+This abstraction is required, because the main purpose of the program is to plot 3D functions over a 2D domain.
+\end{document}

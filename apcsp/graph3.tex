@@ -1,3 +1,52 @@
+% Spencer Todd
+% April 2018, AP Computer Science Principles, Mr. Tull
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{tikz}
+\usetikzlibrary{tikzmark}
+
+\linespread{1.6}
+\setlength\parindent{0em}
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+\lstdefinestyle{PyStyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    basicstyle=\ttfamily,
+    columns=fullflexible,
+    keepspaces=true,
+    language=Python,
+    escapeinside=??
+}
+ 
+\lstset{style=PyStyle}
+
+
+\begin{document}
+\textbf{3.}
+\begin{lstlisting}
 #!/bin/env python3
 """Graph a family of level surfaces for a function of three variables.
 
@@ -56,12 +105,15 @@ def solve_z(sympy_expr):
     return sympy.solve(sympy.Eq(C, sympy_expr), z)
 
 
-def solve_z_str(str_expr):  # OVAL
+def solve_z_str(str_expr):
     """Solve C=f(x,y,z) for z for some string expression f(x,y,z)."""
     return solve_z(eval_str(str_expr))
 
 
-def solve_z_prompt():
+?
+\tikz[overlay]
+\draw[red, ultra thick] (8cm,-1.5*\baselineskip) ellipse (10cm and 2.5*\baselineskip);
+?def solve_z_prompt():
     """Solve C=f(x,y,z) for z for some expression f(x,y,z) that is prompted
     for to the user."""
     return solve_z_str(prompt_expr())
@@ -83,18 +135,22 @@ def e_color_ate(constants):
         color = cm.jet(n / d, 0.93)
         yield color, constant
 
-
-def map_f_xy(f, mesh):  # RECTANGLE
+?\tikzmark{starta}?
+def map_f_xy(f, mesh):
     """Map a numpy (x,y) meshgrid to a function of two variables."""
-    domain = np.array(mesh).transpose(1, 2, 0)
-    z_range = np.empty(mesh[0].shape)
+    domain = np.array(mesh).transpose(1, 2, 0)?
+\tikz[remember picture, overlay]
+\draw[red, ultra thick] ([yshift=-.5*\baselineskip] pic cs:starta) rectangle ([xshift=\textwidth,yshift=-3.25*\baselineskip] pic cs:starta);?
+?\tikzmark{startb}?    z_range = np.empty(mesh[0].shape)
 
     for i, domain_i in enumerate(domain):
         for j, (x_ij, y_ij) in enumerate(domain_i):
             z_ij = f(x_ij, y_ij)
             z_range[i][j] = z_ij if z_ij.is_real else np.nan
 
-    return z_range
+    return z_range?
+\tikz[remember picture, overlay]
+\draw[red,ultra thick] ([yshift=.75*\baselineskip] pic cs:startb) rectangle ([xshift=\textwidth,yshift=-7.25*\baselineskip] pic cs:startb);?
 
 
 class LevelSurfacePlotter(Axes3D):
@@ -136,3 +192,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+\end{lstlisting}
+\end{document}
