@@ -1,1 +1,4 @@
 tikzlibrarytikzmark.code.tex
+*.aux
+*.mp4
+*.pdf

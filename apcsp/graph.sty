@@ -1,0 +1,55 @@
+\ProvidesPackage{graph}
+
+\RequirePackage[protrusion=true,expansion=true]{microtype}
+\RequirePackage[margin=1in]{geometry}
+
+\newif\if@longoption
+\DeclareOption{long}{\@longoptiontrue}
+\ProcessOptions\relax
+
+\if@longoption
+    \RequirePackage[active,tightpage]{preview}
+    \renewcommand{\PreviewBorder}{1in}
+    \newenvironment{stretchpage}{\begin{preview}\begin{minipage}{\hsize}}{\end{minipage}\end{preview}}
+    \AtBeginDocument{\begin{stretchpage}}
+    \AtEndDocument{\end{stretchpage}}
+\fi
+
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\double}[0]{\par\null\par}
+\newcommand{\paren}[1]{\left({#1}\right)}
+
+\RequirePackage{listings}
+\RequirePackage{color}
+\RequirePackage{tikz}
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+\lstdefinestyle{PyStyle}{
+    basicstyle=\ttfamily,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    columns=fullflexible,
+    keepspaces=true,
+    language=Python,
+    escapeinside=??
+}
+
+\lstset{style=PyStyle}

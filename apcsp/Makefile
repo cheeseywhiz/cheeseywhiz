@@ -1,5 +1,5 @@
-PDF:=pdflatex
-PDF_FLAGS:=-halt-on-error
+TEX:=pdflatex
+TEX_FLAGS:=-halt-on-error
 
 BROWSER:=chromium
 
@@ -16,8 +16,7 @@ trim:
 clean: trim
 	rm -f *.pdf
 
-%.pdf: %.tex
-	$(PDF) $(PDF_FLAGS) $<
-	$(PDF) $(PDF_FLAGS) $<
+%.pdf: %.tex graph.sty graph.py
+	$(TEX) $(TEX_FLAGS) $<
 
 .PHONY: all open trim clean
