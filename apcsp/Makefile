@@ -10,13 +10,11 @@ all: $(FILES)
 open:
 	$(BROWSER) $(FILES)
 
-trim:
+clean:
 	rm -f *.aux *.log *.nav *.out *.snm *.toc *.vrb
 
-clean: trim
-	rm -f *.pdf
 
 %.pdf: %.tex graph.sty graph.py
 	$(TEX) $(TEX_FLAGS) $<
 
-.PHONY: all open trim clean
+.PHONY: all open clean
