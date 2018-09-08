@@ -5,7 +5,7 @@ import inspect
 import matplotlib.pyplot as plt
 import differentiable
 
-xmin, xmax = 0, 10
+xmin, xmax = -2, 4
 ymin, ymax = -4, 4
 h = 1 / 1000
 

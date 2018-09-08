@@ -1,5 +1,7 @@
 \ProvidesPackage{graph}
 
+% Basic config
+
 \RequirePackage[protrusion=true,expansion=true]{microtype}
 \RequirePackage[margin=1in]{geometry}
 
@@ -20,6 +22,8 @@
 
 \newcommand{\double}[0]{\par\null\par}
 \newcommand{\paren}[1]{\left({#1}\right)}
+
+% Project specific config
 
 \RequirePackage{listings}
 \RequirePackage{color}
@@ -57,3 +61,6 @@
 }
 
 \lstset{style=PyStyle}
+\renewcommand{\section}[1]{\textbf{2{#1}.}}
+
+\RequirePackage{hanging}

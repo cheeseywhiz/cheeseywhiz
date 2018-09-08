@@ -1,0 +1,398 @@
+% Spencer Todd
+% April 2018, Multivariable Calculus, Jasho
+
+\documentclass[12pt]{article}
+
+\usepackage{solutions}
+
+\begin{document}
+\title{10 detailed solutions}{by Spencer Todd}
+\section{12.5}{57}
+Find the angle between the planes and the parametric equations for the line of intersection between the planes.
+%
+\begin{align*}
+x+y+z&=1\\
+x+2y+2z&=1
+\end{align*}
+%
+We can use the equations of the planes to find the normal vector for each plane. The normal vector of the
+plane $Ax+By+Cz=D$ is $\vector{A,B,C}$.
+%
+\begin{align*}
+\mathbf{n_1}&=\vector{1,1,1}\\
+\mathbf{n_2}&=\vector{1,2,2}
+\end{align*}
+%
+Then, we can use the definition of the vector dot product to find the angle between the normal vectors, which is equivalent
+to the angle between the planes.
+%
+\begin{align*}
+\mathbf{n_1}\dot\mathbf{n_2}&=\abs{\mathbf{n_1}}\abs{\mathbf{n_2}}\cos\theta\\
+\theta&=\arccos\frac{\mathbf{n_1}\dot\mathbf{n_2}}{\abs{\mathbf{n_1}}\abs{\mathbf{n_2}}}
+\end{align*}
+\begin{align*}
+\theta&=\arccos\frac{1\times1+1\times2+1\times2}{\sqrt{1^2+1^2+1^2}\times\sqrt{1^2+2^2+2^2}}\\
+&=\arccos\frac{5}{3\sqrt{3}}
+\end{align*}
+%
+The nonzero angle indicates that the planes intersect.\double
+
+We can form the parametric equations of the line of intersection using a vector parallel to the line and a point on the line.
+The line given by
+%
+\begin{align*}
+x&=a+ut\\
+y&=b+vt\\
+z&=c+wt
+\end{align*}
+%
+is parallel to vector $\vector{u,v,w}$ and runs through point $\paren{a,b,c}$. Since the line of intersection is parallel to
+both planes, it is perpendicular to both normal vectors. The cross product gives us a vector that is perpendicular to the
+normal vectors and is parallel to the line of intersection.
+%
+\begin{gather*}
+\mathbf{n_1}\cross\mathbf{n_2}=\begin{determinant}
+\i&\j&\k\\
+1&1&1\\
+1&2&2
+\end{determinant}\\
+=\paren{1\times{2}-1\times{2}}\i-\paren{1\times{2}-1\times{1}}\j+\paren{1\times{2}-1\times{1}}\k\\
+=\vector{0,-1,1}
+\end{gather*}
+%
+To begin finding a point on the line of intersection, we can eliminate $x$.
+%
+\begin{gather*}
+\begin{tabu}{rllll}
+&x&+2y&+2z&=1\\
+-&x&+y&+z&=1\\
+\hline
+&&y&+z&=0
+\end{tabu}
+\end{gather*}
+\begin{align*}
+z&=-y\\
+x+y-y&=1\\
+x&=1
+\end{align*}
+%
+Now, we can choose $y=0$, which gives us $z=0$. Thus, the point $\paren{1,0,0}$ lies on the line of intersection. Following the
+form for parametric equations above, the line of intersection is given by:
+%
+\begin{align*}
+x&=1+0t\\
+y&=0-1t\\
+z&=0+1t.
+\end{align*}
+
+\section{13.3}{47}
+Find the vectors $\mathbf{T}$, $\mathbf{N}$, and $\mathbf{B}$ at the given point.
+%
+\begin{equation*}
+\mathbf{r}\paren{t}=\vector{t^2,\frac{2}{3}t^3,t}\text{ at }\paren{1,\frac{2}{3},1}
+\end{equation*}
+%
+First, we note that $\mathbf{r}\paren{t}=\vector{1,\frac{2}{3},1}$ when $t=1$.\double
+
+The derivative of $\mathbf{r}$ is tangent to the curve defined by $\mathbf{r}$. Dividing this derivative by its length gives us
+a unit vector that is tangent to the curve, or the unit tangent $\mathbf{T}$.
+%
+\begin{align*}
+\mathbf{r}'\paren{t}&=\vector{2t,2t^2,1}\\
+\abs{\mathbf{r}'\paren{t}}&=\sqrt{4t^2+4t^4+1}\\
+&=2t^2+1\\
+\mathbf{T}\paren{t}&=\frac{\mathbf{r}'\paren{t}}{\abs{\mathbf{r}'\paren{t}}}\\
+&=\frac{\vector{2t,2t^2,1}}{2t^2+1}\\
+\mathbf{T}\paren{1}&=\vector{\frac{2}{3},\frac{2}{3},\frac{1}{3}}
+\end{align*}
+%
+The unit normal is found similarly to how the unit tangent is found. We can differentiate $\mathbf{T}\paren{t}$ using the
+quotient rule.
+%
+\begin{gather*}
+\begin{tabu}{ll}
+u=\vector{2t,2t^2,1} & u'=\vector{2,4t,0}\\
+v=2t^2+1 & v'=4t
+\end{tabu}
+\end{gather*}
+\begin{align*}
+\mathbf{T}'\paren{t}&=\frac{vu'-uv'}{v^2}\\
+&=\frac{\paren{2t^2+1}\times\vector{2,4t,0}-4t\times\vector{2t,2t^2,1}}{\paren{2t^2+1}^2}\\
+&=\frac{\vector{2-4t^2,4t,-4t}}{\paren{2t^2+1}^2}\\
+\abs{\mathbf{T}'\paren{t}}&=\frac{\sqrt{16t^4-16t^2+4+16t^2+16t^2}}{\paren{2t^2+1}^2}\\
+&=\frac{2\paren{2t^2+1}}{\paren{2t^2+1}^2}\\
+\mathbf{N}\paren{t}&=\frac{\mathbf{T}'\paren{t}}{\abs{\mathbf{T}'\paren{t}}}\\
+&=\frac{\vector{1-2t^2,2t,-2t}}{2t^2+1}\\
+\mathbf{N}\paren{1}&=\vector{-\frac{1}{3},\frac{2}{3},-\frac{2}{3}}
+\end{align*}
+%
+The binormal vector $\mathbf{B}$ is the cross product of the unit tangent and unit normal vectors. It is also a unit vector, since it is the
+product of two unit vectors.
+%
+\begin{gather*}
+\mathbf{B}\paren{1}=\mathbf{T}\paren{1}\cross\mathbf{N}\paren{1}\\
+=\frac{1}{3^2}\begin{determinant}
+\i&\j&\k\\
+2&2&1\\
+-1&2&-2
+\end{determinant}\\
+=\frac{1}{9}\paren{\vector{\paren{2\times{-2}-1\times{2}}\i-\paren{2\times{-2}-1\times{-1}}\j+\paren{2\times{2}-2\times{-1}}\k}}\\
+=\vector{-\frac{2}{3},\frac{1}{3},\frac{2}{3}}
+\end{gather*}
+
+\section{13.4}{15}
+Find the velocity and position vectors of a particle that has the given acceleration and given initial velocity and position.
+%
+\begin{align*}
+\mathbf{a}\paren{t}&=2\i+2t\k\\
+\mathbf{v}\paren{0}&=3\i-\j\\
+\mathbf{r}\paren{0}&=\j+\k
+\end{align*}
+%
+We can solve this initial value problem for $\mathbf{v}\paren{t}$ by integrating $\mathbf{a}\paren{t}$, then
+using $\mathbf{v}\paren{0}$ to determine the arbitrary vector constant, $\mathbf{A}$.
+%
+\begin{align*}
+\mathbf{v}\paren{t}=\int\paren{2\i+2t\k}dt&=2t\i+t^2\k+\mathbf{A}\\
+\mathbf{v}\paren{0}=3\i-\j&=2\times0\i+0^2\k+\mathbf{A}\\
+\mathbf{A}&=3\i-\j\\
+\mathbf{v}\paren{t}&=\paren{2t+3}\i-\j+t^2\k
+\end{align*}
+%
+We can solve this initial value problem for $\mathbf{r}\paren{t}$ by integrating $\mathbf{v}\paren{t}$, then
+using $\mathbf{r}\paren{0}$ to determine the arbitrary vector constant, $\mathbf{B}$.
+%
+\begin{align*}
+\mathbf{r}\paren{t}=\int\paren{\paren{2t+3}\i-\j+t^2\k}dt&=\paren{t^2+3t}\i-t\j+\frac{t^3}{3}\k+\mathbf{B}\\
+\mathbf{r}\paren{0}=\j+\k&=\paren{0^2+3\times{0}}\i-0\j+\frac{0^3}{3}\k+\mathbf{B}\\
+\mathbf{B}&=\j+\k\\
+\mathbf{r}\paren{t}&=\paren{t^2+3t}\i+\paren{1-t}\j+\paren{\frac{t^3}{3}+1}\k
+\end{align*}
+
+\section{14.2}{17}
+Evaluate the limit.
+%
+\begin{equation*}
+\lim_{\paren{x,y}\to\paren{0,0}}\frac{x^2+y^2}{\sqrt{x^2+y^2+1}-1}
+\end{equation*}
+%
+Plugging in $x=0$ and $y=0$, we reach $0/0$, which is undefined. We can make the substitution $r^2=x^2+y^2$ and evaluate
+further.
+%
+\begin{equation*}
+=\lim_{r\to{0}}\frac{r^2}{\sqrt{r^2+1}-1}
+\end{equation*}
+%
+Plugging in $r=0$ again, we reach $0/0$, which is an indeterminate form. We can evaluate this limit using L'H\^{o}pital's Rule.
+%
+\begin{align*}
+&=\lim_{r\to{0}}\frac{2r}{\frac{2r}{2\sqrt{r^2+1}}}\\
+&=\lim_{r\to{0}}2\sqrt{r^2+1}\\
+&=2
+\end{align*}
+
+\section{14.7}{5}
+Find the local maximum and minimum values and saddle points of the function.
+%
+\begin{equation*}
+f\paren{x,y}=x^2+xy+y^2+y
+\end{equation*}
+%
+First, we must find the critical points of the function $f$, where $\partial{f}{x}$ and $\partial{f}{y}$ both equal $0$.
+%
+\begin{align*}
+\partial{f}{x}=2x+y&=0\\
+\partial{f}{y}=x+2y+1&=0
+\end{align*}
+%
+We can solve the system of equations using the elimination method.
+%
+\begin{gather*}
+\begin{tabu}{rlll}
+&2x&+y&=0\\
+-&2x&+4y&=-2\\
+\hline
+&&-3y&=2
+\end{tabu}
+\end{gather*}
+\begin{align*}
+y&=-\frac{2}{3}\\
+2x-\frac{2}{3}&=0\\
+x&=\frac{1}{3}
+\end{align*}
+%
+We can use the Hessian matrix of the function $f$ in order to classify the critical point $\paren{\frac{1}{3},-\frac{2}{3}}$.
+The point is classified by the following set of rules: if the Hessian determinant is negative, then the point is a saddle
+point; if the trace of the matrix is positive, then the point is a local minimum; or if the trace is negative, then the point
+is a local maximum.
+%
+\begin{align*}
+H\paren{x,y}&=\begin{matrix}{cc}
+\frac{\part^2{f}}{\part{x}^2}&\frac{\part{f}}{\part{x}\part{y}}\\
+\frac{\part{f}}{\part{y}\part{x}}&\frac{\part^2{f}}{\part{y}^2}
+\end{matrix}\\
+&=\begin{matrix}{cc}
+2&1\\
+1&2
+\end{matrix}
+\end{align*}
+%
+Notice that the Hessian matrix is constant. The Hessian determinant is $2\times2-1\times{1}=3$, which is positive. The trace of
+the matrix is $2+2=4$, which is positive, so the value $f\paren{\frac{1}{3},-\frac{2}{3}}=-\frac{1}{3}$ is a local minimum.
+
+\section{15.6}{19}
+Use a triple integral to find the volume of the tetrahedron enclosed by the coordinate planes and the plane $2x+y+z=4$.\double
+
+The volume of a region is found by integrating $1$ over the region. Rewriting the equation of the plane
+as $\frac{x}{2}+\frac{y}{4}+\frac{z}{4}=1$, the plane triple itercept form, helps us visualize the region. The tetrahedron has
+$x$, $y$, and $z$ intercepts at $2$, $4$, and $4$, respectively. For this integral, we can choose to integrate in the order $z$,
+$y$, and then $x$.\double
+
+The range of $x$ in the tetrahedron is from $0$ to $2$ along the edge on the $x$-axis. We can set $z=0$ in order to
+find the range of $y$, which is from $0$ to $4-2x$ across the $xy$-plane. Finally, the range of $z$ is from the $xy$-plane to the
+plane defined by the equation, or from $0$ to $4-2x-y$. The volume of the tetrahedron is found by evaluating the following
+triple integral:
+%
+\begin{equation*}
+\int_0^2\int_0^{4-2x}\int_0^{4-2x-y}dz\,dy\,dx.
+\end{equation*}
+\begin{align*}
+&=\int_0^2\int_0^{4-2x}\paren{4-2x-y}dy\,dx\\
+&=\int_0^2\left(\paren{4-2x}y-\frac{y^2}{2}\right|_{y=0}^{y=4-2x}\,dx\\
+&=\int_0^2\paren{\paren{4-2x}^2-\frac{\paren{4-2x}^2}{2}}dx\\
+&=\frac{1}{2}\int_0^2\paren{16-16x+4x^2}dx\\
+&=2\left(4x-2x^2+\frac{x^3}{3}\right|_0^2\\
+&=4\paren{4-4+\frac{4}{3}}\\
+&=\frac{16}{3}
+\end{align*}
+
+\section{16.3}{18}
+Evaluate $\int_C\mathbf{F}\dot{d\mathbf{r}}$.
+%
+\begin{gather*}
+\mathbf{F}\paren{x,y,z}=\vector{\sin{y},x\cos{y}+\cos{z},-y\sin{z}}\\
+C:\ \mathbf{r}\paren{t}=\vector{t^2+1,t^2-1,t^2-2t},\ 0\leq{t}\leq\pi/2
+\end{gather*}
+%
+First, we must find the potential function for $\mathbf{F}$, or a function $f\paren{x,y,z}$ such that $\mathbf{F}=\nabla{f}$.
+Since $\mathbf{F}=\vector{\partial{f}{x},\partial{f}{y},\partial{f}{z}}$, we can integrate the three components of $\mathbf{F}$
+to find $f$.
+%
+\begin{align*}
+\partial{f}{x}&=\sin{y}\\
+\partial{f}{y}&=x\cos{y}+\cos{z}\\
+\partial{f}{z}&=-y\sin{z}
+\end{align*}
+\begin{gather*}
+\begin{tabu}{rlll}
+x:&A\paren{y,z}&&+x\sin{y}\\
+y:&y\cos{z}&+B\paren{x,z}&+x\sin{y}\\
+z:&y\cos{z}& &+C\paren{x,y}\\
+\hline
+f\paren{x,y,z}=&y\cos{z}&&+x\sin{y}
+\end{tabu}
+\end{gather*}\begin{equation*}
+f\paren{x,y,z}=y\cos{z}+x\sin{y}+K
+\end{equation*}
+%
+By the fundamental theorem of line integrals, $\int_C\mathbf{F}\dot{d\mathbf{r}}=f\paren{\mathbf{r}\paren{\pi/2}}-f\paren{\mathbf{r}\paren{0}}$.
+%
+\begin{align*}
+\mathbf{r}\paren{\frac{\pi}{2}}&=\vector{\frac{\pi^2}{4}+1,\frac{\pi^2}{4}-1,\frac{\pi^2}{4}+\pi}\\
+\mathbf{r}\paren{0}&=\vector{1,-1,0}
+\end{align*}
+\begin{align*}
+\int\limits_C\mathbf{F}\dot{d\mathbf{r}}&=f\paren{\frac{\pi^2}{4}+1,\frac{\pi^2}{4}-1,\frac{\pi^2}{4}+\pi}-f\paren{1,-1,0}\\
+&=\paren{\frac{\pi^2}{4}-1}\cos\paren{\frac{\pi^2}{4}+\pi}+\paren{\frac{\pi^2}{4}+1}\sin\paren{\frac{\pi^2}{4}-1}-\paren{-1\times\cos{0}+1\times\sin{-1}}\\
+&=\paren{\frac{\pi^2}{4}-1}\cos\paren{\frac{\pi^2}{4}+\pi}+\paren{\frac{\pi^2}{4}+1}\sin\paren{\frac{\pi^2}{4}-1}+1-\sin{1}
+\end{align*}
+
+\section{16.4}{5}
+Use Green's Theorem to evaluate the line integral along the positively oriented curve.
+%
+\begin{equation*}
+\int\limits_C{ye^x{dx}+2e^x{dy}}
+\end{equation*}
+%
+The curve $C$ is the rectangle with vertices $\paren{0,0}$, $\paren{3,0}$, $\paren{3,4}$, and $\paren{0,4}$.\double
+
+Since $C$ is closed and positvely oriented, we can apply Green's Theorem by integrating $\partial{Q}{x}-\partial{P}{y}$ over the
+inside of the curve $D$, whereas
+%
+\begin{align*}
+P&=ye^x\text{, and}\\
+Q&=2e^x.
+\end{align*}
+%
+We begin by finding the partial derivatives of $P$ and $Q$, then applying Green's Theorem.
+%
+\begin{align*}
+\partial{Q}{x}&=2e^x\\
+\partial{P}{y}&=e^x
+\end{align*}
+\begin{align*}
+\int\limits_C{ye^x{dx}+2e^x{dy}}&=\iint\limits_D\paren{2e^x-e^x}dA\\
+&=\int_{0}^{4}\int_{0}^{3}{e^x}dx\,dy\\
+&=\int_{0}^{4}dy\int_{0}^{3}{e^x}{dx}\\
+&=\paren{4-0}\left(e^x\right|_{0}^{3}\\
+&=4e^3-4
+\end{align*}
+
+\section{16.5}{1}
+Find the divergence and curl of the vector field.
+%
+\begin{equation*}
+\mathbf{F}\paren{x,y,z}=\vector{xy^2z^2,x^2yz^2,x^2y^2z}
+\end{equation*}
+%
+We begin with the definition of divergence, $\div\mathbf{F}=\nabla\dot\mathbf{F}$. In other words, the divergence is the dot
+product of the vectors $\vector{\partial{}{x},\partial{}{y},\partial{}{z}}$ and $\mathbf{F}$.
+%
+\begin{align*}
+\div\mathbf{F}&=\vector{\partial{}{x},\partial{}{y},\partial{}{z}}\dot\vector{xy^2z^2,x^2yz^2,x^2y^2z}\\
+&=\partial{}{x}\paren{xy^2z^2}+\partial{}{y}\paren{x^2yz^2}+\partial{}{z}\paren{x^2y^2z}\\
+&=y^2z^2+x^2z^2+x^2y^2
+\end{align*}
+%
+On the other hand, the curl of a vector is the cross product of the
+vectors $\vector{\partial{}{x},\partial{}{y},\partial{}{z}}$ and $\mathbf{F}$, or $\curl\mathbf{F}=\nabla\cross\mathbf{F}$.
+%
+\begin{gather*}
+\curl\mathbf{F}=\begin{determinant}
+\i&\j&\k\\
+\partial{}{x}&\partial{}{y}&\partial{}{z}\\
+xy^2z^2&x^2yz^2&x^2y^2z
+\end{determinant}\\
+=\paren{2x^2yz-2x^2yz}\i-\paren{2xy^2z-2xy^2z}\j+\paren{2xyz^2-2xyz^2}\k\\
+=\mathbf{0}
+\end{gather*}
+%
+Since the curl of $\mathbf{F}$ is the zero vector, $\mathbf{F}$ is a conservative vector field.
+
+\section{16.9}{6}
+Use the Divergence Theorem to calculate the surface integral $\iint_S{\mathbf{F}\dot{d\mathbf{S}}}$.
+%
+\begin{equation*}
+\mathbf{F}\paren{x,y,z}=x^2yz\i+xy^2z\j+xyz^2\k
+\end{equation*}
+%
+$S$ is the surface of the box enclosed by the planes $x=0$, $x=a$, $y=0$, $y=b$, $z=0$, and $z=c$.\double
+
+Since $S$ is a simply solid region, we can integrate the divergence of $\mathbf{F}$ over $E$, the region bounded by $S$.
+%
+\begin{equation*}
+\iint\limits_S{\mathbf{F}\dot{d\mathbf{S}}}=\iiint\limits_E\div{\mathbf{F}}\,dV
+\end{equation*}
+\begin{align*}
+\div{\mathbf{F}}&=\nabla\dot\mathbf{F}\\
+&=\partial{}{x}\paren{x^2yz}+\partial{}{y}\paren{xy^2z}+\partial{}{z}\paren{xyz^2}\\
+&=2xyz+2xyz+2xyz\\
+&=6xyz
+\end{align*}
+\begin{align*}
+\iint\limits_S{\mathbf{F}\dot{d\mathbf{S}}}&=\int_{0}^{c}\int_{0}^{b}\int_{0}^{a}{6xyz}{\,dx\,dy\,dz}\\
+&=6\int_{0}^{a}{x\,dx}\int_{0}^{b}{y\,dy}\int_{0}^{c}{z\,dz}\\
+&=6\left(\frac{x^2}{2}\right|_{0}^{a}\times\left(\frac{y^2}{2}\right|_{0}^{b}\times\left(\frac{z^2}{2}\right|_{0}^{c}\\
+&=\frac{3}{4}a^2b^2c^2
+\end{align*}
+\end{document}

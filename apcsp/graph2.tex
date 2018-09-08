@@ -6,7 +6,7 @@
 \usepackage{graph}
 
 \begin{document}\fontfamily{lmr}\selectfont
-\textbf{2a.}\\
+\section{a}\\
 This project was written in Python and uses a number of Python third-party libraries, such as Matplotlib, NumPy, and
 SymPy.\double
 
@@ -18,7 +18,7 @@ variable changes over three dimensions, such as temperature, air pressure, or br
 The video demonstrates the visualization of the function $f\paren{x,y,z}=\frac{z}{\sqrt{x^2+y^2}}$, as well as one possible interface
 to the program, the command line parameters.\double
 
-\textbf{2b.}\\
+\section{b}\\
 Before starting this project, I was already familiar with Matplotlib 2D plotting, as well as how I can use NumPy matrices to
 plot data. In order to become familiar with the Matplotlib 3D interface, I initially plotted two variable functions by hard
 coding transformations of the $x$ and $y$ domain matrices. To make the program interactive, I replaced the hard coded
@@ -29,7 +29,7 @@ then I would separate different chunks into more readable, individual functions.
 
 All development and library research was independent.\double
 
-\textbf{2c.}
+\section{c}
 \lstinputlisting[firstline=60,lastline=63,firstnumber=60]{graph.py}
 
 The \verb|solve_z_prompt()| function integrates a mathematical algorithm with a logical algorithm in order to collect a string
@@ -47,7 +47,7 @@ equation are returned. The library call dictates that a list of expressions that
 Putting these functions together, \verb|solve_z_prompt()| prompts the user for an expression, then returns the list of solutions
 of that expression set equal to $C$ and solved for $z$.\double
 
-\textbf{2d.}
+\section{d}
 \lstinputlisting[firstline=83,lastline=93,firstnumber=83]{graph.py}
 
 The function \verb|map_f_xy()| makes it simple to iterate over a 2D table of coordinate pairs (which is a 3D table of numbers).

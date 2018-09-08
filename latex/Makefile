@@ -3,10 +3,10 @@ PDF_FLAGS:=-halt-on-error
 
 BROWSER:=chromium
 
-all: 10solutions.pdf
+all: app_nerf_report.pdf
 
 open:
-	$(BROWSER) 10solutions.pdf
+	$(BROWSER) app_nerf_report.pdf
 
 clean:
 	rm -f *.pdf *.aux *.log

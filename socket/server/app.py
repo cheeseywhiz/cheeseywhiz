@@ -66,7 +66,7 @@ class App(server.Server):
         if not methods:
             methods = ('GET', )
 
-        url_path = collect.path.Path(url)
+        url_path = collect.Path(url)
 
         def decorator(func):
             for method in methods:
@@ -167,6 +167,7 @@ class App(server.Server):
         while True:
             try:
                 req = http.Request(connection, address, self.max_recv_size)
+                print(req.raw_request)
             except socket.timeout:
                 Logger.log('Timed out: %s:%s', *address)
                 break

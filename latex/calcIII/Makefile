@@ -3,21 +3,21 @@ TEX_FLAGS:=-halt-on-error
 
 BROWSER:=chromium
 
-FILES:=expl.pdf
+FILES:=solutions.pdf
 
 all: $(FILES)
 
-open: $(FILES)
-	$(BROWSER) $^
+open:
+	$(BROWSER) $(FILES)
 
 trim:
 	rm -f *.aux *.log *.nav *.out *.snm *.toc *.vrb
 
 clean: trim
-	rm -rf expl.pdf
+	rm -f *.pdf
 
 
-%.pdf: %.tex graph.sty
+%.pdf: %.tex solutions.sty
 	$(TEX) $(TEX_FLAGS) $<
 
-.PHONY: all open clean
+.PHONY: all open clean trim

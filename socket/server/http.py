@@ -154,7 +154,7 @@ class Request:
         self.headers = CaseInsensitiveDict()
 
         parsed_url = urllib.parse.urlparse(url)
-        self.path = collect.path.Path(
+        self.path = collect.Path(
             urllib.parse.unquote_plus(parsed_url.path))
         self.params = _parse_data_string(parsed_url.params)
         self.query = _parse_data_string(parsed_url.query)

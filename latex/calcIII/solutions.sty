@@ -1,0 +1,57 @@
+\ProvidesPackage{solutions}
+
+% Basic config
+
+\RequirePackage[protrusion=true,expansion=true]{microtype}
+\RequirePackage[margin=1in]{geometry}
+\RequirePackage{lmodern}
+\RequirePackage{amsmath}
+
+\newif\if@longoption
+\DeclareOption{long}{\@longoptiontrue}
+\ProcessOptions\relax
+
+\if@longoption
+    \RequirePackage[active,tightpage]{preview}
+    \renewcommand{\PreviewBorder}{1in}
+    \newenvironment{stretchpage}{\begin{preview}\begin{minipage}{\hsize}}{\end{minipage}\end{preview}}
+    \AtBeginDocument{\begin{stretchpage}}
+    \AtEndDocument{\end{stretchpage}}
+\fi
+
+\AtBeginDocument{\fontfamily{lmr}\selectfont}
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\double}[0]{\par\null\par}
+\newcommand{\paren}[1]{\left({#1}\right)}
+
+% Project specific config
+
+\newcommand{\bfit}[2]{\textbf{#1}\ \textit{#2}}
+\renewcommand{\title}[2]{\large\bfit{#1}{#2}\normalsize}
+\renewcommand{\section}[2]{\double\LARGE\bfit{#1}{\##2}\normalsize\\}
+\let\dot\cdot
+
+\renewcommand{\vector}[1]{\left\langle{#1}\right\rangle}
+
+\let\part\partial
+\renewcommand{\partial}[2]{\frac{\part{#1}}{\part{#2}}}
+
+\RequirePackage{tabu}
+
+\renewcommand{\i}{\,\mathbf{i}}
+\renewcommand{\j}{\,\mathbf{j}}
+\renewcommand{\k}{\,\mathbf{k}}
+
+\renewenvironment{matrix}[1]{\left[\begin{array}{#1}}{\end{array}\right]}
+\newenvironment{determinant}{\left|\begin{array}{ccc}}{\end{array}\right|}
+
+\let\div\relax
+\DeclareMathOperator\curl{curl}
+\DeclareMathOperator\div{div}
+\DeclareMathOperator\grad{grad}
+
+\newcommand{\abs}[1]{\left|{#1}\right|}
+\let\cross\times
+\renewcommand{\times}{\cdot}

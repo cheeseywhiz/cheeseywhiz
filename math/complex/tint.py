@@ -1,0 +1,1 @@
+/home/cheese/.config/wal/tint.py

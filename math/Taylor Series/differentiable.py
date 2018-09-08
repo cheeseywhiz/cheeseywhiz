@@ -75,6 +75,14 @@ class equations:
         else:
             return self.inv(x,order-1)
 
+    def lnp1(self,x,order=0):
+      """y=ln(x+1)
+      """
+      if order == 0:
+          return log(x+1)
+      else:
+          return self.inv(x+1,order-1)
+
     def esin(self,x,order=0):
         """y=e**sin(x)
         """

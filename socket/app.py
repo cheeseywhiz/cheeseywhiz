@@ -20,14 +20,16 @@ HTML_TMPL = '''\
 LINK_HOME = '<a href="/">Home</a>'
 
 app = server.app.App('0.0.0.0', 8080)
-app.resolver.update({
-    '/img.png': '~/Pictures/wallpapers/tikkle7e9qhz.jpg',
-    '/myStyle.css': 'myStyle.css',
-    '/pkg': 'server',
-    '/home': ('~', False),
-    '/imgs': '~/Pictures/',
-    '/cfg': '~/.config',
-})
+app.resolver.update_from_files_json('app.json')
+
+
+@app.register('/myStyle.css')
+def my_style():
+    status_code, headers, content = app._return_file(
+        collect.Path('myStyle.css')
+    )
+    headers['Content-Type'] = 'text/css'
+    return status_code, headers, content
 
 
 def insert_body(func):
@@ -81,7 +83,7 @@ def dir_landing_page(url_path, folder_path, recursive):
 
 
 for url_path, fs_path in app.resolver.dirs.items():
-    recursive = app.resolver.recursive(fs_path)
+    recursive = app.resolver.recursive(url_path)
 
     def contents():
         if recursive:
@@ -103,7 +105,7 @@ for url_path, fs_path in app.resolver.dirs.items():
 @app.register('/', 'post')
 def index_post():
     input = server.app.ActiveRequest.body['url']
-    new_url = collect.path.Path(input)
+    new_url = collect.Path(input)
     return 303, {'Location': str(new_url)}, ''
 
 

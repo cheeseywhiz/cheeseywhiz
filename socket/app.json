@@ -1,0 +1,36 @@
+{
+    "dirs": {
+        "recursive": [
+            [
+                "~/Pictures",
+                "server"
+            ],
+            {
+                "cfg": "~/.config"
+            }
+        ],
+
+        "nonrecursive": [
+            [
+                "/etc"
+            ],
+            {
+                "home": "~"
+            }
+        ],
+
+        "ignore": [
+            "../.git",
+            "server/__pycache__"
+        ]
+    },
+
+    "static": [
+        [
+            "myStyle.css"
+        ],
+        {
+            "img.png": "~/Pictures/wallpapers/tikkle7e9qhz.jpg"
+        }
+    ]
+}

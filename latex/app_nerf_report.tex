@@ -1,0 +1,256 @@
+% Spencer Todd
+% February 2018, AP Physics Nerf Gun Lab Report, Mrs. Berryhill
+
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{{img/}}
+\newcommand{\paren}[1]{\left({#1}\right)}
+\newcommand{\double}[0]{\par\null\par}
+
+\DeclareMathOperator{\m}{\ m}
+\DeclareMathOperator{\ms}{\ m/s}
+\DeclareMathOperator{\mssq}{\ m/s^2}
+\DeclareMathOperator{\kg}{\ kg}
+
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\bigheader}[1]{\LARGE\textbf{#1}\normalsize}
+\newcommand{\header}[1]{\large\textbf{#1}\normalsize}
+\newcommand{\lilheader}[1]{\textit{#1}}
+
+\begin{document}\fontfamily{lmr}
+\bigheader{Nerf Gun Lab Report}
+
+\lilheader{Spencer Todd}
+
+\renewcommand{\abstractname}{Introduction}
+\begin{abstract}\normalsize
+The purpose of the lab is to determine which approach can more accurately measure the muzzle speed of a Nerf bullet. The two
+methods are based on the kinematic equations and the conservation of momentum. The kinematics approach is possible since the
+kinematic equations arise due to that velocity is the integral of acceleration, and position is the integral of velocity. The
+kinematic equations assume constant acceleration, whereas acceleration due to gravity is constant. The conservation of momentum
+approach is possible since momentum is conserved in a collision, and that momentum is mass multiplied by velocity. I predict that
+the kinematic equation approach will be more accurate, since the method will depend only on the motion of the one object instead
+of two.
+\end{abstract}
+
+\double\bigheader{Kinematics Approach}
+
+\header{Investigation Overview}
+
+\lilheader{Setup}
+
+The premise of the investigation is that the bullet is fired horizontally from a raised position then its travel distance is
+recorded. A level was used to orient the gun horizontally and the vertical height of the bottom of a bullet was recorded. The
+distance to a reference line on the ground was measured and remembered\footnote{Measurements that were remembered were
+intermediate measurements that were not necessary for the final calculations.}. After each trial, the bullet's travel distance
+was calculated from the distance to the reference line, then it was recorded. The shape of the tip of the bullet was not
+significant, although the same type of bullet was used each time. Five trials were performed.
+
+\double\lilheader{A Trial}
+
+Two observers prepare for the launch, waiting to see where the bullet will land. One person placed the handle of the gun on a
+stool while another person aided in adjusting the height of the bullet to the predetermined height. Then, the bullet was shot and
+the observers measured the distance of travel as described before.
+
+\double\header{Observations}
+
+The vertical height of the bottom of the bullet was 0.765 meters.
+
+\begin{center}
+\begin{tabular}{lr|r}
+& travel distance (m) & $v_i=\frac{d}{\sqrt{\frac{2h}{g}}}$ (m/s) \\
+\cline{2-3}
+& 7.695 & 19.475 \\
+& 8.790 & 22.246 \\
+& 8.740 & 22.120 \\
+& 11.100 & 28.092 \\
+& 8.965  & 22.689 \\
+\hline
+Mean & & 22.924 \\
+Standard deviation & & 3.153 \\
+\end{tabular}
+\end{center}
+
+\double\header{Data Analysis}
+
+The horizontal and vertical motion of the bullet:
+\begin{align*}
+x\paren{t}&=\frac{a}{2}t^2+v_i{t}+x_i   & y\paren{t}&=\frac{a}{2}t^2+v_i{t}+y_i \\
+a&=0\mssq                               & a&=-g \\
+&                                       & v_i&=0\ms \\
+x_i&=0\m                                & y_i&=h \\
+x\paren{t}&=v_i{t}                      & y\paren{t}&=-\frac{g}{2}t^2+h.
+\end{align*}
+
+The time when the bullet hits the ground:
+\begin{align*}
+y\paren{t}&=0\m \\
+0&=-\frac{g}{2}t^2+h \\
+t&=\sqrt{\frac{2h}{g}}.
+\end{align*}
+
+The horizontal distance when the bullet hits the ground:
+\begin{equation*}
+x\paren{\sqrt{\frac{2h}{g}}}=d=v_i\sqrt{\frac{2h}{g}}.
+\end{equation*}
+
+Solving for $v_i$ leaves us with only one free variable, $d$, which was determined with the investigation. All other variables are
+constant.
+\begin{equation*}
+v_i=\frac{d}{\sqrt{\frac{2h}{g}}}
+\end{equation*}
+
+\includegraphics[width=\textwidth]{kinematics_approach.png}
+
+Notice how we can keep $h$ constant and vary $d$ to find $v_i$. Now, with $h=0.765\m$, $g=9.8\mssq$, and the travel distance as
+$d$, we can compute the initial velocity for each trial. For example, the initial velocity for trial 1 is
+\begin{align*}
+v_i&=\frac{7.695}{\sqrt{\frac{2\cdot0.765}{9.8}}} \\
+&=19.475\ms.
+\end{align*}
+
+\double\null\par\bigheader{Momentum Approach}
+
+\header{Investigation Overview}
+
+\lilheader{Setup}
+
+The premise of the investigation is that the bullet is fired upwards towards an object of a known mass, then the change in height
+of the object is recorded. To begin, the object (a soda can) was connected to the ceiling with a string. The initial height of the
+bottom of the object was remembered. A vertical ruler aided in measuring heights throughout the investigation.  The masses of the
+object and the bullet were recorded. It was significant that suction cup bullets were used in order for the bullet to stick to the
+object after the collision. The same bullet was used each time. Five trials were performed.
+
+\double\lilheader{A Trial}
+
+The gun was fired upwards towards the object. A video of the trial was recorded, which was used to determine the maximum height of
+the bottom of the object. The difference between the object's maximum and initial height was recorded. The trial was repeated if
+the bullet did not stick to the object.
+
+\double\header{Observations}\double
+
+\begin{center}
+\begin{tabular}{l|r}
+& Mass (kg) \\ \hline
+Object & 0.0136 \\
+Bullet & 0.0014
+\end{tabular}
+
+\begin{tabular}{lr|r}
+& change in height (m) & $v_0=\frac{m+M}{m}\sqrt{2gh}$ (m/s) \\
+\cline{2-3}
+& 0.060 & 11.619\\
+& 0.088 & 14.071 \\
+& 0.086 & 13.910 \\
+& 0.090 & 14.230 \\
+& 0.064 & 12.000 \\
+\hline
+Mean & & 13.166 \\
+Standard deviation & & 1.251 \\
+\end{tabular}
+\end{center}
+
+\double\header{Data Analysis}
+
+The order of events during the trial can lead us towards the solution.
+First, momentum is conserved in the collision.
+Then, the kinetic energy resulting from the collision is converted into potential energy.
+\begin{align*}
+p_0&=p_1 \\
+mv_0&=\paren{m+M}v_1 \\
+v_1&=\frac{mv_0}{m+M} \\
+\null \\
+K_1&=U_2 \\
+\frac{1}{2}\paren{m+M}v_1^2&=\paren{m+M}gh \\
+v_1&=\sqrt{2gh} \\
+\frac{mv_0}{m+M}&=\sqrt{2gh} \\
+v_0&=\frac{m+M}{m}\sqrt{2gh}
+\end{align*}
+
+\begin{center}
+\includegraphics[width=\dimexpr\textwidth/2\relax]{momentum_approach.png}
+\end{center}
+
+Notice that since $m$ and $M$ are constant, we can vary $h$ to find $v_0$. Now, with $m=0.0014\kg$, $M=0.0136\kg$,
+$g=9.8\mssq$, and the change in height as $h$, we can compute the initial velocity for each trial. For example, the initial
+velocity for trial 1 is
+\begin{align*}
+v_0&=\frac{0.0014+0.0136}{0.0014}\sqrt{2\cdot9.8\cdot0.060} \\
+&=11.619\ms.
+\end{align*}
+
+\double\bigheader{Explanation}
+
+The momentum approach was more accurate at determining the muzzle velocity of a Nerf bullet.\double
+
+The standard deviation is a way to reasonably calculate the precision of data. The standard deviation of the kinetics approach
+data was 3.153, while the standard deviation of the momentum approach data was only 1.251.\double
+
+The evidence supports the data, because a smaller standard deviation is the result of more consistent data. We can expect that
+future trials would fall closer to the mean in the momentum approach than the kinematics approach. I had predicted that the
+motion of the bullet through the air would be more consistent than the motion of the bullet in a collision. In reality, the
+bullet was rather inconsistently influenced by air resistance. In the momentum approach, the gun was able to be placed very
+close to the soda can, minimizing any outside influences. The force of air resistance, acting in the opposite direction of the
+bullet's velocity, accounted for the travel distance inconsistency.\double
+
+This overall investigation was a fair test, because we were able to accurately collect the data measurements. Redundant
+observers and video replays made for undisputable accuracy.\double
+
+\double\bigheader{Evaluation}
+
+\header{Sources of Error}
+\begin{itemize}
+\item The kinematic equations assume that the bullet flew essentially in a vacuum. In reality, air resistance may have slowed the
+bullet in the horizontal direction, or it may have made it fall slower, like a ski jumper.
+\item We have assumed that the bullet and can's kinetic energy was perfectly transferred into potential energy. In reality, the
+can became off balance and likely transferred energy to many other forms.
+\item We measured the change in height of the bottom of the can. This was just an arbitrary choice that was easy to measure.
+Determining the change in height of the center of mass of the system may have yielded more accurate data.
+\item We have assumed that the string had no effect. In physics, we assume that objects are held by "light" strings, which have
+no mass and consistent tension. In reality, the string was massive and slightly elastic, so it had uneven tension throughout its
+length.
+\item We have assumed that the bullet did not slow down before colliding with the can. As we know from the kinematic equations,
+the speed of the bullet can change quite handsomely in a short amount of time. Pointing the gun closer to the can mitigated this 
+source of error.
+\end{itemize}
+
+\double\header{Additionally...}
+
+The data we collected is incredibly accurate. For the kinematics approach, we had two observers watching the bullet so
+they could accurately see where it landed. We also had people working together to guarantee that the gun was perfectly
+horizontal each time. For the momentum approach, the trials were recorded in high definition, high speed video so that we could
+accurately pinpoint the can's height. Adding to our accuracy, our trials were very consistent between each other. We did not
+have to redesign our investigations part of the way through.\double
+
+For the momentum approach, we did not control for the vertical orientation of the gun or the distance between the gun and the
+can. Those measurements did not come up in the final calculations, so we assumed that they had no effect.\double
+
+In the future, we could compare our results to repetitions of our investigation process or to officially published muzzle
+speeds by the manufacturer.
+
+\double\bigheader{Image Sources}
+
+\begin{itemize}
+\item Stool \\
+https://target.scene7.com/is/image/Target/10165657\_Alt01?wid=520\&hei=520\\
+\&fmt=pjpeg
+\item Soda can \\
+https://d30y9cdsu7xlg0.cloudfront.net/png/631937-200.png
+\item Suction cup Nerf bullet \\
+http://www.hhmdevelopments.co.uk/images/category\_17/Kids\%20NERF\%20Blaster\\
+\%20Toys\%20100Pcs\%2010\%20Colors\%20Refill\%20Bullets\%20Darts\%20EVA\%20Foam\\
+\%20with\%20Suction\%20Cup\%20for\%20NStrike\%20Elite\%20Kid\%20Toy\%20Gun\\
+\%20Rifle\%20Blasters\%20Darts\%20SWSTTYLC.jpg
+\item Nerf gun \\
+http://i.ebayimg.com/00/s/MzMxWDUwMA==/z/2x4AAOSwVupTlwXL/\$\_32.JPG
+\item Nerf bullet \\
+https://images-na.ssl-images-amazon.com/images/I/51qAcBiOMfL.\_SL1010\_.jpg
+\end{itemize}
+\end{document}
