@@ -4,6 +4,7 @@ import functools
 import multiprocessing
 import pprint
 import random
+import time
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -14,6 +15,19 @@ N_TEST_SWIM = 0
 
 SAMPLE_SIZE = 20
 N_SAMPLES = 1_000_000
+
+
+def timeit(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        t_0 = time.perf_counter()
+        value = func(*args, **kwargs)
+        t_1 = time.perf_counter()
+        print(f'{func.__name__} execution time {t_1 - t_0} seconds')
+        return value
+
+    return wrapped
+
 
 Treatment = enum.Enum('Treatment', 'control test')
 
@@ -99,8 +113,8 @@ def describe(data):
     }
 
 
-def main():
-    population = do_experiment()
+@timeit
+def get_chisqs(population):
     chisqs = []
 
     for _ in range(N_SAMPLES):
@@ -111,6 +125,12 @@ def main():
         if not np.isnan(chisq):
             chisqs.append(chisq)
 
+    return chisqs
+
+
+def main():
+    population = do_experiment()
+    chisqs = get_chisqs(population)
     pprint.pprint(describe(np.array(chisqs)))
     plt.hist(chisqs)
     plt.show()
