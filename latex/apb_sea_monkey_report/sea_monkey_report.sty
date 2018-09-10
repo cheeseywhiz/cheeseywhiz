@@ -1,0 +1,53 @@
+\ProvidesPackage{sea_monkey_report}
+
+% Basic config
+
+\RequirePackage[protrusion=true,expansion=true]{microtype}
+\RequirePackage[margin=1in]{geometry}
+\RequirePackage{lmodern}
+\RequirePackage{amsmath}
+
+\AtBeginDocument{\fontfamily{lmr}\selectfont}
+\linespread{1.6}
+\setlength\parindent{0em}
+
+\newcommand{\double}[0]{\par\null\par}
+\newcommand{\paren}[1]{\left({#1}\right)}
+
+\newif\if@longoption
+\DeclareOption{long}{\@longoptiontrue}
+\ProcessOptions\relax
+
+\if@longoption
+    \RequirePackage[active,tightpage]{preview}
+    \renewcommand{\PreviewBorder}{1in}
+    \newenvironment{stretchpage}{\begin{preview}\begin{minipage}{\hsize}}{\end{minipage}\end{preview}}
+    \AtBeginDocument{\begin{stretchpage}}
+    \AtEndDocument{\end{stretchpage}}
+\fi
+
+% Project specific
+
+\renewcommand{\title}[2]{\large\textbf{#1}\ \textit{#2}\normalsize}
+\newcommand{\bigheader}[1]{\LARGE\textbf{#1}\normalsize}
+\newcommand{\lilheader}[1]{\large\textbf{#1}\normalsize}
+
+\DeclareMathOperator{\inches}{\ in}
+\DeclareMathOperator{\mL}{\ mL}
+\DeclareMathOperator{\grams}{\ g}
+
+\newcommand{\quotes}[1]{``{#1}''}
+\newcommand{\control}[0]{\quotes{control}}
+\newcommand{\test}[0]{\quotes{test}}
+
+\newcommand{\chisq}{$\chi^2$}
+
+\newenvironment{Matrix}{
+    \begin{equation*}
+        \left[
+        \begin{array}{cc}
+}{
+        \end{array}
+        \right]
+    \end{equation*}
+}

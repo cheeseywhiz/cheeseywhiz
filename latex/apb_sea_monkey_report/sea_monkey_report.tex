@@ -1,0 +1,104 @@
+% Spencer Todd
+% September 2018, AP Biology, Bollone
+
+\documentclass[12pt]{article}
+
+\usepackage[long]{sea_monkey_report}
+% \usepackage{sea_monkey_report}
+
+\begin{document}
+\title{Sea Monkey Lab Report}{By Spencer Todd}\double
+
+\bigheader{Question}\\
+How will the sea monkey egg hatch rate be affected in potassium chloride (KCl) solution?\double
+
+\bigheader{Knowledge Probe}\\
+Sea monkeys are salt water creatures, so they require salt to survive. Fish also use potassium to function.\footnote{\textit{Using Salt to Transport Live Fish}, www2.ca.uky.edu/wkrec/SALTTRANS.PDF, Accessed 8 September 2018.} As sodium and chlorine are both alkali metals, they have similar chemical properties.\double
+
+\bigheader{Prediction}\\
+Since there is no salt in the solution, the sea monkey eggs will have a decreased hatch rate.\double
+
+\bigheader{Investigation Plan}\\
+\lilheader{Equipment}
+\begin{itemize}
+    \item 2 petri dishes
+    \item Double sided tape
+    \item 2 graduated cylinders
+    \item Distilled water
+    \item Scale
+    \item 2 weigh boats
+    \item Salt
+    \item Potassium chloride
+    \item Q Tip
+    \item 50 to 100 sea monkey eggs
+    \item Stereoscope
+\end{itemize}
+
+\lilheader{Procedure}
+\begin{enumerate}
+    \item Label the petri dishes \control\ and \test.
+    \item Stick $1\inches$ of double sided tape in the center of each petri dish.
+    \item Fill each graduated cyninder with $100\mL$ of distilled water.
+    \item With the scale and a weigh boat, prepare $1.5\grams$ of salt and pour it into the first graduated cylinder, then shake the cylinder to dissolve all of the salt.
+    \item With the scale and a weigh boat, prepare $1.5\grams$ of potassium chloride and pour it into the second graduated cylinder, then shake the cylinder to dissolve all of the potassium chloride.
+    \item With the Q Tip, divide the sea monkey eggs between both petri dishes, sticking them on the tape.
+    \item With the stereoscope, count and record the number of intact eggs in each dish.
+    \item Pour $30\mL$ of the salt solution in to the \control\ dish, then put the top on the dish.
+    \item Pour $30\mL$ of the potassium chloride solution in to the \test\ dish, then put the top on the dish.
+    \item Wait 24 hours.
+    \item With the stereoscope, count and record the number of swimming sea monkeys in each dish.
+\end{enumerate}\double
+
+\bigheader{Observations}
+\begin{center}
+\begin{tabular}{l|rr}
+Dish & Total eggs & Number of swimmers \\
+\hline
+Control & 40 & 14 \\
+Test & 84 & 0 \\
+\end{tabular}
+\end{center}\double
+
+\bigheader{Data Analysis}\\
+We can use the \chisq\ test with the null hypothesis that none of the tests were significantly unexpected and the alternative hypothesis that at least one test was significant unexpected. We previously determined that $19.4\%$ of sea monkey eggs hatched under the same conditions as our experiment, so we should expect the same proportion of sea monkey eggs to hatch in our experiment.\double
+
+This following matrix describes our experiment so that it can be used for the test. The first row represents the \control\ dish, the second row represents the \test\ dish, the first column represents the number of swimming sea monkeys, and the second column represents the number of sea monkeys that are not swimming.
+%
+\begin{Matrix}
+14 & 26 \\
+0 & 84
+\end{Matrix}
+%
+The following matrix describes the corresponding expencted amounts, as described above.
+%
+\begin{Matrix}
+7.76 & 32.2 \\
+16.3 & 67.7
+\end{Matrix}
+%
+We can now apply the \chisq\ formula to corresponding entries in each matrix: $\frac{\paren{o-e}^2}{e}$.
+%
+\begin{Matrix}
+5.02 & 1.21 \\
+16.3 & 3.92
+\end{Matrix}
+%
+The sum of all entries in this matrix gives us the \chisq\ statistic, which is $26.4$.\double
+
+\bigheader{Explanation}\\
+\lilheader{Claim}\\
+Hello world.\double
+
+\lilheader{Evidence}\\
+Hello world.\double
+
+\lilheader{Reasoning}\\
+Hello world.\double
+
+\bigheader{Evaluation}\\
+This experiment would certainly benefit from a larger sample size, such as having three petri dishes for each test. I also would like to know how the sea monkeys would respond if salt and potassium chloride, or other salts, were disolved in water at the same time. Furthurmore, I could test which concentrations and combinations of salts that the sea monkeys like best. It was assumed that $1.5\grams$ of potassium chloride yielded 1.5\% concentration in the solution, as is the case with salt. This test could be repeated with a more rigorous way to determine concentration.\double
+
+\bigheader{Application}\\
+This experiment can be used to determine how well sea monkeys would survive in a water environment that has different concentrations of salts, possibly such as a deep sea floor.
+
+\end{document}
