@@ -17,8 +17,8 @@ trim:
 clean: trim
 	rm -f *.pdf
 
-
 .PHONY: all files open clean trim
 
 %.pdf: %.tex sea_monkey_report.sty
+	$(TEX) $(TEX_FLAGS) $<
 	$(TEX) $(TEX_FLAGS) $<

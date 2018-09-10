@@ -13,7 +13,7 @@
 How will the sea monkey egg hatch rate be affected in potassium chloride (KCl) solution?\double
 
 \bigheader{Knowledge Probe}\\
-Sea monkeys are salt water creatures, so they require salt to survive. Fish also use potassium to function.\footnote{\textit{Using Salt to Transport Live Fish}, www2.ca.uky.edu/wkrec/SALTTRANS.PDF, Accessed 8 September 2018.} As sodium and chlorine are both alkali metals, they have similar chemical properties.\double
+Sea monkeys are salt water creatures, so they require salt to survive. Fish also use potassium to function.\footnote{\textit{Using Salt to Transport Live Fish}, \url{www2.ca.uky.edu/wkrec/SALTTRANS.PDF}, Accessed 8 September 2018.} As sodium and chlorine are both alkali metals, they have similar chemical properties.\double
 
 \bigheader{Prediction}\\
 Since there is no salt in the solution, the sea monkey eggs will have a decreased hatch rate.\double
@@ -40,7 +40,7 @@ Since there is no salt in the solution, the sea monkey eggs will have a decrease
     \item Stick $1\inches$ of double sided tape in the center of each petri dish.
     \item Fill each graduated cyninder with $100\mL$ of distilled water.
     \item With the scale and a weigh boat, prepare $1.5\grams$ of salt and pour it into the first graduated cylinder, then shake the cylinder to dissolve all of the salt.
-    \item With the scale and a weigh boat, prepare $1.5\grams$ of potassium chloride and pour it into the second graduated cylinder, then shake the cylinder to dissolve all of the potassium chloride.
+    \item With the scale and another weigh boat, prepare $1.5\grams$ of potassium chloride and pour it into the second graduated cylinder, then shake the cylinder to dissolve all of the potassium chloride.
     \item With the Q Tip, divide the sea monkey eggs between both petri dishes, sticking them on the tape.
     \item With the stereoscope, count and record the number of intact eggs in each dish.
     \item Pour $30\mL$ of the salt solution in to the \control\ dish, then put the top on the dish.
@@ -60,43 +60,55 @@ Test & 84 & 0 \\
 \end{center}\double
 
 \bigheader{Data Analysis}\\
-We can use the \chisq\ test with the null hypothesis that none of the tests were significantly unexpected and the alternative hypothesis that at least one test was significant unexpected. We previously determined that $19.4\%$ of sea monkey eggs hatched under the same conditions as our experiment, so we should expect the same proportion of sea monkey eggs to hatch in our experiment.\double
-
-This following matrix describes our experiment so that it can be used for the test. The first row represents the \control\ dish, the second row represents the \test\ dish, the first column represents the number of swimming sea monkeys, and the second column represents the number of sea monkeys that are not swimming.
+We can use the \chisq\ test with the null hypothesis that the choice between the control or test was independent of the amount of swimming sea monkeys. We choose the significance level $\alpha$ to be $0.05$. We can arrange our observations into the following two way table.
 %
-\begin{Matrix}
-14 & 26 \\
-0 & 84
-\end{Matrix}
+\begin{center}
+\begin{tabular}{lrr|r}
+& n swim & n not swim & \\
+Control & 14 & 26 & 40 \\
+Test & 0 & 84 & 84 \\\hline
+& 14 & 110 & 124
+\end{tabular}
+\end{center}
 %
-The following matrix describes the corresponding expencted amounts, as described above.
+We can determine the expected values by dividing the product of a cell's row and column sum by the table sum.
 %
-\begin{Matrix}
-7.76 & 32.2 \\
-16.3 & 67.7
-\end{Matrix}
+\begin{center}
+\begin{tabular}{lrr|r}
+& n swim & n not swim & \\
+Control & $\frac{40\cdot{14}}{124}=4.52$ & $\frac{40\cdot{110}}{124}=35.5$ & 40 \\
+Test & $\frac{84\cdot{14}}{124}=9.48$ & $\frac{84\cdot{110}}{124}=74.5$ & 84 \\\hline
+& 14 & 110 & 124
+\end{tabular}
+\end{center}
 %
-We can now apply the \chisq\ formula to corresponding entries in each matrix: $\frac{\paren{o-e}^2}{e}$.
+Then, we can apply the \chisq\ formula, $\frac{\paren{o-e}^2}{e}$, to corresponding cells in the observation and expected value tables.
 %
-\begin{Matrix}
-5.02 & 1.21 \\
-16.3 & 3.92
-\end{Matrix}
+\begin{center}
+\begin{tabular}{lrr|r}
+& n swim & n not swim & \\
+Control & 19.9 & 2.53 & 22.5 \\
+Test & 9.48 & 1.21 & 10.7 \\\hline
+& 29.4 & 3.74 & 33.1
+\end{tabular}
+\end{center}
 %
-The sum of all entries in this matrix gives us the \chisq\ statistic, which is $26.4$.\double
+The statistic \chisq\ shall not be greater than $3.84$ at $p=0.05$ for 1 degree of freedom. With $\chi^2=33.1$, we can reject the null hypothesis. Thus, taking the test correlates with the amount of swimming sea monkeys.\double
 
 \bigheader{Explanation}\\
 \lilheader{Claim}\\
-Hello world.\double
+Eggs in potassium chloride solution will hatch at a slower rate.\double
 
 \lilheader{Evidence}\\
-Hello world.\double
+In the potassium chloride test, $0$ eggs managed to hatch in the same time that it took $14$ eggs to hatch in salt water. With $\chi^2=33.1$ between the control and the test, the test had significantly fewer hatched sea monkeys.\double
 
 \lilheader{Reasoning}\\
-Hello world.\double
+The evidence supports the claim because when potassium chloride is dissolved in water instead of salt, the amount of swimming sea monkeys decreases. This makes sense, because sea monkeys need salt to survive. Unlike humans, who get salt from eating food, sea monkeys get salt from swimming in salt water. Removing the salt deprives the sea monkeys of a vital resource.\double
+
+The evidence is not reliable, because there was an insufficient amount of test samples. Using just two dishes in the \chisq\ test is improper. Also, it was assumed that $1.5\grams$ of potassium chloride yielded 1.5\% concentration in the solution, as is the case with salt. This test could be repeated with a more rigorous way to determine concentration.\double
 
 \bigheader{Evaluation}\\
-This experiment would certainly benefit from a larger sample size, such as having three petri dishes for each test. I also would like to know how the sea monkeys would respond if salt and potassium chloride, or other salts, were disolved in water at the same time. Furthurmore, I could test which concentrations and combinations of salts that the sea monkeys like best. It was assumed that $1.5\grams$ of potassium chloride yielded 1.5\% concentration in the solution, as is the case with salt. This test could be repeated with a more rigorous way to determine concentration.\double
+I would like to know how the sea monkeys would respond if salt and potassium chloride, or other salts, were disolved in water at the same time. Furthurmore, I could test which concentrations and combinations of salts that the sea monkeys like best.\double
 
 \bigheader{Application}\\
 This experiment can be used to determine how well sea monkeys would survive in a water environment that has different concentrations of salts, possibly such as a deep sea floor.

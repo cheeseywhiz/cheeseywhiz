@@ -14,16 +14,20 @@ N_TEST = 84
 N_TEST_SWIM = 0
 
 SAMPLE_SIZE = 20
-N_SAMPLES = 1_000_000
+N_SAMPLES = 10_000
 
 
 def timeit(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         t_0 = time.perf_counter()
-        value = func(*args, **kwargs)
-        t_1 = time.perf_counter()
-        print(f'{func.__name__} execution time {t_1 - t_0} seconds')
+
+        try:
+            value = func(*args, **kwargs)
+        finally:
+            t_1 = time.perf_counter()
+            print(f'{func.__name__} execution time {t_1 - t_0} seconds')
+
         return value
 
     return wrapped
@@ -93,9 +97,28 @@ def get_expected(observations):
     return expected
 
 
-def get_chisq(observations):
-    expected = get_expected(observations)
-    return (((observations - expected) ** 2) / expected).sum()
+def get_chisq_gen(population):
+    while True:
+        sample = random.sample(population, SAMPLE_SIZE)
+        observations = get_observations(sample)
+        expected = get_expected(observations)
+
+        if expected.all():
+            yield (((observations - expected) ** 2) / expected).sum()
+
+
+@timeit
+def get_chisqs(population):
+    chisq_gen = get_chisq_gen(population)
+    return np.array([
+        next(chisq_gen)
+        for _ in range(N_SAMPLES)
+    ])
+
+
+def get_chisqs_from_experiment():
+    population = do_experiment()
+    return get_chisqs(population)
 
 
 def describe(data):
@@ -113,27 +136,15 @@ def describe(data):
     }
 
 
-@timeit
-def get_chisqs(population):
-    chisqs = []
-
-    for _ in range(N_SAMPLES):
-        sample = random.sample(population, SAMPLE_SIZE)
-        observations = get_observations(sample)
-        chisq = get_chisq(observations)
-
-        if not np.isnan(chisq):
-            chisqs.append(chisq)
-
-    return chisqs
+def analyze(data):
+    pprint.pprint(describe(data))
+    plt.hist(data)
+    plt.show()
 
 
 def main():
-    population = do_experiment()
-    chisqs = get_chisqs(population)
-    pprint.pprint(describe(np.array(chisqs)))
-    plt.hist(chisqs)
-    plt.show()
+    chisqs = get_chisqs_from_experiment()
+    analyze(chisqs)
 
 
 if __name__ == '__main__':

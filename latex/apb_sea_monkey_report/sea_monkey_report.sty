@@ -14,6 +14,8 @@
 \newcommand{\double}[0]{\par\null\par}
 \newcommand{\paren}[1]{\left({#1}\right)}
 
+\RequirePackage{hyperref}  % Project specific
+
 \newif\if@longoption
 \DeclareOption{long}{\@longoptiontrue}
 \ProcessOptions\relax
@@ -41,13 +43,3 @@
 \newcommand{\test}[0]{\quotes{test}}
 
 \newcommand{\chisq}{$\chi^2$}
-
-\newenvironment{Matrix}{
-    \begin{equation*}
-        \left[
-        \begin{array}{cc}
-}{
-        \end{array}
-        \right]
-    \end{equation*}
-}
