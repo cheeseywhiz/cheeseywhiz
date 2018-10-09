@@ -1,0 +1,6 @@
+first 5 bits: morse character where 0 is dot and 1 is dash
+next 3 bits: length of morse character
+null byte is space
+
+S     ... O     ---  S    ...
+011_00000 011_00111 011_00000
