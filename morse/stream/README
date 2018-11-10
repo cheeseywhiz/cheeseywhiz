@@ -1,0 +1,11 @@
+International Morse Code
+1. The length of a dot is one unit.
+2. A dash is three units.
+3. The space between parts of the same letter is one unit.
+4. The space between letters is three units.
+5. The space between words is seven units.
+
+Encoding
+1. One unit is one bit in the stream.
+2. The length of a dot is one unit.
+3. A dash is three units.
