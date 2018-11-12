@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +47,65 @@ struct ll_node* ll_append(struct ll_node **head, void *data) {
         }
 
         return new;
+}
+
+size_t ll_length(struct ll_node **head) {
+        if (*head == NULL) {
+                return 0;
+        }
+
+        size_t length = 0;
+        for (struct ll_node *ptr = *head; ptr != NULL; ptr = ptr->next) length++;
+        return length;
+}
+
+struct ll_node* ll_get_index(struct ll_node **head, size_t index) {
+        if (*head == NULL) {
+                return NULL;
+        } else if (index >= ll_length(head)) {
+                return NULL;
+        }
+
+        struct ll_node *item = *head;
+
+        for (size_t i = 0; i < index; i++) {
+                if (item == NULL) {
+                        return NULL;
+                }
+
+                item = item->next;
+        }
+
+        return item;
+}
+
+void* ll_pop_index(struct ll_node **head, size_t index) {
+        struct ll_node *item;
+        size_t length = ll_length(head);
+
+        if (length == 0 || index >= length) {
+                item = NULL;
+        } else if (length == 1 || index == 0) {
+                item = *head;
+                *head = item->next;
+        } else {
+                struct ll_node *before = ll_get_index(head, index - 1);
+                if (before == NULL) return NULL;
+                item = before->next;
+                if (item == NULL) return NULL;
+                before->next = item->next;
+        }
+
+        void *data;
+
+        if (item == NULL) {
+                data = NULL;
+        } else {
+                data = item->data;
+                free(item);
+        }
+
+        return data;
 }
 
 void ll_deep_free(struct ll_node **head, ll_free_func free_data) {
@@ -114,13 +174,13 @@ void csv_free(struct ll_node *csv_data) {
 static struct ll_node* ll_csv_append(struct ll_node **head, char *contents, int current_word) {
         char *word = contents + current_word;
         char *word_copy = malloc(strlen(word) + 1);
-        strcpy(word_copy, word);
 
         if (word_copy == NULL) {
                 LOG_ERRNO("malloc");
                 return NULL;
         }
 
+        strcpy(word_copy, word);
         return ll_append(head, word_copy);
 }
 
@@ -175,8 +235,8 @@ void print_csv(struct ll_node **csv_data) {
 
         for (row_ptr = *csv_data; row_ptr != NULL; row_ptr = row_ptr->next) {
                 for (cell_ptr = row_ptr->data; cell_ptr != NULL; cell_ptr = cell_ptr->next) {
-                        char *data = cell_ptr->data;
-                        fputs(data, stdout);
+                        int *data = cell_ptr->data;
+                        printf("%d", *data);
                         if (cell_ptr->next) putchar(',');
                 }
 
@@ -184,10 +244,93 @@ void print_csv(struct ll_node **csv_data) {
         }
 }
 
+int init_immunization_data(struct immunization_data *data) {
+        data->matrix = read_csv("immunization.csv");
+
+        if (data->matrix == NULL) {
+                return 1;
+        }
+
+        data->years = ll_pop_index(&data->matrix, 0);
+
+        if (data->years == NULL) {
+                csv_free(data->matrix);
+                return 2;
+        }
+
+        data->year_label = ll_pop_index(&data->years, 0);
+
+        if (data->year_label == NULL) {
+                csv_free(data->matrix);
+                return 3;
+        }
+
+        data->population = ll_pop_index(&data->matrix, 0);
+
+        if (data->population == NULL) {
+                csv_free(data->matrix);
+                return 4;
+        }
+
+        data->population_label = ll_pop_index(&data->population, 0);
+
+        if (data->population_label == NULL) {
+                csv_free(data->matrix);
+                return 5;
+        }
+
+        struct ll_node *ptr;
+
+        for (ptr = data->population; ptr != NULL; ptr = ptr->next) {
+                char *pop_str = ptr->data;
+                ptr->data = malloc(sizeof(unsigned long long));
+                if (ptr->data == NULL) return 6;
+                *((unsigned long long*) ptr->data) = strtoull(pop_str, NULL, 0);
+                free(pop_str);
+        }
+
+        data->disease_names = NULL;
+        struct ll_node *row_ptr, *row;
+
+        for (row_ptr = data->matrix; row_ptr != NULL; row_ptr = row_ptr->next) {
+                row = row_ptr->data;
+                struct ll_node *next = row->next;
+                char *disease_name = ll_pop_index(&row, 0);
+                ll_append(&data->disease_names, disease_name);
+                row_ptr->data = next;
+
+                for (; row != NULL; row = row->next) {
+                        char *value_str = row->data;
+                        row->data = malloc(sizeof(int));
+                        if (row->data == NULL) return 7;
+                        *((int*)row->data) = atoi(value_str);
+                        free(value_str);
+                }
+        }
+
+        return 0;
+}
+
+void immunization_free(struct immunization_data *data) {
+        free(data->year_label);
+        ll_deep_free(&data->years, free);
+        free(data->population_label);
+        ll_deep_free(&data->population, free);
+        ll_deep_free(&data->disease_names, free);
+        ll_2d_deep_free(&data->matrix, free);
+}
+
 int main(int argc, char *argv[]) {
-        struct ll_node *csv_data = read_csv("immunization.csv");
-        if (csv_data == NULL) return 1;
-        print_csv(&csv_data);
-        csv_free(csv_data);
+        struct immunization_data data;
+        if (init_immunization_data(&data)) return 1;
+        print_csv(&data.matrix);
+
+        struct ll_node *ptr;
+
+        for (ptr = data.disease_names; ptr != NULL; ptr = ptr->next) {
+                printf("%s\n", (char*) ptr->data);
+        }
+
+        immunization_free(&data);
         return 0;
 }
