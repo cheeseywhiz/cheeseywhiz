@@ -245,6 +245,9 @@ void print_csv(struct ll_node **csv_data) {
 }
 
 int init_immunization_data(struct immunization_data *data) {
+        data->name_choice = NULL;
+        data->row_choice = NULL;
+        data->percentages = NULL;
         data->matrix = read_csv("immunization.csv");
 
         if (data->matrix == NULL) {
@@ -303,7 +306,7 @@ int init_immunization_data(struct immunization_data *data) {
                         char *value_str = row->data;
                         row->data = malloc(sizeof(int));
                         if (row->data == NULL) return 7;
-                        *((int*)row->data) = atoi(value_str);
+                        *((int*) row->data) = atoi(value_str);
                         free(value_str);
                 }
         }
@@ -318,6 +321,7 @@ void immunization_free(struct immunization_data *data) {
         ll_deep_free(&data->population, free);
         ll_deep_free(&data->disease_names, free);
         ll_2d_deep_free(&data->matrix, free);
+        ll_deep_free(&data->percentages, free);
 }
 
 void print_repeat_char(char c, size_t n) {
@@ -382,12 +386,60 @@ char* disease_input(struct immunization_data *data) {
         return input("Enter the name or part of a name of the disease:");
 }
 
+int disease_process(struct immunization_data *data, char *disease_answer) {
+        struct ll_node *name_node;
+        size_t index_choice = 0;
+        size_t diseases_length = ll_length(&data->disease_names);
+
+        for (name_node = data->disease_names; name_node != NULL; name_node = name_node->next) {
+                if (strcasestr(name_node->data, disease_answer) != NULL) {
+                        data->name_choice = name_node->data;
+                        break;
+                } else if (index_choice == diseases_length) {
+                        printf("%s\n", "No match");
+                        return 1;
+                } else {
+                        index_choice++;
+                }
+        }
+
+        data->row_choice = ll_get_index(&data->matrix, index_choice)->data;
+        struct ll_node *population_node = data->population;
+        struct ll_node *disease_node = data->row_choice;
+
+        for (; population_node != NULL && disease_node != NULL;) {
+                unsigned long long population = *((unsigned long long*) population_node->data);
+                int n_cases = *((int*) disease_node->data);
+                char *percentage = malloc(8);  /* ex: "0.0000%" length 7+1 */
+                if (percentage == NULL) return 2;
+                sprintf(percentage, "%.4f%c", 100 * ((float) n_cases) / ((float) population), '%');
+                ll_append(&data->percentages, percentage);
+                population_node = population_node->next;
+                disease_node = disease_node->next;
+        }
+
+        return 0;
+}
+
+void disease_output(struct immunization_data *data) {
+        printf("%s\n", data->name_choice);
+
+        for (struct ll_node *disease_node = data->row_choice; disease_node != NULL; disease_node = disease_node->next) {
+                printf("%d\n", *((int*) disease_node->data));
+        }
+
+        for (struct ll_node *percentage_node = data->percentages; percentage_node != NULL; percentage_node = percentage_node->next) {
+                printf("%s\n", (char*) percentage_node->data);
+        }
+}
+
 int main(int argc, char *argv[]) {
         struct immunization_data data;
         if (init_immunization_data(&data)) return 1;
         char *disease_answer = disease_input(&data);
-        printf("%s\n", disease_answer);
+        if (disease_process(&data, disease_answer)) return 2;
         free(disease_answer);
+        disease_output(&data);
         immunization_free(&data);
         return 0;
 }

@@ -28,6 +28,10 @@ struct immunization_data {
 
         struct ll_node *disease_names;
         struct ll_node *matrix;
+
+        char *name_choice;
+        struct ll_node *row_choice;
+        struct ll_node *percentages;
 };
 
 char* read_file(char *path);
@@ -45,5 +49,7 @@ void print_repeat_char(char c, size_t n);
 void print_align(char *string, print_alignment alignment, size_t field_width);
 char* input(char *prompt);
 char* disease_input(struct immunization_data *data);
+void disease_output(struct immunization_data *data);
+int main(int argc, char *argv[]);
 
 #endif

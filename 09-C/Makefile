@@ -1,5 +1,6 @@
 CFLAGS+=-Wall -Wextra -std=gnu11 -fPIC
 CFLAGS+=-Og -g3 -Wno-unused-parameter
+CFLAGS+=-D_GNU_SOURCE
 
 all: immunization
 
@@ -11,4 +12,5 @@ test:
 
 .PHONY: all clean test
 
-immunization: immunization.h
+immunization: immunization.c immunization.h
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
