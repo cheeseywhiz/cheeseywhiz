@@ -37,4 +37,13 @@ void print_csv(struct ll_node **csv_data);
 int init_immunization_data(struct immunization_data *data);
 void immunization_free(struct immunization_data *data);
 
+typedef enum {
+        PA_LEFT, PA_RIGHT
+} print_alignment;
+
+void print_repeat_char(char c, size_t n);
+void print_align(char *string, print_alignment alignment, size_t field_width);
+char* input(char *prompt);
+char* disease_input(struct immunization_data *data);
+
 #endif

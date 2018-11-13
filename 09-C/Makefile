@@ -7,7 +7,7 @@ clean:
 	rm -rf immunization
 
 test:
-	valgrind -v --leak-check=full --track-origins=yes --show-leak-kinds=all ./immunization
+	echo mum | valgrind -v --leak-check=full --track-origins=yes --show-leak-kinds=all ./immunization
 
 .PHONY: all clean test
 

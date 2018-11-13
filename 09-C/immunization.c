@@ -320,17 +320,74 @@ void immunization_free(struct immunization_data *data) {
         ll_2d_deep_free(&data->matrix, free);
 }
 
+void print_repeat_char(char c, size_t n) {
+        for (size_t i = 0; i < n; i++) putchar(c);
+}
+
+void print_align(char *string, print_alignment alignment, size_t field_width) {
+        if (string == NULL) {
+                string = "";
+        }
+
+        size_t string_length = strlen(string);
+        size_t padding = field_width >= string_length ? field_width - string_length : 0;
+
+        switch (alignment) {
+                case PA_LEFT: {
+                        printf("%s", string);
+                        print_repeat_char(' ', padding);
+                        break;
+                };
+                case PA_RIGHT: {
+                        print_repeat_char(' ', padding);
+                        printf("%s", string);
+                        break;
+                };
+        }
+}
+
+char* input(char *prompt) {
+        printf("%s ", prompt);
+        char *buffer = NULL;
+        size_t n = 0;
+        ssize_t buffer_length = getline(&buffer, &n, stdin);
+
+        if (buffer_length < 0) {
+                LOG_ERRNO("getline");
+        } else if (buffer[buffer_length - 1] == '\n') {
+                buffer[buffer_length - 1] = '\0';
+        }
+
+        return buffer;
+}
+
+char* disease_input(struct immunization_data *data) {
+        struct ll_node *name_node;
+        size_t i = 1;
+        size_t diseases_length = ll_length(&data->disease_names);
+
+        for (name_node = data->disease_names; name_node != NULL; name_node = name_node->next) {
+                char *name = name_node->data;
+                print_align(name, PA_LEFT, 21);
+                putchar('\t');
+
+                if (i % 3 == 0 || i == diseases_length) {
+                        putchar('\n');
+                }
+
+                i++;
+        }
+
+        putchar('\n');
+        return input("Enter the name or part of a name of the disease:");
+}
+
 int main(int argc, char *argv[]) {
         struct immunization_data data;
         if (init_immunization_data(&data)) return 1;
-        print_csv(&data.matrix);
-
-        struct ll_node *ptr;
-
-        for (ptr = data.disease_names; ptr != NULL; ptr = ptr->next) {
-                printf("%s\n", (char*) ptr->data);
-        }
-
+        char *disease_answer = disease_input(&data);
+        printf("%s\n", disease_answer);
+        free(disease_answer);
         immunization_free(&data);
         return 0;
 }
