@@ -45,11 +45,18 @@ typedef enum {
         PA_LEFT, PA_RIGHT
 } print_alignment;
 
+#define HEADER_WIDTH 20
+#define CELL_WIDTH 11
+
 void print_repeat_char(char c, size_t n);
 void print_align(char *string, print_alignment alignment, size_t field_width);
 char* input(char *prompt);
 char* disease_input(struct immunization_data *data);
+int disease_process(struct immunization_data *data, char *disease_answer);
+void print_underline(struct ll_node *row_ptr);
+void print_char_row(char *label, struct ll_node *row_ptr, int underline);
+void print_ull_row(char *label, struct ll_node *row_ptr, int underline);
+void print_int_row(char *label, struct ll_node *row_ptr, int underline);
 void disease_output(struct immunization_data *data);
-int main(int argc, char *argv[]);
 
 #endif

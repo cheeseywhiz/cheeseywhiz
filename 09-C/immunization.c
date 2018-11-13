@@ -395,7 +395,7 @@ int disease_process(struct immunization_data *data, char *disease_answer) {
                 if (strcasestr(name_node->data, disease_answer) != NULL) {
                         data->name_choice = name_node->data;
                         break;
-                } else if (index_choice == diseases_length) {
+                } else if (index_choice == diseases_length - 1) {
                         printf("%s\n", "No match");
                         return 1;
                 } else {
@@ -421,23 +421,83 @@ int disease_process(struct immunization_data *data, char *disease_answer) {
         return 0;
 }
 
+void print_underline(struct ll_node *row_ptr) {
+        print_repeat_char('=', HEADER_WIDTH);
+        putchar('\t');
+
+        for (; row_ptr != NULL; row_ptr = row_ptr->next) {
+                print_repeat_char('=', CELL_WIDTH);
+                putchar('\t');
+        }
+
+        putchar('\n');
+}
+
+void print_char_row(char *label, struct ll_node *row_ptr, int underline) {
+        print_align(label, PA_LEFT, HEADER_WIDTH);
+        putchar('\t');
+        struct ll_node *row_ptr_alias;
+
+        for (row_ptr_alias = row_ptr; row_ptr_alias != NULL; row_ptr_alias = row_ptr_alias->next) {
+                print_align(row_ptr_alias->data, PA_RIGHT, CELL_WIDTH);
+                putchar('\t');
+        }
+
+        putchar('\n');
+        if (underline) print_underline(row_ptr);
+}
+
+void print_ull_row(char *label, struct ll_node *row_ptr, int underline) {
+        print_align(label, PA_LEFT, HEADER_WIDTH);
+        putchar('\t');
+        struct ll_node *row_ptr_alias;
+
+        for (row_ptr_alias = row_ptr; row_ptr_alias != NULL; row_ptr_alias = row_ptr_alias->next) {
+                char string[21];  /* based on max value of ull (20+1) */
+                sprintf(string, "%lld", *((unsigned long long*) row_ptr_alias->data));
+                print_align(string, PA_RIGHT, CELL_WIDTH);
+                putchar('\t');
+        }
+
+        putchar('\n');
+        if (underline) print_underline(row_ptr);
+}
+
+void print_int_row(char *label, struct ll_node *row_ptr, int underline) {
+        print_align(label, PA_LEFT, HEADER_WIDTH);
+        putchar('\t');
+        struct ll_node *row_ptr_alias;
+
+        for (row_ptr_alias = row_ptr; row_ptr_alias != NULL; row_ptr_alias = row_ptr_alias->next) {
+                char string[6];  /* based on max value of int (5+1) */
+                sprintf(string, "%d", *((int*) row_ptr_alias->data));
+                print_align(string, PA_RIGHT, CELL_WIDTH);
+                putchar('\t');
+        }
+
+        putchar('\n');
+        if (underline) print_underline(row_ptr);
+}
+
 void disease_output(struct immunization_data *data) {
-        printf("%s\n", data->name_choice);
-
-        for (struct ll_node *disease_node = data->row_choice; disease_node != NULL; disease_node = disease_node->next) {
-                printf("%d\n", *((int*) disease_node->data));
-        }
-
-        for (struct ll_node *percentage_node = data->percentages; percentage_node != NULL; percentage_node = percentage_node->next) {
-                printf("%s\n", (char*) percentage_node->data);
-        }
+        putchar('\n');
+        print_char_row(data->year_label, data->years, 1);
+        print_ull_row(data->population_label, data->population, 0);
+        print_int_row(data->name_choice, data->row_choice, 1);
+        print_char_row("Disease Percentage", data->percentages, 0);
 }
 
 int main(int argc, char *argv[]) {
         struct immunization_data data;
         if (init_immunization_data(&data)) return 1;
         char *disease_answer = disease_input(&data);
-        if (disease_process(&data, disease_answer)) return 2;
+
+        if (disease_process(&data, disease_answer)) {
+                free(disease_answer);
+                immunization_free(&data);
+                return 2;
+        }
+
         free(disease_answer);
         disease_output(&data);
         immunization_free(&data);
