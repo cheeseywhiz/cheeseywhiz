@@ -7,7 +7,8 @@ import csv
 import collections
 import traceback
 import re
-from typing import Dict, Set
+import random
+from typing import Dict, Set, Tuple
 from pprint import pprint
 from selenium.webdriver import Chrome
 from selenium.common.exceptions import WebDriverException
@@ -26,25 +27,26 @@ def main(argv) -> int:
 
     if argv[1] == 'init':
         Facebook.init_db()
-        return 0
     elif argv[1] == 'collect':
         Facebook.collect()
-        return 0
+    elif argv[1] == 'all':
+        Facebook.init_collect()
+        friends = read_friends()
+        interpret(friends)
     elif argv[1] == 'interpret':
         friends = read_friends()
         interpret(friends)
-        return 0
     elif argv[1] in ('--help', '-h'):
         print_help(argv[0])
-        return 0
+    else:
+        print_help(argv[0])
+        return 1
 
-    print_help(argv[0])
-    return 1
-
+    return 0
 
 
 def print_help(program):
-    print(f'usage: {program} (collect|interpret|init)')
+    print(f'usage: {program} (collect|interpret|init|all)')
 
 
 class Facebook(Chrome):
@@ -52,12 +54,10 @@ class Facebook(Chrome):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # a stack w/ sentinel value
+        self.friends: Dict[str, Tuple[str, List[str]]] = {}
+        # a stack with sentinel value
         self.todo_names: List[name] = [None]
-        # also serves as the set of all names
-        self.urls: Dict[str, str] = {}
-        # only new rows go in here
-        self.mutuals: Dict[str, List[str]] = collections.defaultdict(list)
+        self.touch_db_file()
         self.read_db()
 
     @classmethod
@@ -68,6 +68,12 @@ class Facebook(Chrome):
     @classmethod
     def collect(cls):
         with cls() as self:
+            self.get_mutuals()
+
+    @classmethod
+    def init_collect(cls):
+        with cls() as self:
+            self._init_db()
             self.get_mutuals()
 
     def __enter__(self):
@@ -104,7 +110,7 @@ class Facebook(Chrome):
 
     def get_friend_mutuals(self, name):
         print(f'trying {name}')
-        url = self.urls[name]
+        url = self.friends[name][0]
 
         if re.match(r'https://m\.facebook\.com/profile\.php\?id=\d*', url):
             url += '&v=friends&mutual=1'
@@ -119,7 +125,7 @@ class Facebook(Chrome):
             raise ValueError('webpage empty')
             return
 
-        mutuals = self.mutuals[name]
+        mutuals = self.friends[name][1]
 
         for element in elements:
             link = element.find_element_by_tag_name('a')
@@ -132,13 +138,15 @@ class Facebook(Chrome):
 
     def _init_db(self):
         os.remove(DB_FNAME)
-
-        with open(DB_FNAME, 'x') as new_file:
-            pass
-
+        self.touch_db_file()
         self.read_db()
         self.get_my_friends()
         self.commit_db()
+
+    def touch_db_file(self):
+        if not os.path.exists(DB_FNAME):
+            with open(DB_FNAME, 'x') as f:
+                pass
 
     def get_my_friends(self):
         self.get(self.BASE_URL + '/friends/center/friends')
@@ -152,32 +160,28 @@ class Facebook(Chrome):
             self.add_new_friend(name, url)
 
     def add_new_friend(self, name, url):
-        if name not in self.urls:
+        if name not in self.friends:
+            self.friends[name] = url, []
             self.todo_names.append(name)
-            self.urls[name] = url
-            self.mutuals[name]
 
     def commit_db(self):
-        with open(DB_FNAME, 'a') as f:
+        with open(DB_FNAME, 'w') as f:
             writer = csv.writer(f)
+            friends = sorted(self.friends.items(), key=sort_key)
 
-            for name, mutuals in sorted(self.mutuals.items(),
-                                        key=lambda i: sort_key(i[0])):
-                writer.writerow([name, self.urls[name], *mutuals])
+            for name, (url, mutuals) in friends:
+                mutuals = sorted(mutuals, key=sort_key)
+                writer.writerow([name, url, *mutuals])
 
         self.read_db()
 
     def read_db(self):
+        self.friends = read_db_helper()
         self.todo_names = [None]
-        self.urls.clear()
-        self.mutuals.clear()
 
-        with open(DB_FNAME) as f:
-            for name, url, *mutuals in csv.reader(f):
-                self.urls[name] = url
-
-                if not mutuals:
-                    self.todo_names.append(name)
+        for name, (url, mutuals) in self.friends.items():
+            if not mutuals:
+                self.todo_names.append(name)
 
     def scroll_all_the_way_down(self, pause_time=1):
         current_height = self.height()
@@ -202,92 +206,39 @@ class Facebook(Chrome):
         return self.execute_script('return document.body.scrollHeight')
 
 
-def getchar():
-    return sys.stdin.read(1)
+def read_friends():
+    friends = {}
 
-
-@dataclasses.dataclass(repr=False, eq=False)
-class Friend:
-    name: str
-    mutuals: Set['Friend'] = dataclasses.field(default_factory=set)
-
-    def sort_key(self):
-        return sort_key(self.name)
-
-    def weight(self, friend: 'Friend'):
-        if friend in self.mutuals:
-            weight = len(self.mutuals.intersection(friend.mutuals))
-            weight = float(weight + 1)
-        else:
-            weight = math.inf
-
-        return weight
-
-    def __repr__(self):
-        mutuals = sorted(self.mutuals, key=type(self).sort_key)
-        mutuals = [friend.name for friend in mutuals]
-
-        if mutuals:
-            cls = type(self).__qualname__
-            return f'{cls}(name={self.name!r}, mutuals={mutuals!r})'
-        else:
-            return repr(self.name)
-
-    def __str__(self):
-        if self.mutuals:
-            return repr(self)
-        else:
-            return self.name
-
-
-def sort_key(name):
-    *names, last = name.split()
-    return last, *names
-
-
-class Friends(collections.abc.Set):
-    def __init__(self):
-        self.friends = {}
-
-    def emplace(self, name):
-        if name in self.friends:
-            friend = self.friends[name]
-        else:
-            friend = Friend(name)
-            self.friends[name] = friend
-
-        return friend
-
-    def __contains__(self, friend):
-        return friend.name in self.friends
-
-    def __iter__(self):
-        return iter(self.friends.values())
-
-    def __len__(self):
-        return len(self.friends)
-
-
-def read_friends() -> Friends:
-    with open(DB_FNAME) as f:
-        reader = csv.reader(f)
-        data = list(reader)
-
-    friends = Friends()
-
-    for name1, url, *mutuals in data:
-        friend1 = friends.emplace(name1)
+    for name1, (url, mutuals) in read_db_helper().items():
+        mutuals1 = friends_emplace(friends, name1)
 
         for name2 in mutuals:
-            friend2 = friends.emplace(name2)
-            # make direct graph
-            friend1.mutuals.add(friend2)
-            friend2.mutuals.add(friend1)
+            mutuals2 = friends_emplace(friends, name2)
+            # direct graph
+            mutuals1.add(name2)
+            mutuals2.add(name1)
 
     return friends
 
 
-def interpret(friends: Friends):
+def friends_emplace(friends, name):
+    if name not in friends:
+        friends[name] = set()
+
+    return friends[name]
+
+
+def read_db_helper():
+    friends = {}
+
+    with open(DB_FNAME) as f:
+        for name, url, *mutuals in csv.reader(f):
+            friends[name] = url, mutuals
+
+    return friends
+
+
+def interpret(friends):
     plot_edges(iter_edges(friends), 'graph.png')
     plot_edges(iter_kruskals(friends), 'mst.png')
 
@@ -297,7 +248,7 @@ def interpret(friends: Friends):
                                 key=lambda i: i[1], reverse=True))
 
     with open('friends.txt', 'w') as f:
-        print_friends(friends, f)
+        print_friends(friends, file=f)
 
 
 def plot_edges(edges, fname):
@@ -319,8 +270,8 @@ def plot_edges(edges, fname):
     plt.show()
 
 
-def iter_kruskals(friends: Friends):
-    names = [friend.name for friend in friends]
+def iter_kruskals(friends):
+    names = list(friends)
     edges = sorted(iter_edges(friends), key=lambda t: t[2], reverse=True)
     reps = list(range(len(names)))
 
@@ -344,22 +295,21 @@ def union_find(reps, x):
     return reps[x]
 
 
-def iter_edges(friends: Friends):
-    for friend1 in friends:
-        name1 = friend1.name
-
-        for friend2 in friend1.mutuals:
-            name2 = friend2.name
-
+def iter_edges(friends):
+    for name1, mutuals1 in friends.items():
+        for name2 in mutuals1:
             # undo the direct-ness of the graph
             if name2 < name1:
                 continue
 
-            if (weight := friend1.weight(friend2)) != math.inf:
+            if name2 in mutuals1:
+                mutuals2 = friends[name2]
+                weight = len(mutuals1.intersection(mutuals2))
+                weight = float(weight + 1)
                 yield name1, name2, weight
 
 
-def hub_score(friends: Friends):
+def hub_score(friends):
     score = collections.defaultdict(int)
 
     for name1, name2, weight in iter_kruskals(friends):
@@ -369,13 +319,24 @@ def hub_score(friends: Friends):
     return score
 
 
-def print_friends(friends: Friends, file):
-    print('{\t', file=file)
+def print_friends(friends, file):
+    print('{', file=file)
 
-    for friend in sorted(friends, key=Friend.sort_key):
-        print(f'\t{friend!r},', file=file)
+    for name, mutuals in sorted(friends.items(), key=sort_key):
+        mutuals = sorted(mutuals, key=sort_key)
+        print(f'\t{name!r}: {mutuals!r},', file=file)
 
     print('}', file=file)
+
+
+def sort_key(name_or_items):
+    if isinstance(name_or_items, str):
+        name = name_or_items
+    elif isinstance(name_or_items, tuple):
+        name = name_or_items[0]
+
+    *names, last = name.split()
+    return last, *names
 
 
 if __name__ == '__main__':
