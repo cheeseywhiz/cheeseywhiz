@@ -2,10 +2,15 @@
 #include "syscall.h"
 #include "types.h"
 
+static void put_int(int);
+static void put_unsigned(unsigned);
+static void put_hex(unsigned);
+
 union PrintfArg {
     char c;
     const char *s;
     int i;
+    unsigned u;
 };
 
 void
@@ -39,6 +44,12 @@ printf_impl(const char *format, union PrintfArg args[]) {
             case 'd':
                 put_int(args[i++].i);
                 break;
+            case 'h':
+                put_hex(args[i++].u);
+                break;
+            case 'u':
+                put_unsigned(args[i++].u);
+                break;
         }
 
         if (!first)
@@ -48,7 +59,7 @@ printf_impl(const char *format, union PrintfArg args[]) {
     write(STDOUT, first, last - first);
 }
 
-void
+static void
 put_int(int n) {
     char mem[12], *stack = mem + LENGTH(mem) - 1;
     int copy = n;
@@ -69,6 +80,37 @@ put_int(int n) {
         *--stack = '-';
 
     put_string(stack);
+}
+
+static void
+put_unsigned(unsigned n) {
+    char mem[12], *stack = mem + LENGTH(mem) - 1;
+    *stack = 0;
+
+    do {
+        *--stack = (n % 10) + '0';
+    } while (n /= 10);
+
+    put_string(stack);
+}
+
+static void
+put_hex(unsigned n) {
+    char mem[] = "0x00000000";
+    char *stack = mem + LENGTH(mem) - 1;
+
+    do {
+        char c = n % 16;
+
+        if (c < 10)
+            c += '0';
+        else
+            c += 'a' - 10;
+
+        *--stack = c;
+    } while (n /= 16);
+
+    put_string(mem);
 }
 
 void
