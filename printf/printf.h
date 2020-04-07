@@ -2,6 +2,10 @@
 #define PRINTF_H
 #include "types.h"
 
+void printf(const char *format, ...);
+
+void put_int(int);
+
 void put_string(const char*);
 
 void put_char(char);
