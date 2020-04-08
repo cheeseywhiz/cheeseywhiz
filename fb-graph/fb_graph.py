@@ -104,7 +104,7 @@ class Facebook(Chrome):
                 print(f'{type(e).__name__}: {e}')
                 break
             else:
-                time.sleep(20)
+                time.sleep(random.randrange(30, 90))
 
         self.commit_db()
 
@@ -129,10 +129,10 @@ class Facebook(Chrome):
 
         for element in elements:
             link = element.find_element_by_tag_name('a')
-            name = link.text
+            friend_name = link.text
             url = link.get_attribute('href')
-            self.add_new_friend(name, url)
-            mutuals.append(name)
+            self.add_new_friend(friend_name, url)
+            mutuals.append(friend_name)
 
         print(f'{name}: {mutuals}')
 
