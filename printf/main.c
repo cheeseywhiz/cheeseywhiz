@@ -2,6 +2,8 @@
 #include "syscall.h"
 #include "types.h"
 
+extern void *_GLOBAL_OFFSET_TABLE_;
+
 int
 main() {
     const struct {
@@ -25,11 +27,12 @@ main() {
            123, -123, 0, 1, 0xdeadbeef, 0xdeadbeef & ~0x80000000,
            7, 8, 9, 10);
     printf("here's some hexes: "
-           "%h %h %h %h %h %h %h\n",
+           "%x %x %x %x %x %x %x\n",
            0xdeadbeef, 0xdeadbeef & ~0x80000000, 0x123, 0, 1, 16, -1);
     printf("here's some unsigned: "
            "%u %u %u %u %u %u %u\n",
            0xdeadbeef, 0xdeadbeef & ~0x80000000, 0x123, 0, 1, 16, -1);
     printf("");
+    printf("%p %p %p %p\n", main, _GLOBAL_OFFSET_TABLE_, NULL, (void*)-1);
     return 0;
 }

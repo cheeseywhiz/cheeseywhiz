@@ -20,6 +20,7 @@ all: printf
 
 release: CFLAGS += -O3
 release: all
+	strip printf
 
 debug: CFLAGS += -g -Og
 debug: ASFLAGS += -gdwarf

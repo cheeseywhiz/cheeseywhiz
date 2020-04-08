@@ -5,12 +5,14 @@
 static void put_int(int);
 static void put_unsigned(unsigned);
 static void put_hex(unsigned);
+static void put_ul_hex(size_t);
 
 union PrintfArg {
     char c;
     const char *s;
     int i;
     unsigned u;
+    void *ptr;
 };
 
 void
@@ -19,22 +21,22 @@ printf_impl(const char *format, union PrintfArg args[]) {
     int type_mode = 0, i = 0;
 
     for (first = last = format; *last; ++last) {
-        if (!type_mode) {
-            if (*last == '%') {
-                type_mode = 1;
+        if (*last == '%') {
+            if (type_mode)
+                first = last;
+            else
                 write(STDOUT, first, last - first);
-            }
 
+            type_mode = !type_mode;
+            continue;
+        } else if (!type_mode) {
             continue;
         }
 
+        first = last + 1;
         type_mode = 0;
-        first = NULL;
 
         switch (*last) {
-            case '%':
-                first = last;
-                break;
             case 's':
                 put_string(args[i++].s);
                 break;
@@ -44,16 +46,16 @@ printf_impl(const char *format, union PrintfArg args[]) {
             case 'd':
                 put_int(args[i++].i);
                 break;
-            case 'h':
+            case 'x':
                 put_hex(args[i++].u);
                 break;
             case 'u':
                 put_unsigned(args[i++].u);
                 break;
+            case 'p':
+                put_ul_hex((size_t)args[i++].ptr);
+                break;
         }
-
-        if (!first)
-            first = last + 1;
     }
 
     write(STDOUT, first, last - first);
@@ -97,6 +99,25 @@ put_unsigned(unsigned n) {
 static void
 put_hex(unsigned n) {
     char mem[] = "0x00000000";
+    char *stack = mem + LENGTH(mem) - 1;
+
+    do {
+        char c = n % 16;
+
+        if (c < 10)
+            c += '0';
+        else
+            c += 'a' - 10;
+
+        *--stack = c;
+    } while (n /= 16);
+
+    put_string(mem);
+}
+
+static void
+put_ul_hex(size_t n) {
+    char mem[] = "0x0000000000000000";
     char *stack = mem + LENGTH(mem) - 1;
 
     do {
