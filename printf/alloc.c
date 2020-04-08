@@ -40,8 +40,7 @@ alloc_impl(size_t size, const char *file, int line) {
                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
     if (DID_SYSCALL_FAIL(map)) {
-        /* TODO: remove cast after implementing %lu */
-        fprintf(STDERR_FILENO, "mmap failed with %d at %s:%d\n", (int)SYSCALL_ERRNO_CAST(map), file, line);
+        fprintf(STDERR_FILENO, "mmap failed with %d at %s:%d\n", SYSCALL_ERRNO_CAST(map), file, line);
         exit(1);
     }
 
@@ -62,8 +61,7 @@ free_impl(void *ptr, const char *file, int line) {
     size = alloc->size;
 
     if (DID_SYSCALL_FAIL(ret = munmap(alloc, size))) {
-        /* TODO: remove cast after implementing %lu */
-        fprintf(STDERR_FILENO, "munmap failed with %d at %s:%d\n", (int)SYSCALL_ERRNO_CAST(ret), file, line);
+        fprintf(STDERR_FILENO, "munmap failed with %d at %s:%d\n", SYSCALL_ERRNO_CAST(ret), file, line);
         exit(1);
     }
 
