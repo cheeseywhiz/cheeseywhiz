@@ -1,6 +1,7 @@
 #include "syscall.h"
 #include "printf.h"
 #include "alloc.h"
+#include "list.h"
 
 extern void *_GLOBAL_OFFSET_TABLE_;
 int main(int argc, char *argv[]);
@@ -49,9 +50,43 @@ test_alloc() {
     FREE(arr);
 }
 
+void
+print_int_node(struct IntNode *node) {
+    printf("%d ", node->datum);
+}
+
+void
+test_list() {
+    int i, len = 10;
+    struct List int_list;
+    init_list(&int_list, sizeof(struct IntNode));
+
+    for (i = 0; i < len; ++i) {
+        struct IntNode *new = (struct IntNode*)list_push_back(&int_list);
+        new->datum = i;
+    }
+
+    check_alloc(0);
+    list_map(&int_list, (list_node_visitor)print_int_node);
+    printf("\n%d\n", (int)int_list.size);
+
+    list_erase(&int_list, list_at(&int_list, len / 2));
+    list_pop_front(&int_list);
+    list_pop_back(&int_list);
+    check_alloc(0);
+
+    /* TODO: remove cast once %lu is implemented */
+    list_map(&int_list, (list_node_visitor)print_int_node);
+    printf("\n%d\n", (int)int_list.size);
+
+    list_clear(&int_list);
+    printf("%d\n", (int)int_list.size);
+}
+
 int
 main(int argc, char *argv[]) {
-    /*test_printf();*/
+    test_printf();
     test_alloc();
+    test_list();
     return 0;
 }

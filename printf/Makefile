@@ -5,10 +5,15 @@ LD := ld
 AS := nasm
 ASFLAGS += -f elf64
 
+C_SOURCES := $(wildcard *.c)
+ASM_SOURCES := $(filter-out sys-syscall.asm, $(wildcard *.asm))
+SOURCES := $(C_SOURCES) $(ASM_SOURCES)
+OBJECTS := $(C_SOURCES:%.c=%.o) $(ASM_SOURCES:%.asm=%.o)
+
 %.o: %.asm
 	$(AS) $(ASFLAGS) -o $@ $<
 
-printf: main.o printf.o syscall.o alloc.o
+printf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 sys-syscall.asm: /usr/include/asm/unistd_64.h
@@ -16,7 +21,7 @@ sys-syscall.asm: /usr/include/asm/unistd_64.h
 		| sed -e "s/__NR/SYS/" -e "s/^#/%/" \
 		> $@
 
-.PHONY: all release debug clean deps
+.PHONY: all release debug objects clean deps
 
 all: printf
 
@@ -27,6 +32,8 @@ release: all
 debug: CFLAGS += -g -Og
 debug: ASFLAGS += -gdwarf
 debug: all
+
+objects: $(OBJECTS)
 
 clean:
 	rm -rfv vgcore.* *.o *.plist \
@@ -41,5 +48,6 @@ deps:
 syscall.o : syscall.asm sys-syscall.asm
 
 alloc.o: alloc.c alloc.h syscall.h printf.h
-main.o: main.c syscall.h printf.h alloc.h
+list.o: list.c list.h alloc.h
+main.o: main.c syscall.h printf.h alloc.h list.h
 printf.o: printf.c printf.h syscall.h

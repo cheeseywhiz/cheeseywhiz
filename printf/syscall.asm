@@ -3,7 +3,7 @@
 
 section .text
 global _start, fprintf, printf, write, exit, mmap, munmap
-extern main, fprintf_impl, printf_impl
+extern main, fprintf_impl, printf_impl, check_alloc
 
 _start:
     xor  rbp, rbp
@@ -11,7 +11,7 @@ _start:
     mov  rsi, rsp   ; second arg = args
     and  rsp, -16
     call main
-    mov  rdi, rax   ; exit code = main return value
+    mov  rdi, rax
     call exit
 
 write:
@@ -20,6 +20,8 @@ write:
     ret
 
 exit:
+    call check_alloc
+    mov rdi, rax
     mov rax, SYS_exit
     syscall
 
