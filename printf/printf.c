@@ -1,11 +1,5 @@
 #include "printf.h"
 #include "syscall.h"
-#include "types.h"
-
-static void put_int(int);
-static void put_unsigned(unsigned);
-static void put_hex(unsigned);
-static void put_ul_hex(size_t);
 
 union PrintfArg {
     char c;
@@ -15,8 +9,29 @@ union PrintfArg {
     void *ptr;
 };
 
+void fprintf_impl(int, const char*, union PrintfArg[]);
+static void fput_int(int, int);
+static void fput_unsigned(int, unsigned);
+static void fput_hex(int, unsigned);
+static void fput_ul_hex(int, size_t);
+
 void
 printf_impl(const char *format, union PrintfArg args[]) {
+    fprintf_impl(STDOUT_FILENO, format, args);
+}
+
+void
+put_string(const char *s) {
+    fputs(STDOUT_FILENO, s);
+}
+
+void
+put_char(char c) {
+    fputc(STDOUT_FILENO, c);
+}
+
+void
+fprintf_impl(int fd, const char *format, union PrintfArg args[]) {
     const char *first, *last;
     int type_mode = 0, i = 0;
 
@@ -25,7 +40,7 @@ printf_impl(const char *format, union PrintfArg args[]) {
             if (type_mode)
                 first = last;
             else
-                write(STDOUT, first, last - first);
+                write(STDOUT_FILENO, first, last - first);
 
             type_mode = !type_mode;
             continue;
@@ -38,31 +53,31 @@ printf_impl(const char *format, union PrintfArg args[]) {
 
         switch (*last) {
             case 's':
-                put_string(args[i++].s);
+                fputs(fd, args[i++].s);
                 break;
             case 'c':
-                put_char(args[i++].c);
+                fputc(fd, args[i++].c);
                 break;
             case 'd':
-                put_int(args[i++].i);
+                fput_int(fd, args[i++].i);
                 break;
             case 'x':
-                put_hex(args[i++].u);
+                fput_hex(fd, args[i++].u);
                 break;
             case 'u':
-                put_unsigned(args[i++].u);
+                fput_unsigned(fd, args[i++].u);
                 break;
             case 'p':
-                put_ul_hex((size_t)args[i++].ptr);
+                fput_ul_hex(fd, (size_t)args[i++].ptr);
                 break;
         }
     }
 
-    write(STDOUT, first, last - first);
+    write(fd, first, last - first);
 }
 
 static void
-put_int(int n) {
+fput_int(int fd, int n) {
     char mem[12], *stack = mem + LENGTH(mem) - 1;
     int copy = n;
     *stack = 0;
@@ -81,11 +96,11 @@ put_int(int n) {
     if (copy < 0)
         *--stack = '-';
 
-    put_string(stack);
+    fputs(fd, stack);
 }
 
 static void
-put_unsigned(unsigned n) {
+fput_unsigned(int fd, unsigned n) {
     char mem[12], *stack = mem + LENGTH(mem) - 1;
     *stack = 0;
 
@@ -93,11 +108,11 @@ put_unsigned(unsigned n) {
         *--stack = (n % 10) + '0';
     } while (n /= 10);
 
-    put_string(stack);
+    fputs(fd, stack);
 }
 
 static void
-put_hex(unsigned n) {
+fput_hex(int fd, unsigned n) {
     char mem[] = "0x00000000";
     char *stack = mem + LENGTH(mem) - 1;
 
@@ -112,11 +127,11 @@ put_hex(unsigned n) {
         *--stack = c;
     } while (n /= 16);
 
-    put_string(mem);
+    fputs(fd, mem);
 }
 
 static void
-put_ul_hex(size_t n) {
+fput_ul_hex(int fd, size_t n) {
     char mem[] = "0x0000000000000000";
     char *stack = mem + LENGTH(mem) - 1;
 
@@ -131,17 +146,17 @@ put_ul_hex(size_t n) {
         *--stack = c;
     } while (n /= 16);
 
-    put_string(mem);
+    fputs(fd, mem);
 }
 
 void
-put_string(const char *s) {
-    write(STDOUT, s, strlen(s));
+fputs(int fd, const char *s) {
+    write(fd, s, strlen(s));
 }
 
 void
-put_char(char c) {
-    write(STDOUT, &c, 1);
+fputc(int fd, char c) {
+    write(fd, &c, 1);
 }
 
 size_t

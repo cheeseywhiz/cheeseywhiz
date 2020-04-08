@@ -1,4 +1,6 @@
 CFLAGS += -ansi -Wall -Werror -pedantic -nostdlib -fno-builtin
+# for MAP_ANONYMOUS
+CFLAGS += -D_GNU_SOURCE
 LD := ld
 AS := nasm
 ASFLAGS += -f elf64
@@ -6,7 +8,7 @@ ASFLAGS += -f elf64
 %.o: %.asm
 	$(AS) $(ASFLAGS) -o $@ $<
 
-printf: main.o printf.o syscall.o
+printf: main.o printf.o syscall.o alloc.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 sys-syscall.asm: /usr/include/asm/unistd_64.h
@@ -27,7 +29,7 @@ debug: ASFLAGS += -gdwarf
 debug: all
 
 clean:
-	rm -rfv vgcore.* .clangd *.o *.plist \
+	rm -rfv vgcore.* *.o *.plist \
 		printf sys-syscall.asm
 
 deps:
@@ -38,5 +40,6 @@ deps:
 
 syscall.o : syscall.asm sys-syscall.asm
 
-main.o: main.c printf.h types.h syscall.h
-printf.o: printf.c printf.h types.h syscall.h
+alloc.o: alloc.c alloc.h syscall.h printf.h
+main.o: main.c syscall.h printf.h alloc.h
+printf.o: printf.c printf.h syscall.h

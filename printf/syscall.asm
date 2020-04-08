@@ -2,8 +2,8 @@
 %include "sys-syscall.asm"
 
 section .text
-global _start, write, printf
-extern main, printf_impl
+global _start, fprintf, printf, write, exit, mmap, munmap
+extern main, fprintf_impl, printf_impl
 
 _start:
     xor  rbp, rbp
@@ -23,8 +23,36 @@ exit:
     mov rax, SYS_exit
     syscall
 
+mmap:
+    mov rax, SYS_mmap
+    mov r10, rcx
+    syscall
+    ret
+
+munmap:
+    mov rax, SYS_munmap
+    syscall
+    ret
+
+fprintf:
+    pop  rax        ; caller's rip
+    ; now we're in the caller's stack frame
+    ; now these are contiguous with the rest of the varargs on the stack
+    push r9
+    push r8
+    push rcx
+    push rdx
+    ; pass rdi and rsi to impl
+    mov  rdx, rsp   ; third arg = varargs
+    push rax        ; save
+    call fprintf_impl
+    pop  rax        ; restore
+    add  rsp, 32    ; dealloc printf_impl stack args
+    push rax        ; stack frame back to normal
+    ret
+
 printf:
-    pop  rax         ; caller's rip
+    pop  rax        ; caller's rip
     ; now we're in the caller's stack frame
     ; now these are contiguous with the rest of the varargs on the stack
     push r9
@@ -32,6 +60,7 @@ printf:
     push rcx
     push rdx
     push rsi
+    ; pass rdi to impl
     mov  rsi, rsp   ; second arg = varargs
     push rax        ; save
     call printf_impl
