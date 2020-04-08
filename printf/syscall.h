@@ -8,4 +8,7 @@ void* mmap(void *addr, size_t length, int prot, int flags,
            int fd, off_t offset);
 int munmap(void *addr, size_t length);
 
+#define SYSCALL_ERRNO_CAST(ret) (-(size_t)(ret))
+#define DID_SYSCALL_FAIL(ret) (-(SYSCALL_ERRNO_CAST(ret)) > -4096UL)
+
 #endif /* SYSCALL_H */

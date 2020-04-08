@@ -39,8 +39,9 @@ alloc_impl(size_t size, const char *file, int line) {
     map = mmap(NULL, size, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-    if ((size_t)map > -4096UL) {
-        fprintf(STDERR_FILENO, "mmap failed with -%d at %s:%d\n", (int)(-(size_t)map), file, line);
+    if (DID_SYSCALL_FAIL(map)) {
+        /* TODO: remove cast after implementing %lu */
+        fprintf(STDERR_FILENO, "mmap failed with %d at %s:%d\n", (int)SYSCALL_ERRNO_CAST(map), file, line);
         exit(1);
     }
 
@@ -59,10 +60,10 @@ free_impl(void *ptr, const char *file, int line) {
         return;
     alloc_list_remove(&alloc_list, alloc);
     size = alloc->size;
-    ret = (size_t)munmap(alloc, size);
 
-    if (ret > -4096UL) {
-        fprintf(STDERR_FILENO, "munmap failed with -%d at %s:%d\n", (int)(-ret), file, line);
+    if (DID_SYSCALL_FAIL(ret = munmap(alloc, size))) {
+        /* TODO: remove cast after implementing %lu */
+        fprintf(STDERR_FILENO, "munmap failed with %d at %s:%d\n", (int)SYSCALL_ERRNO_CAST(ret), file, line);
         exit(1);
     }
 
