@@ -40,7 +40,7 @@ fprintf_impl(int fd, const char *format, union PrintfArg args[]) {
             if (type_mode)
                 first = last;
             else
-                write(STDOUT_FILENO, first, last - first);
+                write(fd, first, last - first);
 
             type_mode = !type_mode;
             continue;

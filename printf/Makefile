@@ -1,4 +1,5 @@
-CFLAGS += -ansi -Wall -Werror -pedantic -nostdlib -fno-builtin
+CFLAGS += -nostdlib -fno-builtin
+CFLAGS += -ansi -Wall -Werror -pedantic
 # for MAP_ANONYMOUS
 CFLAGS += -D_GNU_SOURCE
 LD := ld
@@ -12,6 +13,8 @@ OBJECTS := $(C_SOURCES:%.c=%.o) $(ASM_SOURCES:%.asm=%.o)
 
 %.o: %.asm
 	$(AS) $(ASFLAGS) -o $@ $<
+
+vector.o: CFLAGS += -Wno-pointer-arith
 
 printf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -49,5 +52,6 @@ syscall.o : syscall.asm sys-syscall.asm
 
 alloc.o: alloc.c alloc.h syscall.h printf.h
 list.o: list.c list.h alloc.h
-main.o: main.c syscall.h printf.h alloc.h list.h
+main.o: main.c syscall.h printf.h alloc.h list.h vector.h
 printf.o: printf.c printf.h syscall.h
+vector.o: vector.c vector.h alloc.h

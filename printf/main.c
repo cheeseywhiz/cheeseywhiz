@@ -2,6 +2,7 @@
 #include "printf.h"
 #include "alloc.h"
 #include "list.h"
+#include "vector.h"
 
 extern void *_GLOBAL_OFFSET_TABLE_;
 int main(int argc, char *argv[]);
@@ -83,10 +84,56 @@ test_list() {
     printf("%d\n", (int)int_list.size);
 }
 
+static void
+move_int(int *dest, int *src) {
+    *dest = *src;
+}
+
+static void
+default_init_int(int *n) {
+    *n = 0;
+}
+
+static const struct VectorType int_type = {
+    sizeof(int),
+    (vector_type_move)move_int,
+    (vector_default_init)default_init_int,
+};
+
+static void
+print_int(int *n) {
+    printf("%d ", *n);
+}
+
+static void
+vector_check(struct Vector *vector) {
+    check_alloc(0);
+    vector_map(vector, (vector_visit_item)print_int);
+    printf("\n%d\n", (int)vector_length(vector));
+}
+
+void
+test_vector() {
+    size_t i, len = 5;
+    struct Vector vector;
+    init_vector(&vector, &int_type);
+    vector_resize(&vector, len);
+    vector_check(&vector);
+    for (i = 0; i < len; ++i)
+        *(int*)vector_at(&vector, i) = i;
+    vector_check(&vector);
+    len += 5;
+    for (; i < len; ++i)
+        *(int*)vector_push_back(&vector) = i;
+    vector_check(&vector);
+    vector_clear(&vector);
+}
+
 int
 main(int argc, char *argv[]) {
     test_printf();
     test_alloc();
     test_list();
+    test_vector();
     return 0;
 }
