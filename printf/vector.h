@@ -4,7 +4,6 @@
 
 /* the vector owns its data */
 
-/* TODO: this should be called shallow copy */
 typedef void (*vector_type_move)(void *dest, void *src);
 typedef void (*vector_default_init)(void *ptr);
 

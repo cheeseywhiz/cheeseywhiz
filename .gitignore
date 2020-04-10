@@ -73,3 +73,4 @@ target/
 http/data/sets/
 *.o
 compile_commands.json
+.clangd

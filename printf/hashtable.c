@@ -1,10 +1,22 @@
 #include "hashtable.h"
 
+enum BucketStatus {
+    BS_EMPTY,
+    BS_OCCUPIED,
+    BS_DELETED
+};
+
+struct Bucket {
+    struct Item item;
+    enum BucketStatus status;
+};
+
 static void grow(struct Hashtable*);
-static struct Bucket* find(struct Hashtable*, const void*);
+static struct Bucket* find(const struct Hashtable*, const void*);
 static void init_buckets(struct Vector*);
-static void move_bucket(struct Bucket*, struct Bucket*);
+static void move_bucket(struct Bucket*, const struct Bucket*);
 static void default_init_bucket(struct Bucket*);
+static void set_bucket(struct Bucket*, void*, void*, enum BucketStatus);
 
 void
 init_hashtable(struct Hashtable *hashtable, hashtable_hash_key hash_key,
@@ -21,32 +33,38 @@ hashtable_free(struct Hashtable *hashtable) {
     vector_clear(&hashtable->buckets);
 }
 
-struct Bucket*
+struct Item*
 hashtable_insert(struct Hashtable *hashtable, const void *key) {
     struct Bucket *bucket;
     grow(hashtable);
     bucket = find(hashtable, key);
-    if (bucket->status == BS_OCCUPIED)
-        return bucket;
-    bucket->status = BS_OCCUPIED;
-    ++hashtable->size;
-    return bucket;
+
+    if (bucket->status != BS_OCCUPIED) {
+        bucket->status = BS_OCCUPIED;
+        ++hashtable->size;
+    }
+
+    return (struct Item*)bucket;
 }
 
-void*
-hashtable_find(struct Hashtable *hashtable, const void *key) {
-    struct Bucket *bucket = find(hashtable, key);
-    return bucket->value;
-}
-
-struct Bucket*
-hashtable_erase(struct Hashtable *hashtable, const void *key) {
+struct Item*
+hashtable_find(const struct Hashtable *hashtable, const void *key) {
     struct Bucket *bucket = find(hashtable, key);
     if (bucket->status != BS_OCCUPIED)
-        return bucket;
-    bucket->status = BS_DELETED;
-    --hashtable->size;
-    return bucket;
+        return NULL;
+    return (struct Item*)bucket;
+}
+
+struct Item*
+hashtable_erase(struct Hashtable *hashtable, const void *key) {
+    struct Bucket *bucket = find(hashtable, key);
+
+    if (bucket->status == BS_OCCUPIED) {
+        bucket->status = BS_DELETED;
+        --hashtable->size;
+    }
+
+    return (struct Item*)bucket;
 }
 
 void
@@ -57,7 +75,7 @@ hashtable_map(const struct Hashtable *hashtable,
     for (i = 0; i < length; ++i) {
         struct Bucket *bucket = vector_at(&hashtable->buckets, i);
         if (bucket->status == BS_OCCUPIED)
-            visitor(bucket->key, bucket->value);
+            visitor(bucket->item.key, bucket->item.value);
     }
 }
 
@@ -75,10 +93,9 @@ grow(struct Hashtable *hashtable) {
         const struct Bucket *bucket = vector_at(&old_buckets, i);
 
         if (bucket->status == BS_OCCUPIED) {
-            struct Bucket *insert_bucket = find(hashtable, bucket->key);
-            insert_bucket->status = BS_OCCUPIED;
-            insert_bucket->key = bucket->key;
-            insert_bucket->value = bucket->value;
+            struct Bucket *insert_bucket = find(hashtable, bucket->item.key);
+            set_bucket(insert_bucket, bucket->item.key, bucket->item.value,
+                       BS_OCCUPIED);
         }
     }
 
@@ -86,7 +103,7 @@ grow(struct Hashtable *hashtable) {
 }
 
 static struct Bucket*
-find(struct Hashtable *hashtable, const void *key) {
+find(const struct Hashtable *hashtable, const void *key) {
     struct Bucket *deleted = NULL;
     size_t buckets_length = vector_length(&hashtable->buckets);
     size_t i, first_i = hashtable->hash_key(key) % buckets_length;
@@ -101,7 +118,7 @@ find(struct Hashtable *hashtable, const void *key) {
         case BS_DELETED:
             /* all unoccupied buckets are deleted */
             if (checked_first_i && i == first_i)
-                return bucket;
+                return deleted;
             if (!deleted)
                 deleted = bucket;
             break;
@@ -109,7 +126,7 @@ find(struct Hashtable *hashtable, const void *key) {
             /* all unoccupied buckets are deleted */
             if (checked_first_i && i == first_i)
                 return deleted;
-            if (hashtable->key_equal(bucket->key, key))
+            if (hashtable->key_equal(bucket->item.key, key))
                 return bucket;
             break;
         }
@@ -127,15 +144,19 @@ init_buckets(struct Vector *buckets) {
 }
 
 static void
-move_bucket(struct Bucket *dest, struct Bucket *src) {
-    dest->status = src->status;
-    dest->key = src->key;
-    dest->value = src->value;
+move_bucket(struct Bucket *dest, const struct Bucket *src) {
+    set_bucket(dest, src->item.key, src->item.value, src->status);
 }
 
 static void
 default_init_bucket(struct Bucket *bucket) {
-    bucket->status = BS_EMPTY;
-    bucket->key = NULL;
-    bucket->value = NULL;
+    set_bucket(bucket, NULL, NULL, BS_EMPTY);
+}
+
+static void
+set_bucket(struct Bucket *bucket, void *key, void *value,
+           enum BucketStatus status) {
+    bucket->item.key = key;
+    bucket->item.value = value;
+    bucket->status = status;
 }

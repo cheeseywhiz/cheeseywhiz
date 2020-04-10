@@ -126,8 +126,8 @@ test_vector() {
 }
 
 static void hashtable_check(const struct Hashtable *hashtable);
-static void print_bucket(const struct Bucket *bucket);
-static void print_item(const char*, const int*);
+static void print_item(const struct Item*);
+static void print_object(const char*, const int*);
 static int string_equal(const char*, const char*);
 static int strcmp(const char*, const char*);
 static size_t lu_hash(size_t);
@@ -136,20 +136,23 @@ static size_t string_hash(const char*);
 static void
 hashtable_check(const struct Hashtable *hashtable) {
     check_alloc(0);
-    vector_map(&hashtable->buckets, (vector_visit_item)print_bucket);
     put_string("{ ");
-    hashtable_map(hashtable, (hashtable_item_visitor)print_item);
+    hashtable_map(hashtable, (hashtable_item_visitor)print_object);
     printf("}\n%d\n\n", (int)hashtable->size);
 }
 
 static void
-print_bucket(const struct Bucket *bucket) {
-    printf("Bucket{ %d, \"%s\", \"%s\" }\n", bucket->status, bucket->key,
-           bucket->value);
+print_item(const struct Item *item) {
+    if (!item) {
+        printf("%s, ", NULL);
+        return;
+    }
+
+    print_object(item->key, item->value);
 }
 
 static void
-print_item(const char *object, const int *color) {
+print_object(const char *object, const int *color) {
     printf("\"%s\": \"%s\", ", object, color);
 }
 
@@ -189,7 +192,7 @@ static size_t lu_hash(size_t x) {
     return x;
 }
 
-struct Item {
+struct Object {
     char *object;
     char *color;
 };
@@ -197,8 +200,8 @@ struct Item {
 void
 test_hashtable() {
     struct Hashtable ht;
-    struct Bucket *bucket;
-    const struct Item items[] = {
+    struct Item *item;
+    const struct Object objects[] = {
         { "apple", "red" },
         { "orange", "orange" },
         { "banana", "yellow" },
@@ -207,44 +210,43 @@ test_hashtable() {
     init_hashtable(&ht, (hashtable_hash_key)string_hash, (hashtable_key_equal)string_equal);
     hashtable_check(&ht);
     printf("%d %d\n",
-           strcmp(items[1].object, items[2].object),
-           string_equal(items[1].object, items[2].object));
+           strcmp(objects[1].object, objects[2].object),
+           string_equal(objects[1].object, objects[2].object));
 
-    for (i = 0; i < LENGTH(items); ++i) {
-        const struct Item *item = &items[i];
-        bucket = hashtable_insert(&ht, item->object);
+    for (i = 0; i < LENGTH(objects); ++i) {
+        const struct Object *object = &objects[i];
+        item = hashtable_insert(&ht, object->object);
         printf("insert bucket:\n");
-        print_bucket(bucket);
-        bucket->key = item->object;
-        bucket->value = item->color;
+        print_item(item);
+        item->key = object->object;
+        item->value = object->color;
         hashtable_check(&ht);
     }
 
-    print_bucket(hashtable_insert(&ht, items[0].object));
-    printf("%s %s %s\n", hashtable_find(&ht, "orange"),
-                      hashtable_find(&ht, "grape"),
-                      hashtable_find(&ht, "apple")
-    );
+    print_item(hashtable_insert(&ht, objects[0].object));
+    print_item(hashtable_find(&ht, "orange"));
+    print_item(hashtable_find(&ht, "grape"));
+    print_item(hashtable_find(&ht, "apple"));
     hashtable_check(&ht);
 
-    bucket = hashtable_erase(&ht, items[0].object);
-    print_bucket(bucket);
-    bucket->key = NULL;
-    bucket->value = NULL;
+    item = hashtable_erase(&ht, objects[0].object);
+    print_item(item);
+    item->key = NULL;
+    item->value = NULL;
     hashtable_check(&ht);
 
-    bucket = hashtable_erase(&ht, "not found");
-    print_bucket(bucket);
+    item = hashtable_erase(&ht, "not found");
+    print_item(item);
     hashtable_check(&ht);
 
-    bucket = hashtable_erase(&ht, "abc");
-    print_bucket(bucket);
+    item = hashtable_erase(&ht, "abc");
+    print_item(item);
     hashtable_check(&ht);
 
-    bucket = hashtable_insert(&ht, items[0].object);
-    print_bucket(bucket);
-    bucket->key = items[0].object;
-    bucket->value = items[0].object;
+    item = hashtable_insert(&ht, objects[0].object);
+    print_item(item);
+    item->key = objects[0].object;
+    item->value = objects[0].object;
     hashtable_check(&ht);
 
     hashtable_free(&ht);
