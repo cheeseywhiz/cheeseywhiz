@@ -151,6 +151,8 @@ fput_ul_hex(int fd, size_t n) {
 
 void
 fputs(int fd, const char *s) {
+    if (!s)
+        s = "NULL";
     write(fd, s, strlen(s));
 }
 

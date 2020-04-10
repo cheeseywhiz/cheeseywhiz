@@ -51,7 +51,8 @@ deps:
 syscall.o : syscall.asm sys-syscall.asm
 
 alloc.o: alloc.c alloc.h syscall.h printf.h
+hashtable.o: hashtable.c hashtable.h vector.h alloc.h
 list.o: list.c list.h alloc.h
-main.o: main.c syscall.h printf.h alloc.h list.h vector.h
+main.o: main.c syscall.h printf.h alloc.h list.h vector.h hashtable.h
 printf.o: printf.c printf.h syscall.h
 vector.o: vector.c vector.h alloc.h

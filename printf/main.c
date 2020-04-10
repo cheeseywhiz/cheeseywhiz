@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "list.h"
 #include "vector.h"
+#include "hashtable.h"
 
 extern void *_GLOBAL_OFFSET_TABLE_;
 int main(int argc, char *argv[]);
@@ -94,14 +95,8 @@ default_init_int(int *n) {
     *n = 0;
 }
 
-static const struct VectorType int_type = {
-    sizeof(int),
-    (vector_type_move)move_int,
-    (vector_default_init)default_init_int,
-};
-
 static void
-print_int(int *n) {
+print_int(const int *n) {
     printf("%d ", *n);
 }
 
@@ -116,7 +111,8 @@ void
 test_vector() {
     size_t i, len = 5;
     struct Vector vector;
-    init_vector(&vector, &int_type);
+    init_vector(&vector, sizeof(int), (vector_type_move)move_int,
+                (vector_default_init)default_init_int);
     vector_resize(&vector, len);
     vector_check(&vector);
     for (i = 0; i < len; ++i)
@@ -129,11 +125,137 @@ test_vector() {
     vector_clear(&vector);
 }
 
+static void hashtable_check(const struct Hashtable *hashtable);
+static void print_bucket(const struct Bucket *bucket);
+static void print_item(const char*, const int*);
+static int string_equal(const char*, const char*);
+static int strcmp(const char*, const char*);
+static size_t lu_hash(size_t);
+static size_t string_hash(const char*);
+
+static void
+hashtable_check(const struct Hashtable *hashtable) {
+    check_alloc(0);
+    vector_map(&hashtable->buckets, (vector_visit_item)print_bucket);
+    put_string("{ ");
+    hashtable_map(hashtable, (hashtable_item_visitor)print_item);
+    printf("}\n%d\n\n", (int)hashtable->size);
+}
+
+static void
+print_bucket(const struct Bucket *bucket) {
+    printf("Bucket{ %d, \"%s\", \"%s\" }\n", bucket->status, bucket->key,
+           bucket->value);
+}
+
+static void
+print_item(const char *object, const int *color) {
+    printf("\"%s\": \"%s\", ", object, color);
+}
+
+static int
+string_equal(const char *s1, const char *s2) {
+    return !strcmp(s1, s2);
+}
+
+static int
+strcmp(const char *s1, const char *s2) {
+    /* http://www.cplusplus.com/reference/algorithm/lexicographical_compare/ */
+    while (*s1) {
+        if (!*s2 || *s2 < *s1)
+            return 1;
+        if (*s1 < *s2)
+            return -1;
+        ++s1;
+        ++s2;
+    }
+
+    return *s2;
+}
+
+static size_t
+string_hash(const char *s) {
+    size_t hash = 0, new_hash;
+    while ((new_hash = lu_hash(*s++)))
+        hash = lu_hash(hash + new_hash);
+    return hash;
+}
+
+static size_t lu_hash(size_t x) {
+    /* https://stackoverflow.com/a/12996028 */
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+struct Item {
+    char *object;
+    char *color;
+};
+
+void
+test_hashtable() {
+    struct Hashtable ht;
+    struct Bucket *bucket;
+    const struct Item items[] = {
+        { "apple", "red" },
+        { "orange", "orange" },
+        { "banana", "yellow" },
+    };
+    size_t i;
+    init_hashtable(&ht, (hashtable_hash_key)string_hash, (hashtable_key_equal)string_equal);
+    hashtable_check(&ht);
+    printf("%d %d\n",
+           strcmp(items[1].object, items[2].object),
+           string_equal(items[1].object, items[2].object));
+
+    for (i = 0; i < LENGTH(items); ++i) {
+        const struct Item *item = &items[i];
+        bucket = hashtable_insert(&ht, item->object);
+        printf("insert bucket:\n");
+        print_bucket(bucket);
+        bucket->key = item->object;
+        bucket->value = item->color;
+        hashtable_check(&ht);
+    }
+
+    print_bucket(hashtable_insert(&ht, items[0].object));
+    printf("%s %s %s\n", hashtable_find(&ht, "orange"),
+                      hashtable_find(&ht, "grape"),
+                      hashtable_find(&ht, "apple")
+    );
+    hashtable_check(&ht);
+
+    bucket = hashtable_erase(&ht, items[0].object);
+    print_bucket(bucket);
+    bucket->key = NULL;
+    bucket->value = NULL;
+    hashtable_check(&ht);
+
+    bucket = hashtable_erase(&ht, "not found");
+    print_bucket(bucket);
+    hashtable_check(&ht);
+
+    bucket = hashtable_erase(&ht, "abc");
+    print_bucket(bucket);
+    hashtable_check(&ht);
+
+    bucket = hashtable_insert(&ht, items[0].object);
+    print_bucket(bucket);
+    bucket->key = items[0].object;
+    bucket->value = items[0].object;
+    hashtable_check(&ht);
+
+    hashtable_free(&ht);
+}
+
 int
 main(int argc, char *argv[]) {
     test_printf();
     test_alloc();
     test_list();
     test_vector();
+    test_hashtable();
     return 0;
 }
