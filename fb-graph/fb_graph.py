@@ -212,6 +212,9 @@ def read_friends():
     for name1, (url, mutuals) in read_db_helper().items():
         mutuals1 = friends_emplace(friends, name1)
 
+        if mutuals == ['Null']:
+            continue
+
         for name2 in mutuals:
             mutuals2 = friends_emplace(friends, name2)
             # direct graph
@@ -241,10 +244,15 @@ def read_db_helper():
 def interpret(friends):
     plot_edges(iter_edges(friends), 'graph.png')
     plot_edges(iter_kruskals(friends), 'mst.png')
+    score = hub_score(friends)
+    plot_edges(
+        ((name1, name2, max(score[name1], score[name2]))
+         for name1, name2, _ in iter_kruskals(friends)),
+        'mst2.png')
 
     with open('hub-score.csv', 'w') as f:
         writer = csv.writer(f)
-        writer.writerows(sorted(hub_score(friends).items(),
+        writer.writerows(sorted(score.items(),
                                 key=lambda i: i[1], reverse=True))
 
     with open('friends.txt', 'w') as f:
