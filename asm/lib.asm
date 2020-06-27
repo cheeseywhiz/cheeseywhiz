@@ -14,8 +14,8 @@ putint:
 .div_loop:                  ; do {
     inc     ecx             ;   ++ecx;
     xor     edx, edx        ;   edx = 0;
-    mov     esi, 10         ;          10              10
-    idiv    esi             ;   eax /= | ; edx = eax % | ;
+    mov     esi, 10         ;               10         10
+    idiv    esi             ;   edx = eax % | ; eax /= | ;
     add     edx, '0'        ;   edx += '0';
     push    edx             ;   build stack string
     cmp     eax, 0          ; }

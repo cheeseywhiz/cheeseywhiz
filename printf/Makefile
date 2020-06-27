@@ -1,7 +1,7 @@
 CFLAGS += -nostdlib -fno-builtin
 CFLAGS += -ansi -Wall -Werror -pedantic
 # for MAP_ANONYMOUS
-CFLAGS += -D_GNU_SOURCE
+CPPFLAGS += -D_GNU_SOURCE
 LD := ld
 AS := nasm
 ASFLAGS += -f elf64
