@@ -75,5 +75,4 @@ http/data/sets/
 compile_commands.json
 .clangd
 *.d
-*.cpp
 *.plist
