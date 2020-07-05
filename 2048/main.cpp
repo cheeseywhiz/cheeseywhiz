@@ -9,42 +9,36 @@ int
 main()
 {
     init_ncurses();
-
-#ifdef DEBUG
-    // print the PID so that we can connect in another window with gdb
-    printw(" %d", getpid());
-    getch();
-#endif
-
-    Grid grid(4, 5);
+    Grid grid(4, 4), alt_grid;
     grid.draw_lines();
-
-    // start game
+    grid.draw_score();
     grid.generate_new_cell();
     grid.generate_new_cell();
     refresh();
-
     int c;
 
     while ((c = getch()) != ERR) {
         switch (c) {
+        case ' ':
+            swap(alt_grid, grid);
+            grid.refresh();
+            refresh();
+            break;
         case KEY_LEFT:
-            break;
         case KEY_RIGHT:
-            break;
         case KEY_UP:
-            break;
         case KEY_DOWN:
+            alt_grid = grid;
+            grid.handle_key(c);
+            refresh();
             break;
         case 'q':
             endwin();
             return 0;
-        default:
-            break;
         }
-
-        refresh();
     }
+
+    return 1;
 }
 
 static void
@@ -55,4 +49,10 @@ init_ncurses(void)
     noecho();
     curs_set(0);
     keypad(stdscr, true);
+
+#ifdef DEBUG
+    // print the PID so that we can connect in another window with gdb
+    printw(" %d", getpid());
+    getch();
+#endif
 }

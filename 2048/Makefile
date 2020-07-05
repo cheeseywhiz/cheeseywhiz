@@ -3,7 +3,7 @@
 BUILD ?= .
 
 CPPFLAGS += -MMD -MP
-CXXFLAGS += -std=gnu++17 -O2 -fdiagnostics-color=always
+CXXFLAGS += -std=gnu++17 -O3 -fdiagnostics-color=always
 CXXFLAGS += -Werror -Wall -Wextra -pedantic -Wshadow -Wmissing-declarations \
 	-Wredundant-decls -Wconversion
 LDLIBS := -lncurses
