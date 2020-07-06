@@ -76,6 +76,8 @@ Grid::refresh(void) const
     }
 
     draw_score();
+    refresh_win();
+    refresh_game_over();
 }
 
 void
@@ -87,19 +89,30 @@ Grid::draw_score(void) const
 }
 
 void
-Grid::draw_win(void) const
+Grid::refresh_win(void) const
 {
-    mvprintw(static_cast<int>(height) + 2, 0, "you win!");
+    move(static_cast<int>(height) + 2, 0);
+
+    if (has_won)
+        printw("you win!");
+    else
+        clrtoeol();
 }
 
 void
-Grid::draw_game_over(void) const
+Grid::refresh_game_over(void) const
 {
-    mvprintw(static_cast<int>(height) + 3, 0, "game over");
+    move(static_cast<int>(height) + 3, 0);
+
+    if (!n_empty && check_game_over())
+        printw("game over");
+    else
+        clrtoeol();
 }
 
-// move the cells and update the game as needed.
-void
+// move the cells and update the game as needed. returns if any cells
+// actually moved.
+bool
 Grid::handle_key(int key)
 {
     assert(key == KEY_UP || key == KEY_DOWN || key == KEY_LEFT
@@ -120,12 +133,12 @@ Grid::handle_key(int key)
         draw_score();
     }
 
-    if (!n_empty) {
-        if (check_game_over())
-            draw_game_over();
-    } else if (did_move) {
+    if (did_move) {
         generate_new_cell();
+        refresh_game_over();
     }
+
+    return did_move;
 }
 
 // merge cells towards the front of the list. returns score change.
@@ -145,8 +158,12 @@ Grid::do_move(const CellReferencesT& cells)
 
         if (i_val == next_val) {
             unsigned new_val = i_val * 2;
-            if (new_val == win_value)
-                draw_win();
+
+            if (new_val == win_value) {
+                has_won = true;
+                refresh_win();
+            }
+
             pop_cell(cells[i + 1].first, cells[i + 1].second);
             set_cell(cells[i].first, cells[i].second, new_val);
             score_change += new_val;

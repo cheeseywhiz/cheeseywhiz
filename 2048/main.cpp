@@ -27,11 +27,12 @@ main()
         case KEY_LEFT:
         case KEY_RIGHT:
         case KEY_UP:
-        case KEY_DOWN:
-            alt_grid = grid;
-            grid.handle_key(c);
+        case KEY_DOWN: {
+            Grid tmp_grid(grid);
+            if (grid.handle_key(c))
+                alt_grid = move(tmp_grid);
             refresh();
-            break;
+            break; }
         case 'q':
             endwin();
             return 0;
@@ -51,7 +52,7 @@ init_ncurses(void)
     keypad(stdscr, true);
 
 #ifdef DEBUG
-    // print the PID so that we can connect in another window with gdb
+    // print the PID so that we can connect in another terminal with gdb
     printw(" %d", getpid());
     getch();
 #endif
