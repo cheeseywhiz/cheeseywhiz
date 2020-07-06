@@ -12,12 +12,7 @@ main()
 {
     init_ncurses();
     stack<Grid> history, backtrace;
-    Grid first(4, 4);
-    first.draw_lines();
-    first.draw_score();
-    first.generate_new_cell();
-    first.generate_new_cell();
-    history.push(move(first));
+    history.emplace(4, 4);
     refresh();
     int c;
 

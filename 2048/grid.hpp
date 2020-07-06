@@ -17,27 +17,31 @@ public:
     {
     }
 
+    // create a new 2048 game grid and render it to the terminal.
     Grid(unsigned n_rows_in, unsigned n_columns_in)
         : n_rows(n_rows_in), n_columns(n_columns_in),
           height(n_rows * cell_height), width(n_columns * cell_width),
           n_empty(n_rows_in * n_columns_in), score(0), has_won(false),
           grid(n_rows_in, vector<unsigned>(n_columns_in, 0))
     {
-        mt.seed(0);
+        mt.seed(1);
+        draw_lines();
+        draw_score();
+        generate_new_cell();
+        generate_new_cell();
     }
 
-    void draw_lines(void) const;
 
     // draw all the cells in the grid to the terminal.
     void refresh(void) const;
-    void draw_score(void) const;
 
     // move the cells and update the game as needed. returns if any cells
     // actually moved.
     bool handle_key(int key);
-    void generate_new_cell(void);
 
 private:
+    void draw_lines(void) const;
+    void draw_score(void) const;
     void refresh_win(void) const;
     void refresh_game_over(void) const;
 
@@ -54,6 +58,8 @@ private:
                               unsigned=numeric_limits<unsigned>::max());
     vector<CellReferencesT> normalize_rows(int);
     bool check_game_over(void) const;
+
+    void generate_new_cell(void);
 
     void set_cell(unsigned row, unsigned col, unsigned num);
     void pop_cell(unsigned row, unsigned col);

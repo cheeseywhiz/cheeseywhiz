@@ -104,7 +104,7 @@ Grid::refresh_game_over(void) const
 {
     move(static_cast<int>(height) + 3, 0);
 
-    if (!n_empty && check_game_over())
+    if (check_game_over())
         printw("game over");
     else
         clrtoeol();
@@ -273,10 +273,12 @@ Grid::normalize_rows(int key)
 
 // check if the game must end, when there is gridlock, where no two neighbors
 // have an equal value.
-// REQUIRES: n_empty == 0
 bool
 Grid::check_game_over(void) const
 {
+    if (n_empty)
+        return false;
+
     // check row-wise
     for (const auto& row : grid) {
         unsigned prev = row.front();
