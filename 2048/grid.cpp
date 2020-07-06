@@ -141,7 +141,7 @@ Grid::handle_key(int key)
     return did_move;
 }
 
-// merge cells towards the front of the list. returns score change.
+// merge cells towards the front of the list.
 Grid::move_result
 Grid::do_move(const CellReferencesT& cells)
 {
