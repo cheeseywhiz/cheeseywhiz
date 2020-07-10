@@ -8,6 +8,8 @@
 using std::vector;
 using std::pair;
 using std::numeric_limits;
+using std::mt19937;
+using std::random_device;
 
 class Grid {
 public:
@@ -24,7 +26,8 @@ public:
           n_empty(n_rows_in * n_columns_in), score(0), has_won(false),
           grid(n_rows_in, vector<unsigned>(n_columns_in, 0))
     {
-        mt.seed(1);
+        random_device rd;
+        mt.seed(rd());
         draw_lines();
         draw_score();
         generate_new_cell();
@@ -73,7 +76,7 @@ private:
     unsigned score;
     bool has_won;
     vector<vector<unsigned>> grid;
-    std::mt19937 mt;
+    mt19937 mt;
 
     static const unsigned cell_width = 7;
     static const unsigned cell_height = 4;
