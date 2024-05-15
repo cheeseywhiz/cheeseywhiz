@@ -44,8 +44,8 @@ def get_log(task, mute=False):
 
 
 def main():
-    yield async_launch(produce_fizz_buzz)
-    yield async_launch(print_fizz_buzz)
+    yield from async_launch(produce_fizz_buzz)
+    yield from async_launch(print_fizz_buzz)
 
 
 FIZZBUZZ = []
@@ -67,7 +67,7 @@ def produce_fizz_buzz():
             sleep_time = (1 + random.random()) / 2
 
         skipped = False
-        current_time = yield async_sleep(sleep_time)
+        current_time = yield from async_sleep(sleep_time)
         current_time = int(current_time)
 
         if current_time == last_time:
@@ -99,7 +99,7 @@ def print_fizz_buzz():
         while FIZZBUZZ:
             log(FIZZBUZZ.pop(0))
             i += 1
-        yield async_sleep(3)
+        yield from async_sleep(3)
 
 
 def async_sleep(n):
