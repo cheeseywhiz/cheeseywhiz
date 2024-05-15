@@ -244,7 +244,7 @@ Grid::normalize_rows(int key)
                     --row;
             }
 
-            rows.emplace_back(move(row_ref));
+            rows.emplace_back(std::move(row_ref));
         }
     // column-wise?
     } else {
@@ -264,7 +264,7 @@ Grid::normalize_rows(int key)
                     --col;
             }
 
-            rows.emplace_back(move(row_ref));
+            rows.emplace_back(std::move(row_ref));
         }
     }
 

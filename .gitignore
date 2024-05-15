@@ -77,3 +77,4 @@ compile_commands.json
 *.d
 *.plist
 tags
+.DS_Store

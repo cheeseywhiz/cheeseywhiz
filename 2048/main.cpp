@@ -95,9 +95,9 @@ run_2048(void)
             // forward through history
             if (backtrace.empty())
                 break;
-            Grid current = move(backtrace.top());
+            Grid current = std::move(backtrace.top());
             backtrace.pop();
-            history.push(move(current));
+            history.push(std::move(current));
             history.top().refresh();
             refresh();
             break; }
@@ -105,9 +105,9 @@ run_2048(void)
             // backwards through history
             if (history.size() <= 1)
                 break;
-            Grid current = move(history.top());
+            Grid current = std::move(history.top());
             history.pop();
-            backtrace.push(move(current));
+            backtrace.push(std::move(current));
             history.top().refresh();
             refresh();
             break; }
@@ -119,7 +119,7 @@ run_2048(void)
             Grid new_grid(history.top());
 
             if (new_grid.handle_key(c)) {
-                history.push(move(new_grid));
+                history.push(std::move(new_grid));
                 while (backtrace.size())
                     backtrace.pop();
             }
