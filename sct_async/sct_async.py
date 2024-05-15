@@ -43,6 +43,11 @@ def get_log(task, mute=False):
     return log
 
 
+def main():
+    yield async_launch(produce_fizz_buzz)
+    yield async_launch(print_fizz_buzz)
+
+
 FIZZBUZZ = []
 
 
@@ -103,10 +108,18 @@ def async_sleep(n):
     return time.time()
 
 
+def async_launch(thread):
+    yield LibraryEvent.Launch(thread())
+
+
 class LibraryEvent:
     @dataclass
     class Sleep:
         amount: float
+
+    @dataclass
+    class Launch:
+        thread: object
 
 
 class RuntimeEvent:
@@ -122,9 +135,9 @@ class RuntimeEvent:
             return time.time() >= self.wake_time
 
 
-def runtime(*threads):
+def runtime():
     log = get_log('runtime', mute=not DEBUG_RUNTIME)
-    tasks = [([], thread(), None) for thread in threads]
+    tasks = [([], main(), None)]
     i = 0
 
     while tasks:
@@ -150,6 +163,12 @@ def runtime(*threads):
                 log(f'task will sleep for {future.amount} s')
                 wake_time = time.time() + future.amount
                 tasks.append((senders, task, RuntimeEvent.WakeTime(wake_time)))
+            elif isinstance(future, LibraryEvent.Launch):
+                log(f'task launched another task')
+                # restart parent task
+                tasks.append((senders, task, None))  # TODO: return a Thread object here
+                # launch the child task
+                tasks.append(([], future.thread, None))
             else:
                 log.intervene('bad future')
                 return
@@ -186,4 +205,4 @@ def analyze_tasks(tasks):
 
 
 if __name__ == '__main__':
-    runtime(print_fizz_buzz, produce_fizz_buzz)
+    runtime()
