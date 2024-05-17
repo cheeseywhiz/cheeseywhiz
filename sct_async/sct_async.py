@@ -10,39 +10,6 @@ import types
 DEBUG_RUNTIME = True
 
 
-def get_log(task, mute=False):
-    def log(*args, **kwargs):
-        if mute:
-            return
-        print(int(time.time()), ':', task, ':', sep='', end='')
-        print(*args, **kwargs)
-
-    def pp(*args, msg='', **kwargs):
-        if mute:
-            return
-        log('\n'.join([msg, pprint.pformat(*args, **kwargs)]))
-
-    log.pp = pp
-
-    def intervene(message, x_message=None):
-        if mute:
-            return
-        log('INTERVENE:')
-
-        if x_message is not None:
-            log(message, '? x = ', x_message, sep='')
-        else:
-            log(message, '?', sep='')
-
-        x = None
-        breakpoint() # do not remove
-        #log(x) # debugging
-        return x
-
-    log.intervene = intervene
-    return log
-
-
 def main():
     yield from async_launch(produce_fizz_buzz)
     yield from async_launch(print_fizz_buzz)
@@ -202,6 +169,39 @@ def analyze_tasks(tasks):
         tasks.append(tasks.pop(0))
 
     log.pp(tasks[0], msg='will run:')
+
+
+def get_log(task, mute=False):
+    def log(*args, **kwargs):
+        if mute:
+            return
+        print(int(time.time()), ':', task, ':', sep='', end='')
+        print(*args, **kwargs)
+
+    def pp(*args, msg='', **kwargs):
+        if mute:
+            return
+        log('\n'.join([msg, pprint.pformat(*args, **kwargs)]))
+
+    log.pp = pp
+
+    def intervene(message, x_message=None):
+        if mute:
+            return
+        log('INTERVENE:')
+
+        if x_message is not None:
+            log(message, '? x = ', x_message, sep='')
+        else:
+            log(message, '?', sep='')
+
+        x = None
+        breakpoint() # do not remove
+        #log(x) # debugging
+        return x
+
+    log.intervene = intervene
+    return log
 
 
 if __name__ == '__main__':
