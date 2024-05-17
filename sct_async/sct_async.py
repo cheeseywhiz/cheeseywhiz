@@ -7,12 +7,13 @@ import sys
 import time
 import types
 
-DEBUG_RUNTIME = True
+DEBUG_RUNTIME = False
+PRINT_HOW_MANY_VALUES = 5
 
 
 def main():
-    yield from async_launch(produce_fizz_buzz)
-    yield from async_launch(print_fizz_buzz)
+    produce_thread = yield from async_launch(produce_fizz_buzz())
+    yield from async_launch(print_fizz_buzz(produce_thread))
 
 
 FIZZBUZZ = []
@@ -20,12 +21,11 @@ FIZZBUZZ = []
 
 def produce_fizz_buzz():
     global FIZZBUZZ
-    log = get_log('produce_fizz_buzz', mute=True)
+    log = get_log('produce_fizz_buzz', mute=False)
     last_time = None
     skipped = False
-    i = 0
 
-    while i < 20:
+    while True:
         expected_value = (1 + 0.5) / 2
 
         if skipped:
@@ -46,27 +46,27 @@ def produce_fizz_buzz():
         if current_time % 15 == 0:
             FIZZBUZZ.append(f'FIZZBUZZ: {current_time}')
             log('FIZZBUZZ')
-            i += 1
         elif current_time % 5 == 0:
             FIZZBUZZ.append(f'BUZZ: {current_time}')
             log('BUZZ')
-            i += 1
         elif current_time % 3 == 0:
             FIZZBUZZ.append(f'FIZZ: {current_time}')
             log('FIZZ')
-            i += 1
 
 
-def print_fizz_buzz():
+def print_fizz_buzz(produce_thread):
     global FIZZBUZZ
     log = get_log('print_fizz_buzz')
     i = 0
 
-    while i < 20:
+    while i < PRINT_HOW_MANY_VALUES:
         while FIZZBUZZ:
             log(FIZZBUZZ.pop(0))
             i += 1
         yield from async_sleep(3)
+
+    # close up shop
+    yield from async_stop(produce_thread)
 
 
 def async_sleep(n):
@@ -76,7 +76,12 @@ def async_sleep(n):
 
 
 def async_launch(thread):
-    yield LibraryEvent.Launch(thread())
+    thread_obj = yield LibraryEvent.Launch(thread)
+    return thread_obj
+
+
+def async_stop(thread):
+    yield LibraryEvent.Stop(thread)
 
 
 class LibraryEvent:
@@ -86,7 +91,11 @@ class LibraryEvent:
 
     @dataclass
     class Launch:
-        thread: object
+        thread: types.GeneratorType
+
+    @dataclass
+    class Stop:
+        thread: types.GeneratorType
 
 
 class RuntimeEvent:
@@ -131,11 +140,22 @@ def runtime():
                 wake_time = time.time() + future.amount
                 tasks.append((senders, task, RuntimeEvent.WakeTime(wake_time)))
             elif isinstance(future, LibraryEvent.Launch):
-                log(f'task launched another task')
-                # restart parent task
-                tasks.append((senders, task, None))  # TODO: return a Thread object here
+                log(f'task launched a thread')
+                # restart parent task, returning a thread object
+                tasks.append((senders, task, RuntimeEvent.Return(future.thread)))
                 # launch the child task
                 tasks.append(([], future.thread, None))
+            elif isinstance(future, LibraryEvent.Stop):
+                log(f'task stopped a thread')
+
+                for i, (_, task, _) in enumerate(tasks):
+                    if task != future.thread:
+                        continue
+                    # remove the matching task from execution
+                    del tasks[i]
+                    break
+                else:
+                    raise RuntimeError(f'could not find task {task!r}')
             else:
                 log.intervene('bad future')
                 return
