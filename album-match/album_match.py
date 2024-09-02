@@ -41,6 +41,12 @@ def get_library(folder, feature_detector, resize_width=None):
         keypoints, descriptor = feature_detector.detectAndCompute(gray, None)
         library[fname] = img, gray, keypoints, descriptor
 
+        if DEBUG:
+            # see how many keypoints an album cover may have
+            #kp_img = cv.drawKeypoints(gray, keypoints, img, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            #imshow(kp_img)
+            ...
+
     return library
 
 
