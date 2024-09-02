@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from album_match import *
 import base64
 import lzma
 import pickle
+import numpy as np
+from pprint import pprint as pp
 
 PROCESSES = [
     (lambda x: pickle.dumps(x), lambda x: pickle.loads(x)),
@@ -23,16 +24,15 @@ def decode(obj):
 
     return obj
 
-sift = cv.SIFT_create()
-library = get_library('album-covers-original', sift)
-pickles_stats = {}
+def test_encoding(library):
+    pickles_stats = {}
 
-for fname, (_, _, _, descriptor) in library.items():
-    save_descriptor = descriptor
-    descriptor = encode(descriptor)
-    pickles_stats[fname] = len(descriptor)
-    descriptor = decode(descriptor)
-    if not np.array_equal(descriptor, save_descriptor):
-        raise RuntimeError
+    for fname, (_, _, _, descriptor) in library.items():
+        save_descriptor = descriptor
+        descriptor = encode(descriptor)
+        pickles_stats[fname] = len(descriptor)
+        descriptor = decode(descriptor)
+        if not np.array_equal(descriptor, save_descriptor):
+            raise RuntimeError
 
-pp(pickles_stats)
+    pp(pickles_stats)
