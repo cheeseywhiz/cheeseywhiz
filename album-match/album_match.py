@@ -11,7 +11,6 @@ from statistics import mean
 import functools
 
 DEBUG = False
-IM_WIDTH = 900
 
 
 def imshow(img):
@@ -68,7 +67,7 @@ def main(argv):
 
     library = get_library('album-covers-original', sift)
     # assume query album will take up about 2/3 of the query picture
-    queries = get_library('queries', sift, resize_width=900 * 3 // 2)
+    queries = get_library('queries', sift, resize_width=600 * 3 // 2)
 
     for query_fname in queries:
         query_image(sift, library, queries, query_fname)
